@@ -8,7 +8,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Options
-option(OLIV_BUILD_SHARED "Build shared libraries" OFF)
+option(BOLERO_BUILD_SHARED "Build shared libraries" OFF)
 
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -86,16 +86,16 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 # Platform specifics
 if(WIN32)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE OLIV_PLATFORM_WINDOWS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BOLERO_PLATFORM_WINDOWS)
     target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
 elseif(APPLE)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE OLIV_PLATFORM_MACOS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BOLERO_PLATFORM_MACOS)
     find_library(COCOA_LIBRARY Cocoa)
     find_library(IOKIT_LIBRARY IOKit)
     find_library(COREVID_LIBRARY CoreVideo)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${COCOA_LIBRARY} ${IOKIT_LIBRARY} ${COREVID_LIBRARY})
 elseif(UNIX)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE OLIV_PLATFORM_LINUX)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE BOLERO_PLATFORM_LINUX)
     find_package(OpenGL REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL ${CMAKE_DL_LIBS})
 endif()
