@@ -86,9 +86,8 @@ std::unordered_map<GLenum, std::string> Shader::PreProcess(const std::string& sr
 {
     std::unordered_map<GLenum, std::string> shaderSources;
 
-    const char* typeToken = "#TYPE";    // NOTE: Should be put in some constant. or inside types.hpp
-    size_t tokenLen = strlen(typeToken);
-    size_t pos = src.find(typeToken, 0);    // find the first '#TYPE'
+    size_t tokenLen = strlen(m_TYPE_TOKEN);
+    size_t pos = src.find(m_TYPE_TOKEN, 0);    // find the first '#TYPE'
 
     while (pos != std::string::npos)
     {
@@ -99,7 +98,7 @@ std::unordered_map<GLenum, std::string> Shader::PreProcess(const std::string& sr
         typeStr.erase(typeStr.find_last_not_of(" \n\r\t") + 1);     // NOTE: could be more robust
 
         size_t nextLinePos = src.find_first_not_of("\r\n", eol);    // start of shader code
-        pos = src.find(typeToken, nextLinePos);     // check for another '#TYPE' on the next line
+        pos = src.find(m_TYPE_TOKEN, nextLinePos);     // check for another '#TYPE' on the next line
 
         shaderSources[ShaderStageToGLEnum(ShaderStageFromStr(typeStr))] = (pos == std::string::npos) 
             ? src.substr(nextLinePos) 
@@ -154,22 +153,22 @@ void Shader::SetFloat(std::string_view name, float value)
     glProgramUniform1f(m_rendererID, GetUniformLocation(name), value);
 }
 
-void Shader::SetVec3(std::string_view name, const glm::vec3& value)
+void Shader::SetVec3(std::string_view name, const vec3& value)
 {
     glProgramUniform3fv(m_rendererID, GetUniformLocation(name), 1, &value[0]);
 }
 
-void Shader::SetVec4(std::string_view name, const glm::vec4& value)
+void Shader::SetVec4(std::string_view name, const vec4& value)
 {
     glProgramUniform4fv(m_rendererID, GetUniformLocation(name), 1, &value[0]);
 }
 
-void Shader::SetMat3(std::string_view name, const glm::mat3& value)
+void Shader::SetMat3(std::string_view name, const mat3& value)
 {
     glProgramUniformMatrix3fv(m_rendererID, GetUniformLocation(name), 1, GL_FALSE, &value[0][0]);
 }
 
-void Shader::SetMat4(std::string_view name, const glm::mat4& value)
+void Shader::SetMat4(std::string_view name, const mat4& value)
 {
     glProgramUniformMatrix4fv(m_rendererID, GetUniformLocation(name), 1, GL_FALSE, &value[0][0]);
 }

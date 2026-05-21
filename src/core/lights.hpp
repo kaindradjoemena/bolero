@@ -8,34 +8,39 @@
 namespace BLR
 {
 
+namespace LightBaseDefaults
+{
+    static constexpr vec3  COLOR = vec3(1.0f);
+    static constexpr float POWER = 10.0f;
+};
 
 struct LightBase
 {
-    glm::vec3 color = glm::vec3(1.0f);
-    float     power = 10.0f;
+    vec3 color = LightBaseDefaults::COLOR;
+    float power = LightBaseDefaults::POWER;
 };
 
 struct DirLight
 {
     LightBase base;
-    glm::vec3 direction;
+    vec3 direction;
 };
 
 struct PointLight
 {
     LightBase base;
-    glm::vec3 position;
-    float     range;
+    vec3 position;
+    float range;
 };
 
 struct SpotLight
 {
     LightBase base;
-    glm::vec3 position;
-    glm::vec3 direction;
-    float     length;
-    float     innerCos;
-    float     outerCos;
+    vec3 position;
+    vec3 direction;
+    float length;
+    float innerCos;
+    float outerCos;
 };
 
 

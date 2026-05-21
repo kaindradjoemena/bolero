@@ -11,6 +11,26 @@ namespace BLR
 class Camera
 {
 public:
+    static constexpr float m_DEFAULT_FOV      = 65.0f;
+    static constexpr float m_MIN_FOV          = 15.0f;
+    static constexpr float m_MAX_FOV          = 150.0f;
+
+    static constexpr float m_DEFAULT_DISTANCE = 10.0f;
+
+    static constexpr float m_DEFAULT_NEAR     = 0.001f;
+    static constexpr float m_MIN_NEAR         = 0.01f;
+    static constexpr float m_DEFAULT_FAR      = 100.0f;
+    static constexpr float m_MAX_FAR          = 1000.0f;
+    static constexpr float m_DEFAULT_ASPECT   = 16.0f / 9.0f;
+
+    static constexpr float m_DEFAULT_ROT_SENS = 0.3f;
+    static constexpr float m_DEFAULT_PAN_SENS = 0.002f;
+    static constexpr float m_DEFAULT_SCR_SENS = 0.1f;
+
+    static constexpr float m_MIN_PITCH        = -89.0f;
+    static constexpr float m_MAX_PITCH        = 89.0f;
+
+public:
     Camera() {};
     ~Camera() {};
     
@@ -22,12 +42,12 @@ public:
     Camera(Camera&& other) = delete;
     Camera& operator=(Camera&& other) = delete;
 
-    float GetFov() const { return m_fov; }
-    float GetNear() const { return m_nearPlane; }
-    float GetFar() const { return m_farPlane; }
+    float GetFov()    const { return m_fov; }
+    float GetNear()   const { return m_nearPlane; }
+    float GetFar()    const { return m_farPlane; }
     float GetAspect() const { return m_aspect; }
 
-    float GetYaw() const { return m_yaw; }
+    float GetYaw()   const { return m_yaw; }
     float GetPitch() const { return m_pitch; }
 
     float GetRotSense() const { return m_rotSens; }
@@ -46,33 +66,33 @@ public:
     void SetPanSense(float s) { m_panSens = s; }
     void SetScrSense(float s) { m_scrSens = s; }
 
-    glm::vec3 GetPos() const;
-    glm::mat4 GetViewMat() const;
-    glm::mat4 GetProjMat() const;
+    vec3 GetPos() const;
+    mat4 GetViewMat() const;
+    mat4 GetProjMat() const;
 
-    void BeginDrag(const glm::vec2& mousePos, bool isPan);
+    void BeginDrag(const vec2& mousePos, bool isPan);
     void EndDrag();
-    void HandleDrag(const glm::vec2& mousePos, const glm::vec2& viewportSize);
+    void HandleDrag(const vec2& mousePos, const vec2& viewportSize);
     void HandleScroll(double yOffset);
 
 private:
-    glm::vec3 m_target = glm::vec3(0.0f);
-    glm::vec2 m_lastMousePos = glm::vec2(0.0f);
+    vec3 m_target = vec3(0.0f);
+    vec2 m_lastMousePos = vec2(0.0f);
 
-    float m_distance = 10.0f;
+    float m_distance = m_DEFAULT_DISTANCE;
 
-    float m_fov = 70.0f;    // in degrees
-    float m_nearPlane = 0.01f;
-    float m_farPlane  = 1000.0f;
-    float m_aspect    = 16.0f / 9.0f;
+    float m_fov       = m_DEFAULT_FOV;    // in degrees
+    float m_nearPlane = m_DEFAULT_NEAR;
+    float m_farPlane  = m_DEFAULT_FAR;
+    float m_aspect    = m_DEFAULT_ASPECT;
     
     // in degrees
     float m_yaw   = 0.0f;
     float m_pitch = 0.0f;
 
-    float m_rotSens = 0.3f;
-    float m_panSens = 0.002f;
-    float m_scrSens = 0.1f;
+    float m_rotSens = m_DEFAULT_ROT_SENS;
+    float m_panSens = m_DEFAULT_PAN_SENS;
+    float m_scrSens = m_DEFAULT_SCR_SENS;
     
     bool m_isDragging = false;
     bool m_isPanning  = false;

@@ -14,32 +14,100 @@ namespace BLR
 {
 
 
-// ===== TRANSFORMS =====
+/* ===== MATH ===== */
+using vec2 = glm::vec2;
+using vec3 = glm::vec3;
+using vec4 = glm::vec4;
+using mat3 = glm::mat3;
+using mat4 = glm::mat4;
+using quat = glm::quat;
+
+inline
+float Clamp(float x, float min, float max)
+{
+    return glm::clamp(x, min, max);
+}
+
+inline
+float DegToRad(float deg)
+{
+    return glm::radians(deg);
+}
+
+inline
+vec3 Norm(vec3 v)
+{
+    return glm::normalize(v);
+}
+
+inline
+vec3 Cross(vec3 a, vec3 b)
+{
+    return glm::cross(a, b);
+}
+
+inline
+mat3 Transpose(const mat3& m)
+{
+    return glm::transpose(m);
+} 
+
+inline
+mat4 Transpose(const mat4& m)
+{
+    return glm::transpose(m);
+}
+
+inline
+mat3 Inverse(const mat3& m)
+{
+    return glm::inverse(m);
+}
+
+inline
+mat4 Inverse(const mat4& m)
+{
+    return glm::inverse(m);
+}
+
+inline
+mat4 LookAt(const vec3& eye, const vec3& center, const vec3& up)
+{
+    return glm::lookAt(eye, center, up);
+}
+
+inline
+mat4 Perspective(float rad, float aspect, float near, float far)
+{
+    return glm::perspective(rad, aspect, near, far);
+}
+
+/* ===== TRANSFORMS ===== */
 struct Transform
 {
-    glm::vec3 pos = glm::vec3(0.0f);
-    glm::vec3 scl = glm::vec3(1.0f);
-    glm::quat rot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    vec3 pos = vec3(0.0f);
+    vec3 scl = vec3(1.0f);
+    quat rot = quat(1.0f, 0.0f, 0.0f, 0.0f);
 };
 
 inline
-glm::vec3 QuatToEul(glm::quat q)
+vec3 QuatToEul(quat q)
 {
     return glm::eulerAngles(q);
 }
 
 inline
-glm::quat EulToQuat(glm::vec3 e)
+quat EulToQuat(vec3 e)
 {
-    return glm::quat(e);
+    return quat(e);
 }
 
 inline
-glm::mat4 ModelMat(const Transform& t)
+mat4 ModelMat(const Transform& t)
 {
     // Local -> World
     // St * Rt * Mt
-    glm::mat4 modelMat = glm::mat4(1.0f);
+    mat4 modelMat = glm::mat4(1.0f);
     modelMat  = glm::translate(modelMat, t.pos);
     modelMat *= glm::mat4_cast(t.rot);
     modelMat  = glm::scale(modelMat, t.scl);
@@ -48,7 +116,8 @@ glm::mat4 ModelMat(const Transform& t)
 }
 
 
-// ===== SHADER STAGE =====
+/* ===== RENDERER ===== */
+// ----- Shader Stage -----
 enum class ShaderStage
 {
     None = 0, Vertex, Fragment, Pixel, Geometry, Compute
@@ -81,8 +150,7 @@ static ShaderStage ShaderStageFromStr(const std::string& type)
     return ShaderStage::None;
 }
 
-
-// ===== SHADER DATA TYPES =====
+// ----- Shader Data Types -----
 enum class ShaderDataType
 {
     None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool

@@ -8,6 +8,7 @@
 namespace BLR
 {
 
+
 // ===== Class VertexBuffer =====
 VertexBuffer::VertexBuffer(const void* verts, uint32_t size)
 {

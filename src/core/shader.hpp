@@ -3,7 +3,8 @@
 #pragma once
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
+
+#include "types.hpp"
 
 #include <string>
 #include <string_view>
@@ -13,8 +14,12 @@
 namespace BLR
 {
 
+
 class Shader
 {
+public:
+    static constexpr char* m_TYPE_TOKEN = "#TYPE";
+
 public:
     Shader(const std::filesystem::path& filePath);
     ~Shader();
@@ -32,10 +37,10 @@ public:
 
     void SetInt(std::string_view name, int value);
     void SetFloat(std::string_view name, float value);
-    void SetVec3(std::string_view name, const glm::vec3& value);
-    void SetVec4(std::string_view name, const glm::vec4& value);
-    void SetMat3(std::string_view name, const glm::mat3& value);
-    void SetMat4(std::string_view name, const glm::mat4& value);
+    void SetVec3(std::string_view name, const vec3& value);
+    void SetVec4(std::string_view name, const vec4& value);
+    void SetMat3(std::string_view name, const mat3& value);
+    void SetMat4(std::string_view name, const mat4& value);
 
     GLuint GetRendererID() const { return m_rendererID; }
 
@@ -50,5 +55,6 @@ private:
     GLint GetUniformLocation(std::string_view name);
     void CheckCompileErrors(GLuint object, std::string_view type);
 };
+
 
 } /* namespace BLR */

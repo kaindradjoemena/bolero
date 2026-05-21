@@ -2,9 +2,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 
 // NOTE: put everything inside some include.hpp file instead of this
@@ -14,6 +12,7 @@
 #include "core/shader.hpp"
 #include "core/lights.hpp"
 #include "core/camera.hpp"
+#include "core/types.hpp"
 #include "window/window.hpp"
 
 #include "utils/debug.hpp"
@@ -29,9 +28,9 @@
     }
 #endif
 
-constexpr int WINDOW_WIDTH = 1280;
-constexpr int WINDOW_HEIGHT = 720;
-constexpr const char* WINDOW_TITLE = "Bolero: PBR Renderer";
+constexpr int         DEFAULT_WINDOW_WIDTH  = 1280;
+constexpr int         DEFAULT_WINDOW_HEIGHT = 720;
+constexpr const char* DEFAULT_WINDOW_TITLE  = "Bolero: Renderer";
 
 float deltaTime = 0.0f;	
 float lastFrame = 0.0f;
@@ -39,7 +38,7 @@ float lastFrame = 0.0f;
 
 int main()
 {
-    Window window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
+    Window window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE);
 
     window.AddResizeCallback([](uint32_t w, uint32_t h) {
             glViewport(0, 0, w, h);
@@ -79,7 +78,7 @@ int main()
     std::cout << "GLM Version: "    << GLM_VERSION_MAJOR << "." << GLM_VERSION_MINOR << "." << GLM_VERSION_PATCH << std::endl;
 
     BLR::Camera cam;
-    cam.SetAspect((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT);
+    cam.SetAspect((float)DEFAULT_WINDOW_WIDTH / (float)DEFAULT_WINDOW_HEIGHT);
     cam.SetPitch(20.0f);
 
     // register window resize callback to change camera aspect
@@ -132,6 +131,8 @@ int main()
         -0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f
     };
 
+    // NOTE: std::make_shared<BLR::VertexBuffer>(..) is pretty clunky.
+    //       implementing aliasing or some static factory pattern is pretty cool
     auto vbo = std::make_shared<BLR::VertexBuffer>(vertices, sizeof(vertices));
     vbo->SetLayout({
             { BLR::ShaderDataType::Float3, "a_pos" },
@@ -146,7 +147,7 @@ int main()
 
     BLR::PointLight pointLight;
 
-    pointLight.position   = glm::vec3(2.0f, 2.0f, 2.0f);
+    pointLight.position   = BLR::vec3(2.0f, 2.0f, 2.0f);
     pointLight.range      = 10.0f;
     pointLight.base.power = 10.0f;
 
@@ -165,10 +166,10 @@ int main()
 
         cam.SetYaw(10.0f * currentFrame);   // Rotate camera around the world origin
 
-        glm::mat4 modelMat = glm::mat4(1.0f);
-        glm::mat4 viewMat  = cam.GetViewMat();
-        glm::mat4 projMat  = cam.GetProjMat();
-        glm::mat3 normMat  = glm::transpose(glm::inverse(modelMat));
+        BLR::mat4 modelMat = BLR::mat4(1.0f);
+        BLR::mat4 viewMat  = cam.GetViewMat();
+        BLR::mat4 projMat  = cam.GetProjMat();
+        BLR::mat3 normMat  = BLR::Transpose(BLR::Inverse(modelMat));
 
         shader.Bind();
 
