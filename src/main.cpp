@@ -12,6 +12,8 @@
 #include "core/buffer.hpp"
 #include "core/vertex_array.hpp"
 #include "core/shader.hpp"
+#include "core/lights.hpp"
+#include "core/camera.hpp"
 #include "window/window.hpp"
 
 #include "utils/debug.hpp"
@@ -30,6 +32,9 @@
 constexpr int WINDOW_WIDTH = 1280;
 constexpr int WINDOW_HEIGHT = 720;
 constexpr const char* WINDOW_TITLE = "Bolero: PBR Renderer";
+
+float deltaTime = 0.0f;	
+float lastFrame = 0.0f;
 
 
 int main()
@@ -68,49 +73,118 @@ int main()
     }
 #endif
 
-    std::cout << "GPU: " << glGetString(GL_RENDERER) << ", " << glGetString(GL_VENDOR) << std::endl;
+    std::cout << "GPU: "            << glGetString(GL_RENDERER) << ", " << glGetString(GL_VENDOR) << std::endl;
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
-    std::cout << "GLFW Version: " << glfwGetVersionString() << std::endl;
-    std::cout << "GLM Version: " << GLM_VERSION_MAJOR << "." << GLM_VERSION_MINOR << "." << GLM_VERSION_PATCH << std::endl;
+    std::cout << "GLFW Version: "   << glfwGetVersionString() << std::endl;
+    std::cout << "GLM Version: "    << GLM_VERSION_MAJOR << "." << GLM_VERSION_MINOR << "." << GLM_VERSION_PATCH << std::endl;
+
+    BLR::Camera cam;
+    cam.SetAspect((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT);
+    cam.SetPitch(20.0f);
+
+    // register window resize callback to change camera aspect
+    window.AddResizeCallback([&cam](uint32_t w, uint32_t h) {
+            cam.SetAspect((float)w / (float)h);
+        });
 
     float vertices[] = {
-        // positions          // colors
-        -0.5f, -0.5f, 0.0f,   1.0f, 0.0f, 0.0f,  // bottom left  - red
-         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,  // bottom right - green
-         0.0f,  0.5f, 0.0f,   0.0f, 0.0f, 1.0f,  // top          - blue
+        // x, y, z              // nx, ny, nz
+        -0.5f, -0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
+  
+        -0.5f, -0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
+  
+        -0.5f,  0.5f,  0.5f,   -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,   -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,   -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,   -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,   -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,   -1.0f,  0.0f,  0.0f,
+  
+         0.5f,  0.5f,  0.5f,    1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,    1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,    1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,    1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,    1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,    1.0f,  0.0f,  0.0f,
+  
+        -0.5f, -0.5f, -0.5f,    0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,    0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,    0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,    0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,    0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,    0.0f, -1.0f,  0.0f,
+  
+        -0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,    0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,    0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,    0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f
     };
-    uint32_t indices[] = {0, 1, 2};
 
     auto vbo = std::make_shared<BLR::VertexBuffer>(vertices, sizeof(vertices));
     vbo->SetLayout({
             { BLR::ShaderDataType::Float3, "a_pos" },
-            { BLR::ShaderDataType::Float3, "a_col" }
+            { BLR::ShaderDataType::Float3, "a_norm" }
         });
 
-    auto ibo = std::make_shared<BLR::IndexBuffer>(indices, 3);
+    // auto ibo = std::make_shared<BLR::IndexBuffer>(indices, 3);
 
     auto vao = std::make_unique<BLR::VertexArray>();
     vao->AddVertexBuffer(vbo);
-    vao->SetIndexBuffer(ibo);
-    
-    BLR::Shader shader(std::filesystem::path("assets/shaders/test.glsl"));
+    // vao->SetIndexBuffer(ibo);
+
+    BLR::PointLight pointLight;
+
+    pointLight.position   = glm::vec3(2.0f, 2.0f, 2.0f);
+    pointLight.range      = 10.0f;
+    pointLight.base.power = 10.0f;
+
+    BLR::Shader shader(std::filesystem::path("assets/shaders/blinn_phong.glsl"));
 
     glEnable(GL_DEPTH_TEST);
 
     while (!window.ShouldClose())
     {
-        glClearColor(0.8f, 0.0f, 0.5f, 1.0f);
+        float currentFrame = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
-        glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 mvp = projection * view * model;
+        cam.SetYaw(10.0f * currentFrame);   // Rotate camera around the world origin
+
+        glm::mat4 modelMat = glm::mat4(1.0f);
+        glm::mat4 viewMat  = cam.GetViewMat();
+        glm::mat4 projMat  = cam.GetProjMat();
+        glm::mat3 normMat  = glm::transpose(glm::inverse(modelMat));
 
         shader.Bind();
-        shader.SetMat4("u_mvp", mvp);
+
+        shader.SetMat4("u_modelMat", modelMat);
+        shader.SetMat4("u_viewMat", viewMat);
+        shader.SetMat4("u_projMat", projMat);
+        shader.SetMat3("u_normMat", normMat);
+
+        shader.SetVec3("u_lightCol", pointLight.base.color);
+        shader.SetFloat("u_lightPow", pointLight.base.power);
+        shader.SetVec3("u_lightPos", pointLight.position);
+        shader.SetFloat("u_lightRange", pointLight.range);
+        shader.SetVec3("u_camPos", cam.GetPos());
+
         vao->Bind();
-        glDrawElements(GL_TRIANGLES, vao->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         window.SwapBuffers();
         window.PollEvents();
