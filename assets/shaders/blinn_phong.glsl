@@ -21,29 +21,6 @@ void main()
 
 
 #TYPE FRAGMENT
-#TYPE VERTEX
-#version 460 core
-layout (location = 0) in vec3 a_pos;
-layout (location = 1) in vec3 a_norm;
-
-uniform mat4 u_modelMat;
-uniform mat4 u_viewMat;
-uniform mat4 u_projMat;
-uniform mat3 u_normMat;
-
-out vec3 v_norm;
-out vec3 v_fragPos;
-
-void main()
-{
-    v_fragPos = vec3(u_modelMat * vec4(a_pos, 1.0f));   // world-space frag pos
-    v_norm = u_normMat * a_norm;
-
-    gl_Position = u_projMat * u_viewMat * u_modelMat * vec4(a_pos, 1.0);
-}
-
-
-#TYPE FRAGMENT
 #version 460 core
 in vec3 v_norm;
 in vec3 v_fragPos;
