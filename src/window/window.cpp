@@ -18,7 +18,6 @@ static void FramebufferSizeCallback(GLFWwindow* window, int w, int h)
             cb(win->GetWidth(), win->GetHeight());
         }
     }
-    // glViewport(0, 0, width, height);
 }
 
 Window::Window(int width, int height, const char* title)
