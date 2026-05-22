@@ -11,24 +11,33 @@ namespace BLR
 class Camera
 {
 public:
-    static constexpr float m_DEFAULT_FOV      = 65.0f;
-    static constexpr float m_MIN_FOV          = 15.0f;
-    static constexpr float m_MAX_FOV          = 150.0f;
+    static constexpr vec3 DEFAULT_UP_DIRECTION = vec3(0.0f, 1.0f, 0.0f);
 
-    static constexpr float m_DEFAULT_DISTANCE = 10.0f;
+    static constexpr vec3 DEFAULT_TARGET = vec3(0.0f);
 
-    static constexpr float m_DEFAULT_NEAR     = 0.001f;
-    static constexpr float m_MIN_NEAR         = 0.01f;
-    static constexpr float m_DEFAULT_FAR      = 100.0f;
-    static constexpr float m_MAX_FAR          = 1000.0f;
-    static constexpr float m_DEFAULT_ASPECT   = 16.0f / 9.0f;
+    static constexpr float DEFAULT_FOV      = DegToRadConst(65.0f);
+    static constexpr float MIN_FOV          = DegToRadConst(15.0f);
+    static constexpr float MAX_FOV          = DegToRadConst(150.0f);
 
-    static constexpr float m_DEFAULT_ROT_SENS = 0.3f;
-    static constexpr float m_DEFAULT_PAN_SENS = 0.002f;
-    static constexpr float m_DEFAULT_SCR_SENS = 0.1f;
+    static constexpr float MIN_DISTANCE     = 0.5f;
+    static constexpr float DEFAULT_DISTANCE = 10.0f;
+    static constexpr float MAX_DISTANCE     = 1000.0f;
 
-    static constexpr float m_MIN_PITCH        = -89.0f;
-    static constexpr float m_MAX_PITCH        = 89.0f;
+    static constexpr float DEFAULT_NEAR     = 0.001f;
+    static constexpr float MIN_NEAR         = 0.01f;
+    static constexpr float DEFAULT_FAR      = 100.0f;
+    static constexpr float MAX_FAR          = 1000.0f;
+    static constexpr float DEFAULT_ASPECT   = 16.0f / 9.0f;
+
+    static constexpr float DEFAULT_ROT_SENS = 0.01f;
+    static constexpr float DEFAULT_PAN_SENS = 0.002f;
+    static constexpr float DEFAULT_SCR_SENS = 0.1f;
+
+    static constexpr float MIN_PITCH        = DegToRadConst(-89.0f);
+    static constexpr float DEFAULT_PITCH    = DegToRadConst(30.0f);
+    static constexpr float MAX_PITCH        = DegToRadConst(89.0f);
+
+    static constexpr float DEFAULT_YAW      = DegToRadConst(30.0f);
 
 public:
     Camera() {};
@@ -72,27 +81,26 @@ public:
 
     void BeginDrag(const vec2& mousePos, bool isPan);
     void EndDrag();
-    void HandleDrag(const vec2& mousePos, const vec2& viewportSize);
-    void HandleScroll(double yOffset);
+    void HandleDrag(const vec2& mousePos);
+    void OnScroll(double yOffset);
 
 private:
-    vec3 m_target = vec3(0.0f);
+    vec3 m_target = DEFAULT_TARGET;
     vec2 m_lastMousePos = vec2(0.0f);
 
-    float m_distance = m_DEFAULT_DISTANCE;
+    float m_distance = DEFAULT_DISTANCE;
 
-    float m_fov       = m_DEFAULT_FOV;    // in degrees
-    float m_nearPlane = m_DEFAULT_NEAR;
-    float m_farPlane  = m_DEFAULT_FAR;
-    float m_aspect    = m_DEFAULT_ASPECT;
-    
-    // in degrees
-    float m_yaw   = 0.0f;
-    float m_pitch = 0.0f;
+    float m_fov       = DEFAULT_FOV;
+    float m_nearPlane = DEFAULT_NEAR;
+    float m_farPlane  = DEFAULT_FAR;
+    float m_aspect    = DEFAULT_ASPECT;
 
-    float m_rotSens = m_DEFAULT_ROT_SENS;
-    float m_panSens = m_DEFAULT_PAN_SENS;
-    float m_scrSens = m_DEFAULT_SCR_SENS;
+    float m_yaw   = DEFAULT_YAW;
+    float m_pitch = DEFAULT_PITCH;
+
+    float m_rotSens = DEFAULT_ROT_SENS;
+    float m_panSens = DEFAULT_PAN_SENS;
+    float m_scrSens = DEFAULT_SCR_SENS;
     
     bool m_isDragging = false;
     bool m_isPanning  = false;
