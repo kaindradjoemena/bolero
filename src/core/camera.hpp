@@ -40,8 +40,8 @@ public:
     static constexpr float DEFAULT_YAW      = DegToRadConst(30.0f);
 
 public:
-    Camera() {};
-    ~Camera() {};
+    Camera() = default;
+    ~Camera() = default;
     
     // Prevent copying
     Camera(const Camera&) = delete;

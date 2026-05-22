@@ -31,9 +31,7 @@ void Input::OnKey(int key, int action, int mods)
     }
 
     for (auto& cb : m_keyCallbacks)
-    {
         cb(key, action, mods);
-    }
 }
 
 void Input::OnMouseButton(int button, int action, int mods)
@@ -49,9 +47,7 @@ void Input::OnMouseButton(int button, int action, int mods)
     }
 
     for (auto& cb : m_mouseButtonCallbacks)
-    {
         cb(button, action, mods);
-    }
 }
 
 void Input::OnMouseScroll(double xoffset, double yoffset)
@@ -60,9 +56,7 @@ void Input::OnMouseScroll(double xoffset, double yoffset)
     m_scrollY += yoffset;
 
     for (auto& cb : m_mouseScrollCallbacks)
-    {
         cb(xoffset, yoffset);
-    }
 }
 
 void Input::OnCursorMove(double x, double y)

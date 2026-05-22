@@ -30,6 +30,8 @@ public:
     using MouseScrollCallback = std::function<void(double xOffset, double yOffset)>;
 
 public:
+    
+
     double GetMouseX() const  { return m_mouseX; }
     double GetMouseY() const  { return m_mouseY; }
     double GetMouseDX() const { return m_mouseDX; }
