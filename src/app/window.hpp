@@ -11,7 +11,7 @@
 
 struct GLFWwindow;
 
-namespace APP
+namespace blr::app
 {
 
 class Input;
@@ -65,4 +65,4 @@ private:
 };
 
 
-} /* namespace APP */
+} /* namespace blr::app */

@@ -40,9 +40,9 @@ float lastFrame = 0.0f;
 
 int main()
 {
-    APP::Input input;
+    blr::app::Input input;
 
-    APP::Window window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, input);
+    blr::app::Window window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, input);
 
     window.AddResizeCallback([](uint32_t w, uint32_t h) {
             glViewport(0, 0, w, h);
@@ -81,7 +81,7 @@ int main()
     std::cout << "GLFW Version: "   << glfwGetVersionString() << std::endl;
     std::cout << "GLM Version: "    << GLM_VERSION_MAJOR << "." << GLM_VERSION_MINOR << "." << GLM_VERSION_PATCH << std::endl;
 
-    BLR::Camera cam;
+    blr::core::Camera cam;
     cam.SetAspect((float)DEFAULT_WINDOW_WIDTH / (float)DEFAULT_WINDOW_HEIGHT);
 
     // camera aspect
@@ -96,13 +96,13 @@ int main()
 
     // shift and middle mouse for dragging
     input.AddMouseButtonCallback([&input, &cam](int button, int action, int mods) {
-            if (button == APP::Input::MOUSE_BUTTON_MIDDLE)
+            if (button == blr::app::Input::MOUSE_BUTTON_MIDDLE)
             {
-                if (action == APP::Input::ACTION_PRESS)
+                if (action == blr::app::Input::ACTION_PRESS)
                 {
-                    cam.BeginDrag(glm::vec2(input.GetMouseX(), input.GetMouseY()), input.IsKeyDown(APP::Input::KEY_L_SHIFT));
+                    cam.BeginDrag(glm::vec2(input.GetMouseX(), input.GetMouseY()), input.IsKeyDown(blr::app::Input::KEY_L_SHIFT));
                 }
-                else if (action == APP::Input::ACTION_RELEASE)
+                else if (action == blr::app::Input::ACTION_RELEASE)
                 {
                     cam.EndDrag();
                 }
@@ -155,27 +155,27 @@ int main()
         -0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f
     };
 
-    // NOTE: std::make_shared<BLR::VertexBuffer>(..) is pretty clunky.
+    // NOTE: std::make_shared<blr::core::VertexBuffer>(..) is pretty clunky.
     //       implementing aliasing or some static factory pattern is pretty cool
-    auto vbo = std::make_shared<BLR::VertexBuffer>(vertices, sizeof(vertices));
+    auto vbo = std::make_shared<blr::core::VertexBuffer>(vertices, sizeof(vertices));
     vbo->SetLayout({
-            { BLR::ShaderDataType::Float3, "a_pos" },
-            { BLR::ShaderDataType::Float3, "a_norm" }
+            { blr::core::ShaderDataType::Float3, "a_pos" },
+            { blr::core::ShaderDataType::Float3, "a_norm" }
         });
 
-    // auto ibo = std::make_shared<BLR::IndexBuffer>(indices, 3);
+    // auto ibo = std::make_shared<blr::core::IndexBuffer>(indices, 3);
 
-    auto vao = std::make_unique<BLR::VertexArray>();
+    auto vao = std::make_unique<blr::core::VertexArray>();
     vao->AddVertexBuffer(vbo);
     // vao->SetIndexBuffer(ibo);
 
-    BLR::PointLight pointLight;
+    blr::core::PointLight pointLight;
 
-    pointLight.position   = BLR::vec3(2.0f, 2.0f, 2.0f);
+    pointLight.position   = blr::core::vec3(2.0f, 2.0f, 2.0f);
     pointLight.range      = 10.0f;
     pointLight.base.power = 10.0f;
 
-    BLR::Shader shader(std::filesystem::path("assets/shaders/blinn_phong.glsl"));
+    blr::core::Shader shader(std::filesystem::path("assets/shaders/blinn_phong.glsl"));
 
     glEnable(GL_DEPTH_TEST);
 
@@ -188,10 +188,10 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        BLR::mat4 modelMat = BLR::mat4(1.0f);
-        BLR::mat4 viewMat  = cam.GetViewMat();
-        BLR::mat4 projMat  = cam.GetProjMat();
-        BLR::mat3 normMat  = BLR::Transpose(BLR::Inverse(modelMat));
+        blr::core::mat4 modelMat = blr::core::mat4(1.0f);
+        blr::core::mat4 viewMat  = cam.GetViewMat();
+        blr::core::mat4 projMat  = cam.GetProjMat();
+        blr::core::mat3 normMat  = blr::core::Transpose(blr::core::Inverse(modelMat));
 
         shader.Bind();
 

@@ -3,7 +3,7 @@
 #include "camera.hpp"
 
 
-namespace BLR
+namespace blr::core
 {
 
 
@@ -86,4 +86,4 @@ void Camera::OnScroll(double yOffset)
 }
 
 
-} /* namespace BLR */
+} /* namespace blr::core */

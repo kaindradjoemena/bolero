@@ -4,7 +4,7 @@
 #include <iostream>
 
 
-namespace APP
+namespace blr::app
 {
 
 
@@ -104,4 +104,4 @@ void Input::EndFrame()
 }
 
 
-} /* namespace APP */
+} /* namespace blr::app */

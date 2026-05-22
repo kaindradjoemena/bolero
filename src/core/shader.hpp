@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <filesystem>
 
-namespace BLR
+namespace blr::core
 {
 
 
@@ -57,4 +57,4 @@ private:
 };
 
 
-} /* namespace BLR */
+} /* namespace blr::core */

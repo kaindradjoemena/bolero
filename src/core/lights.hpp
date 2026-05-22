@@ -5,7 +5,7 @@
 #include "types.hpp"
 
 
-namespace BLR
+namespace blr::core
 {
 
 namespace LightBaseDefaults
@@ -44,4 +44,4 @@ struct SpotLight
 };
 
 
-} /* namespace BLR */
+} /* namespace blr::core */

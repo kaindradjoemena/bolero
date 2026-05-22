@@ -9,7 +9,7 @@
 #include <iostream>
 #include <cstring>
 
-namespace BLR
+namespace blr::core
 {
 
 
@@ -213,4 +213,4 @@ void Shader::CheckCompileErrors(GLuint object, std::string_view type)
 }
 
 
-} /* namespace BLR */
+} /* namespace blr::core */

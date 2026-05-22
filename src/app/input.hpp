@@ -8,7 +8,7 @@
 #include <functional>
 #include <unordered_set>
 
-namespace APP
+namespace blr::app
 {
     
     
@@ -73,4 +73,4 @@ private:
 };
 
 
-} // namespace oliv::app
+} /* namespace blr::app */

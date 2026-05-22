@@ -5,7 +5,7 @@
 #include <utility>
 
 
-namespace BLR
+namespace blr::core
 {
 
 
@@ -84,4 +84,4 @@ void VertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer>& iBuffer)
     m_indexBuffer = iBuffer;
 }
 
-} /* namespace BLR */
+} /* namespace blr::core */

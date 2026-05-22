@@ -8,7 +8,7 @@
 #include <cstdint>
 
 
-namespace APP
+namespace blr::app
 {
 
 
@@ -129,4 +129,4 @@ void Window::HandleResize(uint32_t w, uint32_t h)
 }
 
 
-} /* namespace APP */
+} /* namespace blr::app */

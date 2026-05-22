@@ -12,7 +12,7 @@
 #include <string>
 #include <cstdint>
 
-namespace BLR
+namespace blr::core
 {
 
 
@@ -228,4 +228,4 @@ constexpr GLenum ShaderDataTypeToOpenGLBaseType(ShaderDataType type)
 }
 
 
-} /* namespace BLR */
+} /* namespace blr::core */

@@ -5,7 +5,7 @@
 #include <utility>
 
 
-namespace BLR
+namespace blr::core
 {
 
 
@@ -92,4 +92,4 @@ void IndexBuffer::Unbind() const
 }
 
 
-} /* namespace BLR */
+} /* namespace blr::core */

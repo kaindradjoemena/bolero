@@ -4,7 +4,7 @@
 
 #include "types.hpp"
 
-namespace BLR
+namespace blr::core
 {
 
 
@@ -107,4 +107,4 @@ private:
 };
 
 
-} /* namespace BLR */
+} /* namespace blr::core */
