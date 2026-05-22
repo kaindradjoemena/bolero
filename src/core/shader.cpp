@@ -86,8 +86,8 @@ std::unordered_map<GLenum, std::string> Shader::PreProcess(const std::string& sr
 {
     std::unordered_map<GLenum, std::string> shaderSources;
 
-    size_t tokenLen = strlen(m_TYPE_TOKEN);
-    size_t pos = src.find(m_TYPE_TOKEN, 0);    // find the first '#TYPE'
+    size_t tokenLen = strlen(TYPE_TOKEN);
+    size_t pos = src.find(TYPE_TOKEN, 0);    // find the first '#TYPE'
 
     while (pos != std::string::npos)
     {
@@ -98,7 +98,7 @@ std::unordered_map<GLenum, std::string> Shader::PreProcess(const std::string& sr
         typeStr.erase(typeStr.find_last_not_of(" \n\r\t") + 1);     // NOTE: could be more robust
 
         size_t nextLinePos = src.find_first_not_of("\r\n", eol);    // start of shader code
-        pos = src.find(m_TYPE_TOKEN, nextLinePos);     // check for another '#TYPE' on the next line
+        pos = src.find(TYPE_TOKEN, nextLinePos);     // check for another '#TYPE' on the next line
 
         shaderSources[ShaderStageToGLEnum(ShaderStageFromStr(typeStr))] = (pos == std::string::npos) 
             ? src.substr(nextLinePos) 

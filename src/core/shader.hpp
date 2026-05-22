@@ -18,7 +18,7 @@ namespace BLR
 class Shader
 {
 public:
-    static constexpr char* m_TYPE_TOKEN = "#TYPE";
+    static constexpr const char* TYPE_TOKEN = "#TYPE";
 
 public:
     Shader(const std::filesystem::path& filePath);

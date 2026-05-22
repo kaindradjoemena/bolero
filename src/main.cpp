@@ -13,7 +13,9 @@
 #include "core/lights.hpp"
 #include "core/camera.hpp"
 #include "core/types.hpp"
-#include "window/window.hpp"
+
+#include "app/window.hpp"
+#include "app/input.hpp"
 
 #include "utils/debug.hpp"
 
@@ -38,7 +40,9 @@ float lastFrame = 0.0f;
 
 int main()
 {
-    Window window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE);
+    APP::Input input;
+
+    APP::Window window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, input);
 
     window.AddResizeCallback([](uint32_t w, uint32_t h) {
             glViewport(0, 0, w, h);
@@ -79,12 +83,32 @@ int main()
 
     BLR::Camera cam;
     cam.SetAspect((float)DEFAULT_WINDOW_WIDTH / (float)DEFAULT_WINDOW_HEIGHT);
-    cam.SetPitch(20.0f);
 
-    // register window resize callback to change camera aspect
+    // camera aspect
     window.AddResizeCallback([&cam](uint32_t w, uint32_t h) {
             cam.SetAspect((float)w / (float)h);
         });
+    
+    // zooming
+    input.AddMouseScrollCallback([&cam](double xOffset, double yOffset) {
+            cam.OnScroll(yOffset);
+        });
+
+    // shift and middle mouse for dragging
+    input.AddMouseButtonCallback([&input, &cam](int button, int action, int mods) {
+            if (button == APP::Input::MOUSE_BUTTON_MIDDLE)
+            {
+                if (action == APP::Input::ACTION_PRESS)
+                {
+                    cam.BeginDrag(glm::vec2(input.GetMouseX(), input.GetMouseY()), input.IsKeyDown(APP::Input::KEY_L_SHIFT));
+                }
+                else if (action == APP::Input::ACTION_RELEASE)
+                {
+                    cam.EndDrag();
+                }
+            }
+        });
+    
 
     float vertices[] = {
         // x, y, z              // nx, ny, nz
@@ -164,8 +188,6 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        cam.SetYaw(10.0f * currentFrame);   // Rotate camera around the world origin
-
         BLR::mat4 modelMat = BLR::mat4(1.0f);
         BLR::mat4 viewMat  = cam.GetViewMat();
         BLR::mat4 projMat  = cam.GetProjMat();
@@ -189,6 +211,9 @@ int main()
 
         window.SwapBuffers();
         window.PollEvents();
+
+        // Update camera
+        cam.HandleDrag(glm::vec2(input.GetMouseX(), input.GetMouseY()));
     }
 
     return 0;

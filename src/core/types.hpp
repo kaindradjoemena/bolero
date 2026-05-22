@@ -7,6 +7,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <numbers>
+
 #include <string>
 #include <cstdint>
 
@@ -30,6 +32,12 @@ float Clamp(float x, float min, float max)
 
 inline
 float DegToRad(float deg)
+{
+    return glm::radians(deg);
+}
+
+inline
+constexpr float DegToRadConst(float deg)
 {
     return glm::radians(deg);
 }

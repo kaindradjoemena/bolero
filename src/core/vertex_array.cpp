@@ -75,7 +75,7 @@ void VertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer>& vBuffer)
         m_vertexBufferIndex++;
     }
 
-    m_vertexBuffers.push_back(vBuffer);    // NOTE: USING .push_back
+    m_vertexBuffers.emplace_back(vBuffer);
 }
 
 void VertexArray::SetIndexBuffer(const std::shared_ptr<IndexBuffer>& iBuffer)
