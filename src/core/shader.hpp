@@ -21,7 +21,6 @@ public:
     static constexpr const char* TYPE_TOKEN = "#TYPE";
 
 public:
-    Shader(const std::filesystem::path& filePath);
     ~Shader();
 
     // Prevent copying
@@ -54,6 +53,15 @@ private:
 
     GLint GetUniformLocation(std::string_view name);
     void CheckCompileErrors(GLuint object, std::string_view type);
+
+// Construction must be called by the AssetManager class through the Create method
+friend class AssetManager;
+protected:
+    Shader(const std::filesystem::path& filePath);
+    static Ref<Shader> Create(const std::filesystem::path& filePath)
+    {
+        return std::shared_ptr<Shader>(new Shader(filePath));
+    }
 };
 
 

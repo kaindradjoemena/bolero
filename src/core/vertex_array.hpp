@@ -6,7 +6,9 @@
 
 #include <memory>
 
+#include "types.hpp"
 #include "buffer.hpp"
+
 
 namespace blr::core
 {
@@ -44,6 +46,14 @@ private:
 
     std::vector<std::shared_ptr<VertexBuffer>> m_vertexBuffers;
     std::shared_ptr<IndexBuffer> m_indexBuffer;
+
+// Construction must be called by the AssetManager class through the Create method
+friend class AssetManager;
+protected:
+    static Ref<VertexArray> Create()
+    {
+        return std::shared_ptr<VertexArray>(new VertexArray());
+    }
 };
 
 

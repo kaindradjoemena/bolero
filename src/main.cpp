@@ -13,6 +13,7 @@
 #include "core/lights.hpp"
 #include "core/camera.hpp"
 #include "core/types.hpp"
+#include "core/asset_manager.hpp"
 
 #include "app/window.hpp"
 #include "app/input.hpp"
@@ -40,6 +41,7 @@ float lastFrame = 0.0f;
 
 int main()
 {
+    blr::core::AssetManager assetManager;
     blr::app::Input input;
 
     blr::app::Window window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, input);
@@ -155,9 +157,7 @@ int main()
         -0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f
     };
 
-    // NOTE: std::make_shared<blr::core::VertexBuffer>(..) is pretty clunky.
-    //       implementing aliasing or some static factory pattern is pretty cool
-    auto vbo = std::make_shared<blr::core::VertexBuffer>(vertices, sizeof(vertices));
+    auto vbo = assetManager.CreateVB(vertices, sizeof(vertices));
     vbo->SetLayout({
             { blr::core::ShaderDataType::Float3, "a_pos" },
             { blr::core::ShaderDataType::Float3, "a_norm" }
@@ -165,7 +165,7 @@ int main()
 
     // auto ibo = std::make_shared<blr::core::IndexBuffer>(indices, 3);
 
-    auto vao = std::make_unique<blr::core::VertexArray>();
+    auto vao = assetManager.CreateVA();
     vao->AddVertexBuffer(vbo);
     // vao->SetIndexBuffer(ibo);
 
@@ -175,7 +175,7 @@ int main()
     pointLight.range      = 10.0f;
     pointLight.base.power = 10.0f;
 
-    blr::core::Shader shader(std::filesystem::path("assets/shaders/blinn_phong.glsl"));
+    auto shader = assetManager.CreateShader(std::filesystem::path("assets/shaders/blinn_phong.glsl"));
 
     glEnable(GL_DEPTH_TEST);
 
@@ -193,18 +193,18 @@ int main()
         blr::core::mat4 projMat  = cam.GetProjMat();
         blr::core::mat3 normMat  = blr::core::Transpose(blr::core::Inverse(modelMat));
 
-        shader.Bind();
+        shader->Bind();
 
-        shader.SetMat4("u_modelMat", modelMat);
-        shader.SetMat4("u_viewMat", viewMat);
-        shader.SetMat4("u_projMat", projMat);
-        shader.SetMat3("u_normMat", normMat);
+        shader->SetMat4("u_modelMat", modelMat);
+        shader->SetMat4("u_viewMat", viewMat);
+        shader->SetMat4("u_projMat", projMat);
+        shader->SetMat3("u_normMat", normMat);
 
-        shader.SetVec3("u_lightCol", pointLight.base.color);
-        shader.SetFloat("u_lightPow", pointLight.base.power);
-        shader.SetVec3("u_lightPos", pointLight.position);
-        shader.SetFloat("u_lightRange", pointLight.range);
-        shader.SetVec3("u_camPos", cam.GetPos());
+        shader->SetVec3("u_lightCol", pointLight.base.color);
+        shader->SetFloat("u_lightPow", pointLight.base.power);
+        shader->SetVec3("u_lightPos", pointLight.position);
+        shader->SetFloat("u_lightRange", pointLight.range);
+        shader->SetVec3("u_camPos", cam.GetPos());
 
         vao->Bind();
         glDrawArrays(GL_TRIANGLES, 0, 36);

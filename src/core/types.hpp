@@ -3,6 +3,7 @@
 #pragma once
 
 #include <glad/glad.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -12,9 +13,19 @@
 #include <string>
 #include <cstdint>
 
+#include <memory>
+
+
 namespace blr::core
 {
 
+
+/* ===== SMART POINTERS ===== */
+template<typename T>
+using Ref = std::shared_ptr<T>;
+
+template<typename T>
+using Scope = std::unique_ptr<T>;
 
 /* ===== MATH ===== */
 using vec2 = glm::vec2;
@@ -25,70 +36,43 @@ using mat4 = glm::mat4;
 using quat = glm::quat;
 
 inline
-float Clamp(float x, float min, float max)
-{
-    return glm::clamp(x, min, max);
-}
+float Clamp(float x, float min, float max) { return glm::clamp(x, min, max); }
 
 inline
-float DegToRad(float deg)
-{
-    return glm::radians(deg);
-}
+float DegToRad(float deg) { return glm::radians(deg); }
+
+inline constexpr
+float DegToRadConst(float deg) { return glm::radians(deg); }
 
 inline
-constexpr float DegToRadConst(float deg)
-{
-    return glm::radians(deg);
-}
+vec3 QuatToEul(quat q) { return glm::eulerAngles(q); }
 
 inline
-vec3 Norm(vec3 v)
-{
-    return glm::normalize(v);
-}
+quat EulToQuat(vec3 e) { return quat(e); }
 
 inline
-vec3 Cross(vec3 a, vec3 b)
-{
-    return glm::cross(a, b);
-}
+vec3 Norm(vec3 v) { return glm::normalize(v); }
 
 inline
-mat3 Transpose(const mat3& m)
-{
-    return glm::transpose(m);
-} 
+vec3 Cross(vec3 a, vec3 b) { return glm::cross(a, b); }
 
 inline
-mat4 Transpose(const mat4& m)
-{
-    return glm::transpose(m);
-}
+mat3 Transpose(const mat3& m) { return glm::transpose(m); } 
 
 inline
-mat3 Inverse(const mat3& m)
-{
-    return glm::inverse(m);
-}
+mat4 Transpose(const mat4& m) { return glm::transpose(m); }
 
 inline
-mat4 Inverse(const mat4& m)
-{
-    return glm::inverse(m);
-}
+mat3 Inverse(const mat3& m) { return glm::inverse(m); }
 
 inline
-mat4 LookAt(const vec3& eye, const vec3& center, const vec3& up)
-{
-    return glm::lookAt(eye, center, up);
-}
+mat4 Inverse(const mat4& m) { return glm::inverse(m); }
 
 inline
-mat4 Perspective(float rad, float aspect, float near, float far)
-{
-    return glm::perspective(rad, aspect, near, far);
-}
+mat4 LookAt(const vec3& eye, const vec3& center, const vec3& up) { return glm::lookAt(eye, center, up); }
+
+inline
+mat4 Perspective(float rad, float aspect, float near, float far) { return glm::perspective(rad, aspect, near, far); }
 
 /* ===== TRANSFORMS ===== */
 struct Transform
@@ -97,18 +81,6 @@ struct Transform
     vec3 scl = vec3(1.0f);
     quat rot = quat(1.0f, 0.0f, 0.0f, 0.0f);
 };
-
-inline
-vec3 QuatToEul(quat q)
-{
-    return glm::eulerAngles(q);
-}
-
-inline
-quat EulToQuat(vec3 e)
-{
-    return quat(e);
-}
 
 inline
 mat4 ModelMat(const Transform& t)
@@ -123,16 +95,116 @@ mat4 ModelMat(const Transform& t)
     return modelMat;
 }
 
-
 /* ===== RENDERER ===== */
-// ----- Shader Stage -----
-enum class ShaderStage
+// ----- Textures -----
+enum class ImgFmt
 {
-    None = 0, Vertex, Fragment, Pixel, Geometry, Compute
+    None = 0,
+    R8,
+    RGB8,
+    RGBA8,
+    SRGB8,
+    SRGBA8,
+    RGBA16F,
+    RGB16F
+};
+
+enum class TexFilter
+{
+    None = 0,
+    Nearest,
+    Linear,
+    NearestMipmapNearest,
+    LinearMipmapNearest,
+    NearestMipmapLinear,
+    LinearMipmapLinear
+};
+
+enum class TexWrap
+{
+    None = 0,
+    Repeat,
+    ClampToEdge,
+    ClampToBorder
 };
 
 inline
-static GLenum ShaderStageToGLEnum(ShaderStage stage)
+GLenum ImgFmtToGLFmt(ImgFmt imgFmt)
+{
+    switch(imgFmt)
+    {
+        case ImgFmt::R8:      return GL_R8;
+        case ImgFmt::RGB8:    return GL_RGB8;
+        case ImgFmt::RGBA8:   return GL_RGBA8;
+        case ImgFmt::RGBA16F: return GL_RGBA16F;
+        default:              return GL_RGB8;
+    }
+}
+
+inline
+GLenum GetGLDataFmt(ImgFmt imgFmt)
+{
+    switch(imgFmt)
+    {
+        case ImgFmt::R8:      return GL_RED;
+        case ImgFmt::RGB8:    return GL_RGB;
+        case ImgFmt::RGBA8:
+        case ImgFmt::RGBA16F: return GL_RGBA;
+        default:              return GL_RGBA;
+    }
+}
+
+inline
+GLenum TexFilterToGLEnum(TexFilter filter)
+{
+    switch (filter)
+    {
+        case TexFilter::Nearest:              return GL_NEAREST;
+        case TexFilter::Linear:               return GL_LINEAR;
+        case TexFilter::NearestMipmapNearest: return GL_NEAREST_MIPMAP_NEAREST;
+        case TexFilter::LinearMipmapNearest:  return GL_LINEAR_MIPMAP_NEAREST;
+        case TexFilter::NearestMipmapLinear:  return GL_NEAREST_MIPMAP_LINEAR;
+        case TexFilter::LinearMipmapLinear:   return GL_LINEAR_MIPMAP_LINEAR;
+        default:                              return GL_LINEAR;
+    }
+}
+
+inline
+GLenum TextWrapToGLEnum(TexWrap wrap)
+{
+    switch (wrap)
+    {
+        case TexWrap::Repeat:        return GL_REPEAT;
+        case TexWrap::ClampToEdge:   return GL_CLAMP_TO_EDGE;
+        case TexWrap::ClampToBorder: return GL_CLAMP_TO_BORDER;
+        default:                     return GL_REPEAT;
+    }
+}
+
+struct TexSpec
+{
+    uint32_t w          = 1;
+    uint32_t h          = 1;
+    bool generateMips   = true;
+    ImgFmt format       = ImgFmt::RGBA8;
+    TexWrap wrapS       = TexWrap::Repeat;
+    TexWrap wrapT       = TexWrap::Repeat;
+    TexFilter minFilter = TexFilter::LinearMipmapLinear;
+    TexFilter magFilter = TexFilter::Linear;
+};
+
+// ----- Shader Stage -----
+enum class ShaderStage
+{
+    None = 0,
+    Vertex,
+    Fragment, Pixel,
+    Geometry,
+    Compute
+};
+
+inline
+GLenum ShaderStageToGLEnum(ShaderStage stage)
 {
     switch (stage)
     {
@@ -147,7 +219,7 @@ static GLenum ShaderStageToGLEnum(ShaderStage stage)
 }
 
 inline
-static ShaderStage ShaderStageFromStr(const std::string& type)
+ShaderStage ShaderStageFromStr(const std::string& type)
 {
     if (type == "VERTEX")   return ShaderStage::Vertex;
     if (type == "FRAGMENT" || 
@@ -161,7 +233,11 @@ static ShaderStage ShaderStageFromStr(const std::string& type)
 // ----- Shader Data Types -----
 enum class ShaderDataType
 {
-    None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool
+    None = 0,
+    Float, Float2, Float3, Float4,
+    Mat3, Mat4,
+    Int, Int2, Int3, Int4,
+    Bool
 };
 
 inline
