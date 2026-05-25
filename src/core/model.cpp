@@ -2,6 +2,8 @@
 
 #include "model.hpp"
 #include "shader.hpp"
+#include "mesh.hpp"
+#include "material.hpp"
 #include "asset_manager.hpp"
 
 #include <iostream>
@@ -9,7 +11,6 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <vector>
-#include <utility>
 
 
 namespace blr::core

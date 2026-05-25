@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include <vector>
-
 #include "types.hpp"
+
+#include <vector>
 
 
 namespace blr::core

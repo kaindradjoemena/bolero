@@ -9,6 +9,7 @@
 
 struct GLFWwindow;
 
+
 namespace blr::app
 {
 

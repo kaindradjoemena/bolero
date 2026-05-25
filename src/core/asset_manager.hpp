@@ -3,19 +3,24 @@
 #pragma once
 
 #include "types.hpp"
-#include "buffer.hpp"
-#include "vertex_array.hpp"
-#include "texture.hpp"
-#include "shader.hpp"
-#include "material.hpp"
-#include "mesh.hpp"
-#include "model.hpp"
 #include "utils/uuid.hpp"
+
+#include <filesystem>
 
 
 namespace blr::core
 {
 
+
+class Shader;
+class VertexBuffer;
+class IndexBuffer;
+class VertexArray;
+class Material;
+class Vertex;
+class Tex;
+class Mesh;
+class Model;
 
 class AssetManager
 {

@@ -4,7 +4,6 @@
 #include "types.hpp"
 
 #include <fstream>
-#include <utility>
 #include <vector>
 #include <iostream>
 #include <cstring>

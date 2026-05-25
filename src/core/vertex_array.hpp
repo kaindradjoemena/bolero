@@ -2,17 +2,18 @@
 
 #pragma once
 
-#include <glad/glad.h>
-
-#include <memory>
-
 #include "types.hpp"
-#include "buffer.hpp"
+
+#include <glad/glad.h>
+#include <memory>
 
 
 namespace blr::core
 {
 
+
+class VertexBuffer;
+class IndexBuffer;
 
 class VertexArray
 {

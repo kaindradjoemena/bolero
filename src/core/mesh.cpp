@@ -1,9 +1,12 @@
 // core/mesh.cpp
 
 #include "mesh.hpp"
+#include "buffer.hpp"
+#include "vertex_array.hpp"
+#include "material.hpp"
 #include "asset_manager.hpp"
 
-#include <utility>
+#include <iostream>
 
 
 namespace blr::core

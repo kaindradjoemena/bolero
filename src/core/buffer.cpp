@@ -2,8 +2,6 @@
 
 #include "buffer.hpp"
 
-#include <utility>
-
 
 namespace blr::core
 {

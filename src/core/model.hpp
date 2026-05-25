@@ -7,8 +7,6 @@
 #include <filesystem>
 
 #include "types.hpp"
-#include "mesh.hpp"
-#include "material.hpp"
 
 struct aiNode;
 struct aiMesh;
@@ -19,6 +17,9 @@ namespace blr::core
 {
 
 
+class Mesh;
+class Material;
+class Shader;
 class AssetManager;
 
 class Model

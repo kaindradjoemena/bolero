@@ -5,8 +5,6 @@
 #include "shader.hpp"
 #include "texture.hpp"
 
-#include <utility>
-
 
 namespace blr::core
 {

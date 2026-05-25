@@ -2,20 +2,20 @@
 
 #pragma once
 
+#include "types.hpp"
+
 #include <vector>
 #include <glm/glm.hpp>
-
-#include "types.hpp"
-#include "buffer.hpp"
-#include "vertex_array.hpp"
-#include "material.hpp"
-
 
 
 namespace blr::core
 {
 
 
+class VertexBuffer;
+class IndexBuffer;
+class VertexArray;
+class Material;
 class AssetManager;
 
 struct Vertex

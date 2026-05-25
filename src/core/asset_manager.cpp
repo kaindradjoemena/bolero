@@ -1,6 +1,13 @@
 // core/asset_manager.cpp
 
 #include "asset_manager.hpp"
+#include "buffer.hpp"
+#include "vertex_array.hpp"
+#include "texture.hpp"
+#include "shader.hpp"
+#include "material.hpp"
+#include "mesh.hpp"
+#include "model.hpp"
 
 
 namespace blr::core

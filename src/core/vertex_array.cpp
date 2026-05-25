@@ -1,8 +1,7 @@
 // core/vertex_array.cpp
 
 #include "vertex_array.hpp"
-
-#include <utility>
+#include "buffer.hpp"
 
 
 namespace blr::core

@@ -12,6 +12,8 @@
 #include "core/vertex_array.hpp"
 #include "core/shader.hpp"
 #include "core/model.hpp"
+#include "core/mesh.hpp"
+#include "core/material.hpp"
 #include "core/lights.hpp"
 #include "core/camera.hpp"
 #include "core/types.hpp"
