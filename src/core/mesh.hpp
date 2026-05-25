@@ -1,0 +1,76 @@
+// core/mesh.hpp
+
+#pragma once
+
+#include <vector>
+#include <glm/glm.hpp>
+
+#include "types.hpp"
+#include "buffer.hpp"
+#include "vertex_array.hpp"
+#include "material.hpp"
+
+
+
+namespace blr::core
+{
+
+
+class AssetManager;
+
+struct Vertex
+{
+    vec3 position;
+    vec3 normal;
+    vec2 texCoords;
+    vec3 tangent;
+    vec3 bitangent;
+};
+
+class Mesh
+{
+
+
+public:
+    ~Mesh() = default;
+
+    // Prevent copying
+    Mesh(const Mesh&) = delete;
+    Mesh& operator=(const Mesh&) = delete;
+
+    // Allow moving
+    Mesh(Mesh&& other) = default;
+    Mesh& operator=(Mesh&& other) = default;
+
+
+    Ref<VertexArray> GetVAO() const { return m_vao; }
+    Ref<IndexBuffer> GetIBO() const { return m_ibo; }
+    Ref<Material> GetMaterial() const { return m_material; }
+
+    const std::vector<Vertex>& GetVertices() const { return m_vertices; }
+    const std::vector<uint32_t>& GetIndices() const { return m_indices; }
+
+private:
+    void SetupMesh(AssetManager& assetManager);
+
+private:
+    std::vector<Vertex> m_vertices;
+    std::vector<uint32_t> m_indices;
+    Ref<Material> m_material;
+
+    Ref<VertexArray> m_vao;
+    Ref<VertexBuffer> m_vbo;
+    Ref<IndexBuffer> m_ibo;
+
+// Construction must be called by the AssetManager class through the Create method
+friend class AssetManager;
+protected:
+    Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material, AssetManager& assetManager);
+    static Ref<Mesh> Create(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material, AssetManager& assetManager)
+    {
+        return std::shared_ptr<Mesh>(new Mesh(vertices, indices, material, assetManager));
+    }
+};
+
+
+} /* namespace blr::core */
