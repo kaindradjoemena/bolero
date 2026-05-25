@@ -97,10 +97,18 @@ mat4 ModelMat(const Transform& t)
 
 /* ===== RENDERER ===== */
 // ----- Textures -----
+// enum TexSlot
+// {
+//     SLOT_0 = GL_TEXTURE0,
+//     SLOT_1 = GL_TEXTURE1,
+//     SLOT_3 = GL_TEXTURE2
+// };
+
 enum class ImgFmt
 {
     None = 0,
     R8,
+    RG8,
     RGB8,
     RGBA8,
     SRGB8,
@@ -134,6 +142,7 @@ GLenum ImgFmtToGLFmt(ImgFmt imgFmt)
     switch(imgFmt)
     {
         case ImgFmt::R8:      return GL_R8;
+        case ImgFmt::RG8:     return GL_RG8;
         case ImgFmt::RGB8:    return GL_RGB8;
         case ImgFmt::RGBA8:   return GL_RGBA8;
         case ImgFmt::RGBA16F: return GL_RGBA16F;

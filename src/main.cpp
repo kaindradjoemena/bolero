@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <assimp/version.h>
 
 #include <iostream>
 
@@ -10,6 +11,7 @@
 #include "core/buffer.hpp"
 #include "core/vertex_array.hpp"
 #include "core/shader.hpp"
+#include "core/model.hpp"
 #include "core/lights.hpp"
 #include "core/camera.hpp"
 #include "core/types.hpp"
@@ -82,6 +84,7 @@ int main()
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLFW Version: "   << glfwGetVersionString() << std::endl;
     std::cout << "GLM Version: "    << GLM_VERSION_MAJOR << "." << GLM_VERSION_MINOR << "." << GLM_VERSION_PATCH << std::endl;
+    std::cout << "Assimp Version: " << aiGetVersionMajor() << "." << aiGetVersionMinor() << "." << aiGetVersionPatch() << std::endl;
 
     blr::core::Camera cam;
     cam.SetAspect((float)DEFAULT_WINDOW_WIDTH / (float)DEFAULT_WINDOW_HEIGHT);
@@ -110,72 +113,16 @@ int main()
                 }
             }
         });
-    
-
-    float vertices[] = {
-        // x, y, z              // nx, ny, nz
-        -0.5f, -0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,    0.0f,  0.0f, -1.0f,
-  
-        -0.5f, -0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
-        -0.5f,  0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
-        -0.5f, -0.5f,  0.5f,    0.0f,  0.0f,  1.0f,
-  
-        -0.5f,  0.5f,  0.5f,   -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,   -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,   -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,   -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,   -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,   -1.0f,  0.0f,  0.0f,
-  
-         0.5f,  0.5f,  0.5f,    1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,    1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,    1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,    1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,    1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,    1.0f,  0.0f,  0.0f,
-  
-        -0.5f, -0.5f, -0.5f,    0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,    0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,    0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,    0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,    0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,    0.0f, -1.0f,  0.0f,
-  
-        -0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,    0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,    0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,    0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,    0.0f,  1.0f,  0.0f
-    };
-
-    auto vbo = assetManager.CreateVB(vertices, sizeof(vertices));
-    vbo->SetLayout({
-            { blr::core::ShaderDataType::Float3, "a_pos" },
-            { blr::core::ShaderDataType::Float3, "a_norm" }
-        });
-
-    // auto ibo = std::make_shared<blr::core::IndexBuffer>(indices, 3);
-
-    auto vao = assetManager.CreateVA();
-    vao->AddVertexBuffer(vbo);
-    // vao->SetIndexBuffer(ibo);
 
     blr::core::PointLight pointLight;
-
     pointLight.position   = blr::core::vec3(2.0f, 2.0f, 2.0f);
     pointLight.range      = 10.0f;
     pointLight.base.power = 10.0f;
 
-    auto shader = assetManager.CreateShader(std::filesystem::path("assets/shaders/blinn_phong.glsl"));
+    auto shader = assetManager.CreateShader(std::filesystem::path("assets/shaders/basic.glsl"));
+    
+    std::cout << "loading model..." << std::endl;
+    auto model = assetManager.CreateModel(std::filesystem::path("assets/models/dude.gltf"), shader);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -185,7 +132,7 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         blr::core::mat4 modelMat = blr::core::mat4(1.0f);
@@ -195,10 +142,8 @@ int main()
 
         shader->Bind();
 
-        shader->SetMat4("u_modelMat", modelMat);
         shader->SetMat4("u_viewMat", viewMat);
         shader->SetMat4("u_projMat", projMat);
-        shader->SetMat3("u_normMat", normMat);
 
         shader->SetVec3("u_lightCol", pointLight.base.color);
         shader->SetFloat("u_lightPow", pointLight.base.power);
@@ -206,8 +151,21 @@ int main()
         shader->SetFloat("u_lightRange", pointLight.range);
         shader->SetVec3("u_camPos", cam.GetPos());
 
-        vao->Bind();
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (const auto& mesh : model->GetMeshes())
+        {
+            if (!mesh->GetVAO())
+                continue;
+
+            if (mesh->GetMaterial())
+                mesh->GetMaterial()->Bind(); 
+
+            shader->SetMat4("u_modelMat", modelMat);
+            shader->SetMat3("u_normMat", normMat);
+
+            mesh->GetVAO()->Bind();
+            glDrawElements(GL_TRIANGLES, mesh->GetIBO()->GetCount(), GL_UNSIGNED_INT, nullptr);
+            mesh->GetVAO()->Unbind();
+        }
 
         window.SwapBuffers();
         window.PollEvents();

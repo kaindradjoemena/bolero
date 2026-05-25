@@ -22,22 +22,6 @@ VertexBuffer::~VertexBuffer()
         glDeleteBuffers(1, &m_rendererID);
 }
 
-VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept 
-    : m_rendererID(std::exchange(other.m_rendererID, 0)) {}
-
-VertexBuffer& VertexBuffer::operator=(VertexBuffer&& other) noexcept
-{
-    if (this != &other)
-    {
-        if (m_rendererID != 0)
-            glDeleteBuffers(1, &m_rendererID);
-
-        m_rendererID = std::exchange(other.m_rendererID, 0);
-    }
-
-    return *this;
-}
-
 void VertexBuffer::Bind() const
 {
     glBindBuffer(GL_ARRAY_BUFFER, m_rendererID);
@@ -61,24 +45,6 @@ IndexBuffer::~IndexBuffer()
 {
     if (m_rendererID != 0)
         glDeleteBuffers(1, &m_rendererID);
-}
-
-IndexBuffer::IndexBuffer(IndexBuffer&& other) noexcept 
-    : m_rendererID(std::exchange(other.m_rendererID, 0))
-    , m_count(std::exchange(other.m_count, 0)) {}
-
-IndexBuffer& IndexBuffer::operator=(IndexBuffer&& other) noexcept
-{
-    if (this != &other)
-    {
-        if (m_rendererID != 0)
-            glDeleteBuffers(1, &m_rendererID);
-
-        m_rendererID = std::exchange(other.m_rendererID, 0);
-        m_count = std::exchange(other.m_count, 0);
-    }
-
-    return *this;
 }
 
 void IndexBuffer::Bind() const

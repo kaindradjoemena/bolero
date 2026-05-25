@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <filesystem>
 
+
 namespace blr::core
 {
 
@@ -28,12 +29,13 @@ public:
     Shader& operator=(const Shader&) = delete;
 
     // Allow moving
-    Shader(Shader&& other) noexcept;
-    Shader& operator=(Shader&& other) noexcept;
+    Shader(Shader&& other) = default;
+    Shader& operator=(Shader&& other) = default;
 
     void Bind() const;
     void Unbind() const;
 
+    void SetBool(std::string_view name, bool value);
     void SetInt(std::string_view name, int value);
     void SetFloat(std::string_view name, float value);
     void SetVec3(std::string_view name, const vec3& value);

@@ -25,8 +25,8 @@ public:
     VertexArray& operator=(const VertexArray&) = delete;
 
     // Allow moving
-    VertexArray(VertexArray&& other) noexcept;
-    VertexArray& operator=(VertexArray&& other) noexcept;
+    VertexArray(VertexArray&& other) = default;
+    VertexArray& operator=(VertexArray&& other) = default;
 
 
     void Bind() const;

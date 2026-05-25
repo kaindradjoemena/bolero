@@ -21,28 +21,6 @@ VertexArray::~VertexArray()
         glDeleteVertexArrays(1, &m_rendererID);
 }
 
-VertexArray::VertexArray(VertexArray&& other) noexcept
-    : m_rendererID(std::exchange(other.m_rendererID, 0))
-    , m_vertexBufferIndex(std::exchange(other.m_vertexBufferIndex, 0))
-    , m_vertexBuffers(std::move(other.m_vertexBuffers))
-    , m_indexBuffer(std::move(other.m_indexBuffer)) {}
-
-VertexArray& VertexArray::operator=(VertexArray&& other) noexcept
-{
-    if (this != &other)
-    {
-        if (m_rendererID != 0)
-            glDeleteVertexArrays(1, &m_rendererID);
-        
-        m_rendererID        = std::exchange(other.m_rendererID, 0);
-        m_vertexBufferIndex = std::exchange(other.m_vertexBufferIndex, 0);
-        m_vertexBuffers     = std::move(other.m_vertexBuffers);
-        m_indexBuffer       = std::move(other.m_indexBuffer);
-    }
-
-    return *this;
-}
-
 void VertexArray::Bind() const
 {
     glBindVertexArray(m_rendererID);

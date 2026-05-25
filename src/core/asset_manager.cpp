@@ -49,5 +49,26 @@ Ref<Tex> AssetManager::CreateTex(const TexSpec& texSpec)
     return tex;
 }
 
+Ref<Material> AssetManager::CreateMaterial(Ref<Shader> shader)
+{
+    Ref<Material> mat = Material::Create(shader);
+
+    return mat;
+}
+
+Ref<Mesh> AssetManager::CreateMesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material)
+{
+    Ref<Mesh> mesh = Mesh::Create(vertices, indices, material, *this);
+
+    return mesh;
+}
+
+Ref<Model> AssetManager::CreateModel(const std::filesystem::path& filePath, Ref<Shader> defaultShader)
+{
+    Ref<Model> model = Model::Create(filePath, defaultShader, *this);
+
+    return model;
+}
+
 
 } /* namespace blr::core */

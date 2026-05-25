@@ -71,8 +71,8 @@ public:
     VertexBuffer& operator=(const VertexBuffer&) = delete;
 
     // Allow moving
-    VertexBuffer(VertexBuffer&& other) noexcept;
-    VertexBuffer& operator=(VertexBuffer&& other) noexcept;
+    VertexBuffer(VertexBuffer&& other) = default;
+    VertexBuffer& operator=(VertexBuffer&& other) = default;
 
 
     void Bind() const;
@@ -107,8 +107,8 @@ public:
     IndexBuffer& operator=(const IndexBuffer&) = delete;
 
     // Allow moving
-    IndexBuffer(IndexBuffer&& other) noexcept;
-    IndexBuffer& operator=(IndexBuffer&& other) noexcept;
+    IndexBuffer(IndexBuffer&& other) = default;
+    IndexBuffer& operator=(IndexBuffer&& other) = default;
 
 
     void Bind() const;

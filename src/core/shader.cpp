@@ -26,25 +26,6 @@ Shader::~Shader()
         glDeleteProgram(m_rendererID);
 }
 
-Shader::Shader(Shader&& other) noexcept
-    : m_rendererID(std::exchange(other.m_rendererID, 0))
-    , m_uniformLocCache(std::move(other.m_uniformLocCache)) {}
-
-Shader& Shader::operator=(Shader&& other) noexcept
-{
-    if (this != &other)
-    {
-        if (m_rendererID != 0)
-            glDeleteProgram(m_rendererID);
-        
-        m_rendererID      = std::exchange(other.m_rendererID, 0);
-        m_uniformLocCache = std::move(other.m_uniformLocCache);
-    }
-
-    return *this;
-}
-
-
 void Shader::Bind() const
 {
     glUseProgram(m_rendererID);
@@ -142,6 +123,10 @@ void Shader::Compile(const std::unordered_map<GLenum, std::string>& shaderSource
     m_rendererID = program;
 }
 
+void Shader::SetBool(std::string_view name, bool value)
+{
+    glProgramUniform1i(m_rendererID, GetUniformLocation(name), value);
+}
 
 void Shader::SetInt(std::string_view name, int value)
 {
