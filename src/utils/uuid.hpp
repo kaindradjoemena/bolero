@@ -15,7 +15,7 @@ class UUID
 public:
     static AssetHandle Generate()
     {
-        static std::atomic<uint64_t> s_counter{ 1 };
+        static std::atomic<uint64_t> s_counter{1};
         return s_counter++;
     }
 };

@@ -2,11 +2,12 @@
 
 #pragma once
 
+#include "types.hpp"
+#include "resource.hpp"
+
 #include <vector>
 #include <string>
 #include <filesystem>
-
-#include "types.hpp"
 
 struct aiNode;
 struct aiMesh;
@@ -22,7 +23,7 @@ class Material;
 class Shader;
 class AssetManager;
 
-class Model
+class Model : public Resource
 {
 public:
     ~Model() = default;

@@ -5,6 +5,7 @@
 #include <glad/glad.h>
 
 #include "types.hpp"
+#include "resource.hpp"
 
 #include <string>
 #include <string_view>
@@ -16,7 +17,7 @@ namespace blr::core
 {
 
 
-class Shader
+class Shader : public Resource
 {
 public:
     static constexpr const char* TYPE_TOKEN = "#TYPE";

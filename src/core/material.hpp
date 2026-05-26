@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "types.hpp"
+#include "resource.hpp"
 
 
 namespace blr::core
@@ -14,7 +15,7 @@ namespace blr::core
 class Shader;
 class Tex;
 
-class Material
+class Material : public Resource
 {
 public:
     Ref<Tex> albedoMap;

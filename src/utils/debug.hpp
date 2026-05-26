@@ -6,7 +6,13 @@
 
 #include <iostream>
 
+
+// Debug Flags
+#define DEBUG_RESOURCE_CREATION_HANDLE 1
+
+
 #ifndef NDEBUG
+inline
 void APIENTRY glDebugOutput(GLenum source, 
                             GLenum type, 
                             GLuint id, 

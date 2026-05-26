@@ -3,6 +3,7 @@
 #pragma once
 
 #include "types.hpp"
+#include "resource.hpp"
 
 #include <vector>
 #include <glm/glm.hpp>
@@ -27,7 +28,7 @@ struct Vertex
     vec3 bitangent;
 };
 
-class Mesh
+class Mesh : public Resource
 {
 
 

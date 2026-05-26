@@ -3,6 +3,7 @@
 #pragma once
 
 #include "types.hpp"
+#include "resource.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -12,7 +13,7 @@ namespace blr::core
 {
 
 
-class Tex
+class Tex : public Resource
 {
 public:
     ~Tex();
