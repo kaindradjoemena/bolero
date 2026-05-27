@@ -132,7 +132,9 @@ enum class ImgFmt
     SRGB8,
     SRGBA8,
     RGBA16F,
-    RGB16F
+    RGB16F,
+    Depth32F,
+    Depth24Stencil8
 };
 
 enum class TexFilter
@@ -159,12 +161,14 @@ GLenum ImgFmtToGLFmt(ImgFmt imgFmt)
 {
     switch(imgFmt)
     {
-        case ImgFmt::R8:      return GL_R8;
-        case ImgFmt::RG8:     return GL_RG8;
-        case ImgFmt::RGB8:    return GL_RGB8;
-        case ImgFmt::RGBA8:   return GL_RGBA8;
-        case ImgFmt::RGBA16F: return GL_RGBA16F;
-        default:              return GL_RGB8;
+        case ImgFmt::R8:              return GL_R8;
+        case ImgFmt::RG8:             return GL_RG8;
+        case ImgFmt::RGB8:            return GL_RGB8;
+        case ImgFmt::RGBA8:           return GL_RGBA8;
+        case ImgFmt::RGBA16F:         return GL_RGBA16F;
+        case ImgFmt::Depth32F:        return GL_DEPTH_COMPONENT32F;
+        case ImgFmt::Depth24Stencil8: return GL_DEPTH24_STENCIL8;
+        default:                      return GL_RGB8;
     }
 }
 
@@ -173,11 +177,13 @@ GLenum GetGLDataFmt(ImgFmt imgFmt)
 {
     switch(imgFmt)
     {
-        case ImgFmt::R8:      return GL_RED;
-        case ImgFmt::RGB8:    return GL_RGB;
+        case ImgFmt::R8:              return GL_RED;
+        case ImgFmt::RGB8:            return GL_RGB;
         case ImgFmt::RGBA8:
-        case ImgFmt::RGBA16F: return GL_RGBA;
-        default:              return GL_RGBA;
+        case ImgFmt::RGBA16F:         return GL_RGBA;
+        case ImgFmt::Depth32F:        return GL_DEPTH_COMPONENT;
+        case ImgFmt::Depth24Stencil8: return GL_DEPTH_STENCIL;
+        default:                      return GL_RGBA;
     }
 }
 
@@ -219,6 +225,22 @@ struct TexSpec
     TexFilter minFilter = TexFilter::LinearMipmapLinear;
     TexFilter magFilter = TexFilter::Linear;
 };
+
+struct FBAttachmentSpec
+{
+    ImgFmt format = ImgFmt::None;
+    FBAttachmentSpec() = default;
+    FBAttachmentSpec(ImgFmt fmt) : format(fmt) {} 
+};
+
+struct FBSpec
+{
+    uint32_t w = 0;
+    uint32_t h = 0;
+    std::vector<FBAttachmentSpec> attachments;
+};
+
+
 
 // ----- Shader Stage -----
 enum class ShaderStage

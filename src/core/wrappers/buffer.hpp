@@ -1,4 +1,4 @@
-// core/buffer.h
+// core/wrappers/buffer.h
 
 #pragma once
 
@@ -125,6 +125,69 @@ private:
 
     GLuint m_rendererID{0};
     uint32_t m_count{0};
+};
+
+
+class UniformBuffer
+{
+public:
+    static Ref<UniformBuffer> Create(uint32_t size)
+    {
+        return std::shared_ptr<UniformBuffer>(new UniformBuffer(size));
+    }
+
+    ~UniformBuffer();
+
+    // Prevent copying
+    UniformBuffer(const UniformBuffer&) = delete;
+    UniformBuffer& operator=(const UniformBuffer&) = delete;
+
+    // Allow moving
+    UniformBuffer(UniformBuffer&& other) = default;
+    UniformBuffer& operator=(UniformBuffer&& other) = default;
+
+
+    void Bind(uint32_t binding) const;
+    void Unbind() const;
+    void SetData(const void* data, uint32_t size, uint32_t offset = 0) const;
+
+    GLuint GetRendererID() const { return m_rendererID; }
+
+private:
+    UniformBuffer(uint32_t size);
+
+    GLuint m_rendererID{0};
+};
+
+
+class ShaderStorageBuffer
+{
+public:
+    static Ref<ShaderStorageBuffer> Create()
+    {
+        return std::shared_ptr<ShaderStorageBuffer>(new ShaderStorageBuffer());
+    }
+
+    ~ShaderStorageBuffer();
+
+    // Prevent copying
+    ShaderStorageBuffer(const ShaderStorageBuffer&) = delete;
+    ShaderStorageBuffer& operator=(const ShaderStorageBuffer&) = delete;
+
+    // Allow moving
+    ShaderStorageBuffer(ShaderStorageBuffer&& other) = default;
+    ShaderStorageBuffer& operator=(ShaderStorageBuffer&& other) = default;
+
+    void Bind(uint32_t binding) const;
+    void Unbind() const;
+    void SetData(const void* data, uint32_t size) const;
+
+    GLuint GetRendererID() const { return m_rendererID; }
+
+private:
+    ShaderStorageBuffer();
+
+    GLuint m_rendererID{0};
 };
 
 

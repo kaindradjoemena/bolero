@@ -1,4 +1,4 @@
-// core/vertex_array.hpp
+// core/wrappers/vertex_array.hpp
 
 #pragma once
 

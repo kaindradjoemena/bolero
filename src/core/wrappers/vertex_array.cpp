@@ -1,4 +1,4 @@
-// core/vertex_array.cpp
+// core/wrappers/vertex_array.cpp
 
 #include "vertex_array.hpp"
 #include "buffer.hpp"

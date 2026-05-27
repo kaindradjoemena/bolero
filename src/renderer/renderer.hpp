@@ -16,6 +16,7 @@ namespace blr::core
 class Mesh;
 class Material;
 class Camera;
+class ShaderStorageBuffer;
 
 struct DirLightData
 {
