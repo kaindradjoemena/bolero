@@ -56,14 +56,14 @@ void Model::ProcessMaterials(const aiScene* scene, AssetManager& assetManager)
             aiMat->GetTexture(aiTextureType_BASE_COLOR, 0, &texPathStr) == AI_SUCCESS)
         {
             std::filesystem::path texPath = m_directory / texPathStr.C_Str();
-            mat->albedoMap = assetManager.CreateTex(texPath);
+            mat->SetAlbedoMap(assetManager.CreateTex(texPath));
         }
 
         // Normal
         if (aiMat->GetTexture(aiTextureType_NORMALS, 0, &texPathStr) == AI_SUCCESS)
         {
             std::filesystem::path texPath = m_directory / texPathStr.C_Str();
-            mat->normalMap = assetManager.CreateTex(texPath);
+            mat->SetNormalMap(assetManager.CreateTex(texPath));
         }
 
         // Metallic / Roughness
@@ -72,16 +72,16 @@ void Model::ProcessMaterials(const aiScene* scene, AssetManager& assetManager)
             std::filesystem::path texPath = m_directory / texPathStr.C_Str();
             Ref<Tex> packedMap = assetManager.CreateTex(texPath);
             
-            mat->metallicMap = packedMap;
-            mat->roughnessMap = packedMap;
+            mat->SetMetallicMap(packedMap);
+            mat->SetRoughnessMap(packedMap);
         }
         else
         {
             if (aiMat->GetTexture(aiTextureType_METALNESS, 0, &texPathStr) == AI_SUCCESS)
-                mat->metallicMap = assetManager.CreateTex(m_directory / texPathStr.C_Str());
+                mat->SetMetallicMap(assetManager.CreateTex(m_directory / texPathStr.C_Str()));
                 
             if (aiMat->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texPathStr) == AI_SUCCESS)
-                mat->roughnessMap = assetManager.CreateTex(m_directory / texPathStr.C_Str());
+                mat->SetRoughnessMap(assetManager.CreateTex(m_directory / texPathStr.C_Str()));
         }
 
         m_materials.emplace_back(mat);

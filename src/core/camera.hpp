@@ -24,8 +24,8 @@ public:
     static constexpr float DEFAULT_DISTANCE = 10.0f;
     static constexpr float MAX_DISTANCE     = 1000.0f;
 
-    static constexpr float DEFAULT_NEAR     = 0.001f;
-    static constexpr float MIN_NEAR         = 0.01f;
+    static constexpr float DEFAULT_NEAR     = 0.01f;
+    static constexpr float MIN_NEAR         = 0.001f;
     static constexpr float DEFAULT_FAR      = 100.0f;
     static constexpr float MAX_FAR          = 1000.0f;
     static constexpr float DEFAULT_ASPECT   = 16.0f / 9.0f;
@@ -64,13 +64,13 @@ public:
     float GetPanSense() const { return m_panSens; }
     float GetScrSense() const { return m_scrSens; }
 
-    void SetFov(float fov)  { m_fov = fov; }
-    void SetNear(float n)   { m_nearPlane = n; }
-    void SetFar(float f)    { m_farPlane = f; }
+    void SetFov(float fov)  { m_fov = Clamp(fov, MIN_FOV, MAX_FOV); }
+    void SetNear(float n)   { m_nearPlane = Clamp(n, MIN_NEAR, m_farPlane); }
+    void SetFar(float f)    { m_farPlane = Clamp(f, m_nearPlane, MAX_FAR); }
     void SetAspect(float a) { m_aspect = a; }
 
     void SetYaw(float y)   { m_yaw = y; }
-    void SetPitch(float p) { m_pitch = p; }
+    void SetPitch(float p) { m_pitch = Clamp(p, MIN_PITCH, MAX_PITCH); }
 
     void SetRotSense(float s) { m_rotSens = s; }
     void SetPanSense(float s) { m_panSens = s; }

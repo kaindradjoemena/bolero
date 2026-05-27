@@ -24,22 +24,22 @@ void Material::Bind() const
     // and textures would start at slot 3(?)
     uint32_t slot = 0;
 
-    if (albedoMap)
+    if (m_albedoMap)
     {
-        albedoMap->Bind(slot);
+        m_albedoMap->Bind(slot);
         m_shader->SetInt("u_albedoMap", slot);
         m_shader->SetBool("u_hasAlbedoMap", true);
         slot++;
     }
     else
     {
-        m_shader->SetVec3("u_albedoFactor", albedoFactor);
+        m_shader->SetVec3("u_albedoFactor", m_albedoFactor);
         m_shader->SetBool("u_hasAlbedoMap", false);
     }
 
-    if (normalMap)
+    if (m_normalMap)
     {
-        normalMap->Bind(slot);
+        m_normalMap->Bind(slot);
         m_shader->SetInt("u_normalMap", slot);
         m_shader->SetBool("u_hasNormalMap", true);
         slot++;
@@ -49,42 +49,42 @@ void Material::Bind() const
         m_shader->SetBool("u_hasNormalMap", false);
     }
 
-    if (metallicMap)
+    if (m_metallicMap)
     {
-        metallicMap->Bind(slot);
+        m_metallicMap->Bind(slot);
         m_shader->SetInt("u_metallicMap", slot);
         m_shader->SetBool("u_hasMetallicMap", true);
         slot++;
     }
     else
     {
-        m_shader->SetFloat("u_metallicFactor", metallicFactor);
+        m_shader->SetFloat("u_metallicFactor", m_metallicFactor);
         m_shader->SetBool("u_hasMetallicMap", false);
     }
 
-    if (roughnessMap)
+    if (m_roughnessMap)
     {
-        roughnessMap->Bind(slot);
+        m_roughnessMap->Bind(slot);
         m_shader->SetInt("u_roughnessMap", slot);
         m_shader->SetBool("u_hasRoughnessMap", true);
         slot++;
     }
     else
     {
-        m_shader->SetFloat("u_roughnessFactor", roughnessFactor);
+        m_shader->SetFloat("u_roughnessFactor", m_roughnessFactor);
         m_shader->SetBool("u_hasRoughnessMap", false);
     }
 
-    if (aoMap)
+    if (m_aoMap)
     {
-        aoMap->Bind(slot);
+        m_aoMap->Bind(slot);
         m_shader->SetInt("u_aoMap", slot);
         m_shader->SetBool("u_hasAOMap", true);
         slot++;
     }
     else
     {
-        m_shader->SetFloat("u_AOFactor", aoFactor);
+        m_shader->SetFloat("u_AOFactor", m_aoFactor);
         m_shader->SetBool("u_hasAOMap", false);
     }
 }

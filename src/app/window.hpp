@@ -54,9 +54,9 @@ public:
 
 private:
     GLFWwindow* m_window = nullptr;
-    uint32_t m_width  = DEFAULT_WIDTH;
-    uint32_t m_height = DEFAULT_HEIGHT;
-    const char* m_title = DEFAULT_TITLE;
+    uint32_t m_width     = DEFAULT_WIDTH;
+    uint32_t m_height    = DEFAULT_HEIGHT;
+    const char* m_title  = DEFAULT_TITLE;
 
     Input& m_input;
 
