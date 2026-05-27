@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "types.hpp"
+#include "../types.hpp"
 
 #include <vector>
 
@@ -64,6 +64,11 @@ private:
 class VertexBuffer
 {
 public:
+    static Ref<VertexBuffer> Create(const void* verts, uint32_t size)
+    {
+        return std::shared_ptr<VertexBuffer>(new VertexBuffer(verts, size));
+    }
+
     ~VertexBuffer();
 
     // Prevent copying
@@ -83,23 +88,21 @@ public:
     GLuint GetRendererID() const { return m_rendererID; }
 
 private:
+    VertexBuffer(const void* verts, uint32_t size);
+
     GLuint m_rendererID{0};
     BufferLayout m_layout;
-
-// Construction must be called by the AssetManager class through the Create method
-friend class AssetManager;
-protected:
-    VertexBuffer(const void* verts, uint32_t size);
-    static Ref<VertexBuffer> Create(const void* verts, uint32_t size)
-    {
-        return std::shared_ptr<VertexBuffer>(new VertexBuffer(verts, size));
-    }
 };
 
 
 class IndexBuffer
 {
 public:
+    static Ref<IndexBuffer> Create(const uint32_t* indices, uint32_t count)
+    {
+        return std::shared_ptr<IndexBuffer>(new IndexBuffer(indices, count));
+    }
+
     ~IndexBuffer();
 
     // Prevent copying
@@ -118,17 +121,10 @@ public:
     GLuint GetRendererID() const { return m_rendererID; }
 
 private:
+    IndexBuffer(const uint32_t* indices, uint32_t count);
+
     GLuint m_rendererID{0};
     uint32_t m_count{0};
-
-// Construction must be called by the AssetManager class through the Create method
-friend class AssetManager;
-protected:
-    IndexBuffer(const uint32_t* indices, uint32_t count);
-    static Ref<IndexBuffer> Create(const uint32_t* indices, uint32_t count)
-    {
-        return std::shared_ptr<IndexBuffer>(new IndexBuffer(indices, count));
-    }
 };
 
 

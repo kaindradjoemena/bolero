@@ -1,8 +1,8 @@
 // core/mesh.cpp
 
 #include "mesh.hpp"
-#include "buffer.hpp"
-#include "vertex_array.hpp"
+#include "wrappers/buffer.hpp"
+#include "wrappers/vertex_array.hpp"
 #include "material.hpp"
 #include "asset_manager.hpp"
 
@@ -32,10 +32,10 @@ void Mesh::SetupMesh(AssetManager& assetManager)
         return; 
     }
 
-    m_vao = assetManager.CreateVA();
+    m_vao = VertexArray::Create();
 
     uint32_t vertexSize = static_cast<uint32_t>(m_vertices.size() * sizeof(Vertex));
-    m_vbo = assetManager.CreateVB(m_vertices.data(), vertexSize);    
+    m_vbo = VertexBuffer::Create(m_vertices.data(), vertexSize);    
     m_vbo->SetLayout({
         { ShaderDataType::Float3, "a_position"  },
         { ShaderDataType::Float3, "a_normal"    },
@@ -45,7 +45,7 @@ void Mesh::SetupMesh(AssetManager& assetManager)
     });
 
     uint32_t indexCount = static_cast<uint32_t>(m_indices.size());
-    m_ibo = assetManager.CreateIB(m_indices.data(), indexCount);
+    m_ibo = IndexBuffer::Create(m_indices.data(), indexCount);
     
     m_vao->AddVertexBuffer(m_vbo);
     m_vao->SetIndexBuffer(m_ibo);

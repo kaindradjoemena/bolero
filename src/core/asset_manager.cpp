@@ -1,8 +1,6 @@
 // core/asset_manager.cpp
 
 #include "asset_manager.hpp"
-#include "buffer.hpp"
-#include "vertex_array.hpp"
 #include "texture.hpp"
 #include "shader.hpp"
 #include "material.hpp"
@@ -26,27 +24,6 @@ Ref<Shader> AssetManager::CreateShader(const std::filesystem::path& filePath)
 #endif
 
     return shader;
-}
-
-Ref<VertexBuffer> AssetManager::CreateVB(const void* verts, uint32_t size)
-{
-    Ref<VertexBuffer> vb = VertexBuffer::Create(verts, size);
-
-    return vb;
-}
-
-Ref<IndexBuffer> AssetManager::CreateIB(const uint32_t* indices, uint32_t count)
-{
-    Ref<IndexBuffer> ib = IndexBuffer::Create(indices, count);
-
-    return ib;
-}
-
-Ref<VertexArray> AssetManager::CreateVA()
-{
-    Ref<VertexArray> va = VertexArray::Create();
-
-    return va;
 }
 
 Ref<Tex> AssetManager::CreateTex(const std::filesystem::path& texPath, const TexSpec& texSpec)

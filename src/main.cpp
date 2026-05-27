@@ -8,8 +8,8 @@
 
 // NOTE: put everything inside some include.hpp file instead of this
 #include "core/types.hpp"
-#include "core/buffer.hpp"
-#include "core/vertex_array.hpp"
+#include "core/wrappers/buffer.hpp"
+#include "core/wrappers/vertex_array.hpp"
 #include "core/shader.hpp"
 #include "core/model.hpp"
 #include "core/mesh.hpp"

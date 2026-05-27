@@ -38,12 +38,6 @@ public:
 
     Ref<Shader> CreateShader(const std::filesystem::path& filePath);
 
-    Ref<VertexBuffer> CreateVB(const void* verts, uint32_t size);
-
-    Ref<IndexBuffer> CreateIB(const uint32_t* indices, uint32_t count);
-
-    Ref<VertexArray> CreateVA();
-
     Ref<Tex> CreateTex(const std::filesystem::path& texPath, const TexSpec& texSpec = TexSpec{});
 
     Ref<Tex> CreateTex(const TexSpec& texSpec);

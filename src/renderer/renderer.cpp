@@ -4,8 +4,8 @@
 #include "core/shader.hpp"
 #include "core/material.hpp"
 #include "core/mesh.hpp"
-#include "core/buffer.hpp"
-#include "core/vertex_array.hpp"
+#include "core/wrappers/buffer.hpp"
+#include "core/wrappers/vertex_array.hpp"
 #include "utils/debug.hpp"
 
 #include <algorithm>

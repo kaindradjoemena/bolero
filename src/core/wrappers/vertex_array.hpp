@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "types.hpp"
+#include "../types.hpp"
 
 #include <glad/glad.h>
 #include <memory>
@@ -18,7 +18,11 @@ class IndexBuffer;
 class VertexArray
 {
 public:
-    VertexArray();
+    static Ref<VertexArray> Create()
+    {
+        return std::shared_ptr<VertexArray>(new VertexArray());
+    }
+
     ~VertexArray();
 
     // Prevent copying
@@ -42,19 +46,13 @@ public:
     GLuint GetRendererID() const { return m_rendererID; }
 
 private:
+    VertexArray();
+
     GLuint m_rendererID{0};
     uint32_t m_vertexBufferIndex = 0;
 
     std::vector<std::shared_ptr<VertexBuffer>> m_vertexBuffers;
     std::shared_ptr<IndexBuffer> m_indexBuffer;
-
-// Construction must be called by the AssetManager class through the Create method
-friend class AssetManager;
-protected:
-    static Ref<VertexArray> Create()
-    {
-        return std::shared_ptr<VertexArray>(new VertexArray());
-    }
 };
 
 
