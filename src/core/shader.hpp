@@ -38,6 +38,7 @@ public:
 
     void SetBool(std::string_view name, bool value);
     void SetInt(std::string_view name, int value);
+    void SetUInt(std::string_view name, unsigned int value);
     void SetFloat(std::string_view name, float value);
     void SetVec3(std::string_view name, const vec3& value);
     void SetVec4(std::string_view name, const vec4& value);

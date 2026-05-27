@@ -18,6 +18,7 @@
 #include "core/camera.hpp"
 #include "core/types.hpp"
 #include "core/asset_manager.hpp"
+#include "renderer/renderer.hpp"
 
 #include "app/window.hpp"
 #include "app/input.hpp"
@@ -54,33 +55,7 @@ int main()
             glViewport(0, 0, w, h);
         });
 
-#ifndef NDEBUG
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-#endif
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-
-#ifndef NDEBUG
-    int flags; 
-    glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
-    {
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback(glDebugOutput, nullptr);
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-        std::cout << "OpenGL Debug Context initialized!\n";
-    }
-#endif
+    blr::core::Renderer::Init();
 
     std::cout << "GPU: "            << glGetString(GL_RENDERER) << ", " << glGetString(GL_VENDOR) << std::endl;
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
@@ -121,10 +96,12 @@ int main()
     pointLight.range      = 10.0f;
     pointLight.base.power = 10.0f;
 
-    auto shader = assetManager.CreateShader(std::filesystem::path("assets/shaders/basic.glsl"));
-    
-    std::cout << "loading model..." << std::endl;
+    auto shader = assetManager.CreateShader(std::filesystem::path("assets/shaders/renderer_test.glsl"));
+
     auto model = assetManager.CreateModel(std::filesystem::path("assets/models/dude.gltf"), shader);
+    
+    blr::core::Transform myEntityTransform;
+    myEntityTransform.SetPos(blr::core::vec3(0.0f, 0.0f, -5.0f));
 
     glEnable(GL_DEPTH_TEST);
 
@@ -137,37 +114,19 @@ int main()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        blr::core::mat4 modelMat = blr::core::mat4(1.0f);
-        blr::core::mat4 viewMat  = cam.GetViewMat();
-        blr::core::mat4 projMat  = cam.GetProjMat();
-        blr::core::mat3 normMat  = blr::core::Transpose(blr::core::Inverse(modelMat));
+        myEntityTransform.SetRot(glm::rotate(myEntityTransform.GetRot(), 0.01f, blr::core::vec3(0.0f, 1.0f, 0.0f)));
+
+        blr::core::Renderer::BeginScene(cam);
 
         shader->Bind();
-
-        shader->SetMat4("u_viewMat", viewMat);
-        shader->SetMat4("u_projMat", projMat);
-
-        shader->SetVec3("u_lightCol", pointLight.base.color);
-        shader->SetFloat("u_lightPow", pointLight.base.power);
-        shader->SetVec3("u_lightPos", pointLight.position);
-        shader->SetFloat("u_lightRange", pointLight.range);
-        shader->SetVec3("u_camPos", cam.GetPos());
+        shader->SetMat4("u_ViewProj", cam.GetProjMat() * cam.GetViewMat());
 
         for (const auto& mesh : model->GetMeshes())
         {
-            if (!mesh->GetVAO())
-                continue;
-
-            if (mesh->GetMaterial())
-                mesh->GetMaterial()->Bind(); 
-
-            shader->SetMat4("u_modelMat", modelMat);
-            shader->SetMat3("u_normMat", normMat);
-
-            mesh->GetVAO()->Bind();
-            glDrawElements(GL_TRIANGLES, mesh->GetIBO()->GetCount(), GL_UNSIGNED_INT, nullptr);
-            mesh->GetVAO()->Unbind();
+            blr::core::Renderer::Submit(mesh, mesh->GetMaterial(), myEntityTransform);
         }
+
+        blr::core::Renderer::Render();
 
         window.SwapBuffers();
         window.PollEvents();
@@ -175,6 +134,8 @@ int main()
         // Update camera
         cam.HandleDrag(glm::vec2(input.GetMouseX(), input.GetMouseY()));
     }
+
+    blr::core::Renderer::Shutdown();
 
     return 0;
 }

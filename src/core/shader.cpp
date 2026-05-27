@@ -132,6 +132,11 @@ void Shader::SetInt(std::string_view name, int value)
     glProgramUniform1i(m_rendererID, GetUniformLocation(name), value);
 }
 
+void Shader::SetUInt(std::string_view name, unsigned int value)
+{
+    glProgramUniform1ui(m_rendererID, GetUniformLocation(name), value);
+}
+
 void Shader::SetFloat(std::string_view name, float value)
 {
     glProgramUniform1f(m_rendererID, GetUniformLocation(name), value);

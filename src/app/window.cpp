@@ -1,9 +1,12 @@
 // window/window.cpp
 
 #include "window.hpp"
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 #include "input.hpp"
 
-#include <GLFW/glfw3.h>
 #include <iostream>
 #include <cstdint>
 
@@ -54,6 +57,14 @@ Window::Window(uint32_t width, uint32_t height, const char* title, Input& input)
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW");
 
+#ifndef NDEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+#endif
+
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -66,6 +77,13 @@ Window::Window(uint32_t width, uint32_t height, const char* title, Input& input)
     }
 
     glfwMakeContextCurrent(m_window);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        glfwDestroyWindow(m_window);
+        glfwTerminate();
+        throw std::runtime_error("Failed to initialize GLAD");
+    }
 
     glfwSetWindowUserPointer(m_window, this);
 

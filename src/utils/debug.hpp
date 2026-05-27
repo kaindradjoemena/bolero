@@ -65,7 +65,7 @@ void APIENTRY glDebugOutput(GLenum source,
     // NOTE: Placing a breakpoint here should be help with tracing errors(?)
     if (severity == GL_DEBUG_SEVERITY_HIGH)
     {
-        std::cerr << "Fatal OpenGL Error! Check callstack." << std::endl;
+        std::cerr << "Fatal OpenGL Error! Check callstack" << std::endl;
     }
 }
 #endif
