@@ -15,16 +15,15 @@ namespace blr::core
 
 Mesh::Mesh(std::vector<Vertex> vertices,
            std::vector<uint32_t> indices,
-           Ref<Material> material,
-           AssetManager& assetManager)
+           Ref<Material> material)
     : m_vertices(std::move(vertices))
     , m_indices(std::move(indices))
     , m_material(std::move(material))
 {
-    SetupMesh(assetManager);
+    SetupMesh();
 }
 
-void Mesh::SetupMesh(AssetManager& assetManager)
+void Mesh::SetupMesh()
 {
     if (m_vertices.empty() || m_indices.empty())
     {

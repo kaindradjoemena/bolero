@@ -64,7 +64,7 @@ Ref<Material> AssetManager::CreateMaterial(Ref<Shader> shader)
 
 Ref<Mesh> AssetManager::CreateMesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material)
 {
-    Ref<Mesh> mesh = Mesh::Create(vertices, indices, material, *this);
+    Ref<Mesh> mesh = Mesh::Create(vertices, indices, material);
     mesh->SetHandle(UUID::Generate());
 
 #if DEBUG_RESOURCE_CREATION_HANDLE

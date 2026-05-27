@@ -8,6 +8,7 @@
 
 // NOTE: put everything inside some include.hpp file instead of this
 #include "core/types.hpp"
+#include "core/scene.hpp"
 #include "core/wrappers/buffer.hpp"
 #include "core/wrappers/vertex_array.hpp"
 #include "core/shader.hpp"
@@ -48,14 +49,12 @@ int main()
 {
     blr::core::AssetManager assetManager;
     blr::app::Input input;
-
     blr::app::Window window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, input);
+    blr::core::Renderer::Init();
 
     window.AddResizeCallback([](uint32_t w, uint32_t h) {
             glViewport(0, 0, w, h);
         });
-
-    blr::core::Renderer::Init();
 
     std::cout << "GPU: "            << glGetString(GL_RENDERER) << ", " << glGetString(GL_VENDOR) << std::endl;
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
@@ -64,7 +63,7 @@ int main()
     std::cout << "Assimp Version: " << aiGetVersionMajor() << "." << aiGetVersionMinor() << "." << aiGetVersionPatch() << std::endl;
 
     blr::core::Camera cam;
-    cam.SetAspect((float)DEFAULT_WINDOW_WIDTH / (float)DEFAULT_WINDOW_HEIGHT);
+    cam.SetAspect(window.GetWidth() / window.GetHeight());
 
     // camera aspect
     window.AddResizeCallback([&cam](uint32_t w, uint32_t h) {
@@ -91,17 +90,23 @@ int main()
             }
         });
 
+    
+    blr::core::Scene scene;
+    scene.SetCam(&cam);
+    
+    // Model
+    auto shader = assetManager.CreateShader(std::filesystem::path("assets/shaders/renderer_test.glsl"));    
+    auto model  = assetManager.CreateModel(std::filesystem::path("assets/models/dude.gltf"), shader);
+    blr::core::Transform transform;
+    transform.SetPos(blr::core::vec3(0.0f, 0.0f, -5.0f));
+    scene.AddEntity(model, transform);
+    
+    // Point light
     blr::core::PointLight pointLight;
     pointLight.position   = blr::core::vec3(2.0f, 2.0f, 2.0f);
     pointLight.range      = 10.0f;
     pointLight.base.power = 10.0f;
-
-    auto shader = assetManager.CreateShader(std::filesystem::path("assets/shaders/renderer_test.glsl"));
-
-    auto model = assetManager.CreateModel(std::filesystem::path("assets/models/dude.gltf"), shader);
-    
-    blr::core::Transform myEntityTransform;
-    myEntityTransform.SetPos(blr::core::vec3(0.0f, 0.0f, -5.0f));
+    scene.AddLight(pointLight);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -111,28 +116,22 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        myEntityTransform.SetRot(glm::rotate(myEntityTransform.GetRot(), 0.01f, blr::core::vec3(0.0f, 1.0f, 0.0f)));
-
-        blr::core::Renderer::BeginScene(cam);
-
-        shader->Bind();
-        shader->SetMat4("u_ViewProj", cam.GetProjMat() * cam.GetViewMat());
-
-        for (const auto& mesh : model->GetMeshes())
-        {
-            blr::core::Renderer::Submit(mesh, mesh->GetMaterial(), myEntityTransform);
-        }
-
-        blr::core::Renderer::Render();
-
-        window.SwapBuffers();
         window.PollEvents();
 
         // Update camera
         cam.HandleDrag(glm::vec2(input.GetMouseX(), input.GetMouseY()));
+        
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        blr::core::Renderer::BeginFrame();
+        
+        scene.Update(deltaTime, true);
+
+        scene.SubmitToRenderer();
+        blr::core::Renderer::DrawQueue();
+
+        window.SwapBuffers();
     }
 
     blr::core::Renderer::Shutdown();

@@ -1,6 +1,7 @@
 // renderer/renderer.cpp
 
 #include "renderer.hpp"
+#include "core/camera.hpp"
 #include "core/shader.hpp"
 #include "core/material.hpp"
 #include "core/mesh.hpp"
@@ -10,6 +11,8 @@
 #include "utils/debug.hpp"
 
 #include <algorithm>
+
+#include <glfw/glfw3.h>
 
 
 namespace blr::core
@@ -31,24 +34,62 @@ void Renderer::Init()
     }
 #endif
 
-    glCreateBuffers(1, &s_SSBO);
-    glCreateBuffers(1, &s_lightSSBO);
+    s_cameraUBO = UniformBuffer::Create(sizeof(CameraFrameData));
+    s_cameraUBO->Bind(0);
+
+    s_instanceSSBO = ShaderStorageBuffer::Create();
+    s_instanceSSBO->Bind(1);
+
+    s_lightSSBO = ShaderStorageBuffer::Create();
+    s_lightSSBO->Bind(2);
+
+    s_emptyVAO = VertexArray::Create();    
 }
 
 void Renderer::Shutdown()
 {
-    glDeleteBuffers(1, &s_SSBO);
-    glDeleteBuffers(1, &s_lightSSBO);
+    s_renderQueue.clear();
+    s_instanceBuffer.clear();
 }
 
-void Renderer::BeginScene(const Camera& camera)
+void Renderer::BeginFrame()
 {
     s_renderQueue.clear();
     s_instanceBuffer.clear();
-
     s_dirLightBuffer.clear();
     s_pointLightBuffer.clear();
     s_spotLightBuffer.clear();
+}
+
+void Renderer::UpdateCameraUBO(const Camera& camera)
+{
+    CameraFrameData camData;
+    camData.view = camera.GetViewMat();
+    camData.projection = camera.GetProjMat();
+    camData.viewProj = camData.projection * camData.view;
+    camData.cameraPosAndTime = vec4(camera.GetPos(), (float)glfwGetTime());
+
+    s_cameraUBO->SetData(&camData, sizeof(CameraFrameData), 0);
+}
+
+void Renderer::UploadBuffers()
+{
+    // Instance data
+    if (!s_instanceBuffer.empty())
+        s_instanceSSBO->SetData(s_instanceBuffer.data(), s_instanceBuffer.size() * sizeof(InstanceData));
+
+    // Light data
+    GPULightBuffer lightBuffer;
+    lightBuffer.dirCount   = static_cast<uint32_t>(std::min(s_dirLightBuffer.size(),   16ull));
+    lightBuffer.pointCount = static_cast<uint32_t>(std::min(s_pointLightBuffer.size(), 1024ull));
+    lightBuffer.spotCount  = static_cast<uint32_t>(std::min(s_spotLightBuffer.size(),  512ull));
+    lightBuffer.padding    = 0;
+
+    std::copy_n(s_dirLightBuffer.begin(),   lightBuffer.dirCount,   lightBuffer.dirLights);
+    std::copy_n(s_pointLightBuffer.begin(), lightBuffer.pointCount, lightBuffer.pointLights);
+    std::copy_n(s_spotLightBuffer.begin(),  lightBuffer.spotCount,  lightBuffer.spotLights);
+
+    s_lightSSBO->SetData(&lightBuffer, sizeof(GPULightBuffer));
 }
 
 void Renderer::Submit(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform)
@@ -71,7 +112,6 @@ void Renderer::Submit(const Ref<Mesh>& mesh, const Ref<Material>& material, cons
         mesh.get(),
         material.get(),
         transformIndex});
-
 }
 
 void Renderer::Submit(const DirLight& l)
@@ -97,43 +137,37 @@ void Renderer::Submit(const SpotLight& l)
         vec4(l.base.power, vec3(1.0f))});
 }
 
-
-void Renderer::Render()
+void Renderer::DrawQueue(Shader* overrideShader)
 {
     if (s_renderQueue.empty())
         return;
 
+    // Sort queue
     std::sort(s_renderQueue.begin(), s_renderQueue.end());
 
-    // Upload instace matrices
-    glNamedBufferData(s_SSBO, s_instanceBuffer.size() * sizeof(InstanceData), s_instanceBuffer.data(), GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, s_SSBO);
-
-    // Upload light data
-    GPULightBuffer lightBuffer;
-    lightBuffer.dirCount   = static_cast<uint32_t>(s_dirLightBuffer.size());
-    lightBuffer.pointCount = static_cast<uint32_t>(s_pointLightBuffer.size());
-    lightBuffer.spotCount  = static_cast<uint32_t>(s_spotLightBuffer.size());
-
-    std::copy_n(s_dirLightBuffer.begin(),   std::min(lightBuffer.dirCount,   16u),    lightBuffer.dirLights);
-    std::copy_n(s_pointLightBuffer.begin(), std::min(lightBuffer.pointCount, 1024u), lightBuffer.pointLights);
-    std::copy_n(s_spotLightBuffer.begin(),  std::min(lightBuffer.spotCount,  512u),   lightBuffer.spotLights);
-
-    glNamedBufferData(s_lightSSBO, sizeof(GPULightBuffer), &lightBuffer, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, s_lightSSBO);
-
+    if (overrideShader)
+        overrideShader->Bind();
+    
     uint64_t lastMaterialID = 0;
     uint64_t lastMeshID = 0;
     for (const RenderTask& task : s_renderQueue)
     {
-        if (task.material->GetHandle() != lastMaterialID)
+        if (!overrideShader)
         {
-            task.material->Bind();
-            lastMaterialID = task.material->GetHandle();
+            if (task.material->GetHandle() != lastMaterialID)
+            {
+                task.material->Bind();
+                lastMaterialID = task.material->GetHandle();
+            }
+
+            task.material->GetShader()->SetUInt("u_TransformIndex", task.transformIndex);
+        }
+        else
+        {
+            overrideShader->SetUInt("u_TransformIndex", task.transformIndex);
         }
 
-        task.material->GetShader()->SetUInt("u_TransformIndex", task.transformIndex);
-
+        // Bind mesh geometry
         if (task.mesh->GetHandle() != lastMeshID)
         {
             task.mesh->GetVAO()->Bind();
@@ -142,6 +176,12 @@ void Renderer::Render()
 
         glDrawElements(GL_TRIANGLES, task.mesh->GetIBO()->GetCount(), GL_UNSIGNED_INT, nullptr);
     }
+}
+
+void Renderer::DrawFullscreenQuad()
+{
+    s_emptyVAO->Bind();
+    glDrawArrays(GL_TRIANGLES, 0, 3);   // make the triangle in the vertex shader
 }
 
 

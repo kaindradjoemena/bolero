@@ -52,7 +52,7 @@ public:
     const std::vector<uint32_t>& GetIndices() const { return m_indices; }
 
 private:
-    void SetupMesh(AssetManager& assetManager);
+    void SetupMesh();
 
 private:
     std::vector<Vertex> m_vertices;
@@ -66,10 +66,10 @@ private:
 // Construction must be called by the AssetManager class through the Create method
 friend class AssetManager;
 protected:
-    Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material, AssetManager& assetManager);
-    static Ref<Mesh> Create(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material, AssetManager& assetManager)
+    Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material);
+    static Ref<Mesh> Create(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material)
     {
-        return std::shared_ptr<Mesh>(new Mesh(vertices, indices, material, assetManager));
+        return std::shared_ptr<Mesh>(new Mesh(vertices, indices, material));
     }
 };
 

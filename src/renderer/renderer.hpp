@@ -16,6 +16,9 @@ namespace blr::core
 class Mesh;
 class Material;
 class Camera;
+class Shader;
+class UniformBuffer;
+class VertexArray;
 class ShaderStorageBuffer;
 
 struct DirLightData
@@ -69,6 +72,14 @@ struct InstanceData
     mat4 normal;
 };
 
+struct CameraFrameData
+{
+    mat4 view;
+    mat4 projection;
+    mat4 viewProj;
+    vec4 cameraPosAndTime; // xyz = position, w = time
+};
+
 class Renderer
 {
 public:
@@ -85,25 +96,31 @@ public:
     static void Init();
     static void Shutdown();
 
-    static void BeginScene(const Camera& camera);
+    static void BeginFrame();
+
+    static void UpdateCameraUBO(const Camera& camera);
+    static void UploadBuffers(); 
     
     static void Submit(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform);
     static void Submit(const DirLight& l);
     static void Submit(const PointLight& l);
     static void Submit(const SpotLight& l);
 
-    static void Render();
+    static void DrawQueue(Shader* overrideShader = nullptr);
+    static void DrawFullscreenQuad();
 
 private:
-    inline static std::vector<RenderTask> s_renderQueue;
+    inline static std::vector<RenderTask>   s_renderQueue;
     inline static std::vector<InstanceData> s_instanceBuffer;
 
-    inline static std::vector<DirLightData> s_dirLightBuffer;
+    inline static std::vector<DirLightData>   s_dirLightBuffer;
     inline static std::vector<PointLightData> s_pointLightBuffer;
-    inline static std::vector<SpotLightData> s_spotLightBuffer;
+    inline static std::vector<SpotLightData>  s_spotLightBuffer;
 
-    inline static uint32_t s_SSBO = 0;
-    inline static uint32_t s_lightSSBO = 0;
+    inline static Ref<UniformBuffer>       s_cameraUBO;
+    inline static Ref<ShaderStorageBuffer> s_instanceSSBO;
+    inline static Ref<ShaderStorageBuffer> s_lightSSBO;
+    inline static Ref<VertexArray>         s_emptyVAO;
 };
 
 
