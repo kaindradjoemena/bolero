@@ -7,133 +7,165 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Options
-option(BOLERO_BUILD_SHARED "Build shared libraries" OFF)
+# ── Options ───────────────────────────────────────────────────────────────────
+option(BOLERO_BUILD_SHARED  "Build Bolero as a shared library" OFF)
+option(BOLERO_BUILD_SANDBOX "Build the sandbox executable"     ON)
 
-# Output directories
+# If Bolero is being consumed via add_subdirectory() in another project, 
+# do not build the sandbox testbench by default.
+if(NOT CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    set(BOLERO_BUILD_SANDBOX OFF)
+endif()
+
+# ── Output dirs ───────────────────────────────────────────────────────────────
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-foreach(CONFIG ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER ${CONFIG} CONFIG_UPPER)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/bin/${CONFIG})
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/lib/${CONFIG})
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_UPPER} ${CMAKE_BINARY_DIR}/lib/${CONFIG})
-endforeach()
+# ── Dependencies ──────────────────────────────────────────────────────────────
+# Try to find packages locally first (useful for vcpkg/system package managers)
+find_package(glfw3  QUIET)
+find_package(glm    QUIET)
+find_package(assimp QUIET)
 
-# Dependencies
 include(FetchContent)
 
-# GLFW
-FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG 3.4
-    GIT_SHALLOW TRUE
-)
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(glfw)
+if(NOT glfw3_FOUND)
+    FetchContent_Declare(glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG        3.4
+        GIT_SHALLOW    TRUE)
+    set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(glfw)
+endif()
 
-# GLM
-FetchContent_Declare(
-    glm
-    GIT_REPOSITORY https://github.com/g-truc/glm.git
-    GIT_TAG 1.0.3
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(glm)
+if(NOT glm_FOUND)
+    FetchContent_Declare(glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG        1.0.3
+        GIT_SHALLOW    TRUE)
+    FetchContent_MakeAvailable(glm)
+endif()
 
-# Assimp
-FetchContent_Declare(
-    assimp
-    GIT_REPOSITORY https://github.com/assimp/assimp.git
-    GIT_TAG v6.0.5
-    GIT_SHALLOW TRUE
-)
-set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
-set(INJECT_DEBUG_POSTFIX OFF CACHE BOOL "" FORCE) 
-set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_GLTF_IMPORTER ON CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_FBX_IMPORTER ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(assimp)
+if(NOT assimp_FOUND)
+    FetchContent_Declare(assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp.git
+        GIT_TAG        v6.0.5
+        GIT_SHALLOW    TRUE)
+    
+    # The Assimp Diet: Turn off everything except the importers we actually need
+    set(ASSIMP_BUILD_TESTS                    OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_ASSIMP_TOOLS             OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_INSTALL                        OFF CACHE BOOL "" FORCE)
+    set(INJECT_DEBUG_POSTFIX                  OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_GLTF_IMPORTER            ON  CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_OBJ_IMPORTER             ON  CACHE BOOL "" FORCE)
+    set(ASSIMP_BUILD_FBX_IMPORTER             ON  CACHE BOOL "" FORCE)
+    set(ASSIMP_NO_EXPORT                      ON  CACHE BOOL "" FORCE) # Massive speedup
+    set(ASSIMP_BUILD_ZLIB                     ON  CACHE BOOL "" FORCE)
+    set(ASSIMP_WARNINGS_AS_ERRORS             OFF CACHE BOOL "" FORCE)
+    set(BUILD_SHARED_LIBS                     OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(assimp)
+endif()
 
-# GLAD check
-set(GLAD_C_SOURCE ${CMAKE_SOURCE_DIR}/extern/glad/src/glad.c)
-set(GLAD_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/extern/glad/include)
+# ── GLAD ──────────────────────────────────────────────────────────────────────
+set(GLAD_C_SOURCE    ${CMAKE_CURRENT_SOURCE_DIR}/extern/glad/src/glad.c)
+set(GLAD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/glad/include)
 
 if(NOT EXISTS ${GLAD_C_SOURCE})
     message(FATAL_ERROR
         "GLAD not found at ${GLAD_C_SOURCE}.\n"
-        "Generate GLAD (https://glad.dav1d.de) and place it in extern/glad/"
-    )
+        "Generate GLAD (https://glad.dav1d.de) and place it in extern/glad/")
 endif()
 
-# Source files
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_SOURCE_DIR}/src/*.cpp"
-    "${CMAKE_SOURCE_DIR}/src/*.h"
-    "${CMAKE_SOURCE_DIR}/src/*.hpp"
+# ── Engine library ────────────────────────────────────────────────────────────
+file(GLOB_RECURSE BOLERO_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
+)
+list(APPEND BOLERO_SOURCES ${GLAD_C_SOURCE})
+
+if(BOLERO_BUILD_SHARED)
+    add_library(Bolero SHARED ${BOLERO_SOURCES})
+else()
+    add_library(Bolero STATIC ${BOLERO_SOURCES})
+endif()
+
+# PUBLIC:  Consumers get these automatically when they link Bolero
+# PRIVATE: Only needed when compiling Bolero itself
+target_include_directories(Bolero PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${GLAD_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
+target_include_directories(Bolero PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/extern
+    ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb
+    $<$<NOT:$<BOOL:${assimp_FOUND}>>:${assimp_SOURCE_DIR}/include>
 )
 
-list(APPEND SOURCES ${GLAD_C_SOURCE})
+# Export GLFW and GLM to users. Hide Assimp so it doesn't pollute their namespace.
+target_link_libraries(Bolero PUBLIC  glfw glm::glm)
+target_link_libraries(Bolero PRIVATE assimp)
 
-# Executable
-add_executable(${PROJECT_NAME} ${SOURCES})
-
-# Include directories
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/extern
-    ${GLAD_INCLUDE_DIR}
-    ${CMAKE_SOURCE_DIR}/extern/stb
-    ${assimp_SOURCE_DIR}/include
-)
-
-# Link libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    glfw
-    glm::glm
-    assimp
-)
-
-# Platform specifics
+# ── Platform ──────────────────────────────────────────────────────────────────
 if(WIN32)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE BOLERO_PLATFORM_WINDOWS)
-    target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
+    target_compile_definitions(Bolero PUBLIC BOLERO_PLATFORM_WINDOWS)
+    target_link_libraries(Bolero PRIVATE opengl32)
+
+    if(MSVC)
+        target_compile_options(Bolero PRIVATE
+            /MP
+            $<$<CONFIG:Debug>:/Od /Zi>
+            $<$<CONFIG:Release>:/O2 /GL>
+        )
+        target_link_options(Bolero PRIVATE
+            $<$<CONFIG:Debug>:/DEBUG:FASTLINK>
+            $<$<CONFIG:Release>:/LTCG>
+        )
+    endif()
 elseif(APPLE)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE BOLERO_PLATFORM_MACOS)
-    find_library(COCOA_LIBRARY Cocoa)
-    find_library(IOKIT_LIBRARY IOKit)
-    find_library(COREVID_LIBRARY CoreVideo)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${COCOA_LIBRARY} ${IOKIT_LIBRARY} ${COREVID_LIBRARY})
+    target_compile_definitions(Bolero PUBLIC BOLERO_PLATFORM_MACOS)
+    find_library(COCOA_LIBRARY   Cocoa   REQUIRED)
+    find_library(IOKIT_LIBRARY   IOKit   REQUIRED)
+    find_library(COREVID_LIBRARY CoreVideo REQUIRED)
+    target_link_libraries(Bolero PRIVATE
+        ${COCOA_LIBRARY} ${IOKIT_LIBRARY} ${COREVID_LIBRARY})
 elseif(UNIX)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE BOLERO_PLATFORM_LINUX)
+    target_compile_definitions(Bolero PUBLIC BOLERO_PLATFORM_LINUX)
     find_package(OpenGL REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL ${CMAKE_DL_LIBS})
+    target_link_libraries(Bolero PRIVATE OpenGL::GL ${CMAKE_DL_LIBS})
 endif()
 
-# Compiler warnings
+# ── Warnings ──────────────────────────────────────────────────────────────────
 if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /W4 /permissive-)
+    target_compile_options(Bolero PRIVATE /W4 /permissive-)
 else()
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(Bolero PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-# Copy assets on build
-if(EXISTS ${CMAKE_SOURCE_DIR}/assets)
-    add_custom_target(copy_assets ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/assets
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets
-        COMMENT "Copying assets to build directory"
-    )
-    add_dependencies(${PROJECT_NAME} copy_assets)
-else()
-    message(STATUS "No assets directory found, skipping copy")
+# ── Sandbox ───────────────────────────────────────────────────────────────────
+if(BOLERO_BUILD_SANDBOX)
+    add_executable(BoleroSandbox
+        "${CMAKE_CURRENT_SOURCE_DIR}/sandbox/main.cpp")
+    
+    # Enforce C++17 for the sandbox testbench
+    target_compile_features(BoleroSandbox PRIVATE cxx_std_17)
+
+    target_link_libraries(BoleroSandbox PRIVATE Bolero)
+
+    # Copy assets from the root to the sandbox binary directory
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/assets)
+        add_custom_target(copy_assets ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/assets
+                $<TARGET_FILE_DIR:BoleroSandbox>/assets
+            COMMENT "Copying assets to BoleroSandbox"
+        )
+        add_dependencies(BoleroSandbox copy_assets)
+    endif()
 endif()

@@ -12,6 +12,7 @@
 
 
 #ifndef NDEBUG
+
 inline
 void APIENTRY glDebugOutput(GLenum source, 
                             GLenum type, 
@@ -69,3 +70,13 @@ void APIENTRY glDebugOutput(GLenum source,
     }
 }
 #endif
+
+
+namespace blr::utils
+{
+
+
+void PrintSystemInfo();
+
+
+} /* namespace blr::utils */

@@ -6,7 +6,7 @@
 #include "material.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
-#include "utils/uuid.hpp"
+#include "core/uuid.hpp"
 #include "utils/debug.hpp"
 
 

@@ -41,3 +41,5 @@ ipch/
 # OS
 .DS_Store
 Thumbs.db
+
+vcpkg_installed/
