@@ -60,7 +60,7 @@ private:
     Ref<Tex> m_roughnessMap;
     Ref<Tex> m_aoMap;
 
-    vec3 m_albedoFactor{1.0f, 1.0f, 1.0f}; 
+    vec3 m_albedoFactor{1.0f, 0.0f, 1.0f}; 
     float m_metallicFactor{1.0f};
     float m_roughnessFactor{0.5f};
     float m_aoFactor{1.0f};

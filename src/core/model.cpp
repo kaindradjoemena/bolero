@@ -23,7 +23,7 @@ Model::Model(const std::filesystem::path& filePath, Ref<Shader> defaultShader, A
     Assimp::Importer importer;
 
     const uint32_t flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | 
-                           aiProcess_CalcTangentSpace |
+                           aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices |
                            aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure;
 
     const aiScene* scene = importer.ReadFile(filePath.string(), flags);
@@ -55,8 +55,20 @@ void Model::ProcessMaterials(const aiScene* scene, AssetManager& assetManager)
         if (aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &texPathStr) == AI_SUCCESS ||
             aiMat->GetTexture(aiTextureType_BASE_COLOR, 0, &texPathStr) == AI_SUCCESS)
         {
+            // Has texture
             std::filesystem::path texPath = m_directory / texPathStr.C_Str();
             mat->SetAlbedoMap(assetManager.CreateTex(texPath));
+        }
+        else
+        {
+            // No texture, default to magenta
+            aiColor4D baseColor(1.0f, 0.0f, 1.0f, 1.0f);
+            
+            if (aiMat->Get(AI_MATKEY_BASE_COLOR, baseColor) == AI_SUCCESS ||
+                aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor) == AI_SUCCESS)
+            {
+                mat->SetAlbedoFactor(blr::core::vec3(baseColor.r, baseColor.g, baseColor.b));
+            }
         }
 
         // Normal
