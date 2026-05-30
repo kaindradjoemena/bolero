@@ -1,5 +1,7 @@
 # Bolero
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Bolero is a minimal boilerplate graphics testbench that uses OpenGL 4.6 to help programmers build faster prototypes for their projects. 
 
 Heavily inspired by Dihara Wijetunga's [dwSampleFramework](https://github.com/diharaw/dw-sample-framework)
