@@ -1,11 +1,6 @@
 #pragma once
 
-#include "core/types.hpp"
-#include "renderer/pass.hpp"
-#include "renderer/renderer.hpp"
-
-#include "core/wrappers/framebuffer.hpp"
-#include "core/shader.hpp"
+#include <bolero.hpp>
 #include "core/lights.hpp"
 
 namespace blrc = blr::core;

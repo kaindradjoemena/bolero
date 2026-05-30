@@ -5,6 +5,7 @@
 #include "types.hpp"
 
 #include <filesystem>
+#include <unordered_map>
 
 
 namespace blr::core
@@ -21,10 +22,16 @@ class Tex;
 class Mesh;
 class Model;
 
+struct ShaderCacheEntry
+{
+    Ref<Shader> shader;
+    std::filesystem::file_time_type lastWrite;
+};
+
 class AssetManager
 {
 public:
-    AssetManager() = default;
+    AssetManager(const std::filesystem::path& baseDir = "");
     ~AssetManager() = default;
 
     // Prevent copying
@@ -47,6 +54,13 @@ public:
     Ref<Mesh> CreateMesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material);
 
     Ref<Model> CreateModel(const std::filesystem::path& filePath, Ref<Shader> defaultShader);
+
+    void Update();
+
+private:
+    std::filesystem::path m_baseDir;
+
+    std::unordered_map<std::string, ShaderCacheEntry> m_shaderCache;
 };
 
 

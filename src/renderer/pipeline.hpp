@@ -5,6 +5,7 @@
 #include "renderer/pass.hpp"
 #include "core/scene.hpp"
 #include "renderer/renderer.hpp"
+#include "utils/cpu_timer.hpp"
 
 #include <vector>
 
@@ -39,7 +40,30 @@ public:
 
         // Iterates on every (user defined) render pass
         for (auto& pass : m_passes)
-            pass->Execute(scene);
+        {
+            pass->GetGpuTimer().Start();
+            uint32_t drawCallsBefore = Renderer::GetRenderStats().drawCalls;
+            float cpuTime = 0.0f;
+            
+            {
+                utils::CpuTimer cpuTimer(cpuTime);
+                pass->Execute(scene);
+            }
+            
+            pass->GetGpuTimer().Stop();
+            
+            // Profiling
+            PassStats& stats = pass->GetStats();
+            stats.cpuTimeMs  = cpuTime;
+            stats.gpuTimeMs  = pass->GetGpuTimer().GetElapsedMs();
+            stats.drawCalls  = Renderer::GetRenderStats().drawCalls - drawCallsBefore;
+        }
+    }
+
+    void OnResize(uint32_t width, uint32_t height)
+    {
+        for (auto& pass : m_passes)
+            pass->OnResize(width, height);
     }
 
     void Shutdown()
@@ -49,6 +73,8 @@ public:
 
         m_passes.clear();
     }
+
+    const std::vector<Ref<RenderPass>>& GetPasses() const { return m_passes; }
 
 private:
     std::vector<Ref<RenderPass>> m_passes;

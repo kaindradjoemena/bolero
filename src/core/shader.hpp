@@ -45,15 +45,19 @@ public:
     void SetMat3(std::string_view name, const mat3& value);
     void SetMat4(std::string_view name, const mat4& value);
 
+    bool Reload();
+
     GLuint GetRendererID() const { return m_rendererID; }
 
 private:
+    std::filesystem::path m_filePath;
+
     GLuint m_rendererID{0};
     std::unordered_map<std::string, GLint> m_uniformLocCache;
 
     std::string ReadFile(const std::filesystem::path& filePath);
     std::unordered_map<GLenum, std::string> PreProcess(const std::string& src);
-    void Compile(const std::unordered_map<GLenum, std::string>& shaderSources);
+    GLuint Compile(const std::unordered_map<GLenum, std::string>& shaderSources);
 
     GLint GetUniformLocation(std::string_view name);
     void CheckCompileErrors(GLuint object, std::string_view type);

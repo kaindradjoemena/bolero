@@ -13,6 +13,16 @@ namespace blr::core
 {
 
 
+struct RenderStats
+{
+    uint32_t drawCalls = 0;
+    
+    void Reset()
+    {
+        drawCalls = 0;
+    }
+};
+
 class Mesh;
 class Material;
 class Camera;
@@ -93,6 +103,8 @@ public:
     Renderer& operator=(Renderer&& other) = delete;
 
 
+    static const RenderStats& GetRenderStats() { return s_stats; }
+
     static void Init();
     static void Shutdown();
 
@@ -122,6 +134,8 @@ private:
     inline static Ref<ShaderStorageBuffer> s_instanceSSBO;
     inline static Ref<ShaderStorageBuffer> s_lightSSBO;
     inline static Ref<VertexArray>         s_emptyVAO;
+
+    inline static RenderStats s_stats;
 };
 
 

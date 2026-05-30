@@ -14,21 +14,33 @@ namespace blr::core
 {
 
 
+AssetManager::AssetManager(const std::filesystem::path& baseDir)
+: m_baseDir(baseDir)
+{ 
+}
+
 Ref<Shader> AssetManager::CreateShader(const std::filesystem::path& filePath)
 {
-    Ref<Shader> shader = Shader::Create(filePath);
+    std::filesystem::path fullPath = m_baseDir / filePath;
+
+    if (m_shaderCache.find(fullPath.string()) != m_shaderCache.end())
+        return m_shaderCache[fullPath.string()].shader;
+
+    Ref<Shader> shader = Shader::Create(fullPath);
     shader->SetHandle(UUID::Generate());
 
 #if DEBUG_RESOURCE_CREATION_HANDLE
     std::cout << "AssetManager::CreateShader " << shader->GetHandle() << std::endl;
 #endif
 
+    m_shaderCache[fullPath.string()] = { shader, std::filesystem::last_write_time(filePath) };
+
     return shader;
 }
 
 Ref<Tex> AssetManager::CreateTex(const std::filesystem::path& texPath, const TexSpec& texSpec)
 {
-    Ref<Tex> tex = Tex::Create(texPath, texSpec);
+    Ref<Tex> tex = Tex::Create(m_baseDir / texPath, texSpec);
     tex->SetHandle(UUID::Generate());
 
 #if DEBUG_RESOURCE_CREATION_HANDLE
@@ -76,7 +88,7 @@ Ref<Mesh> AssetManager::CreateMesh(std::vector<Vertex> vertices, std::vector<uin
 
 Ref<Model> AssetManager::CreateModel(const std::filesystem::path& filePath, Ref<Shader> defaultShader)
 {
-    Ref<Model> model = Model::Create(filePath, defaultShader, *this);
+    Ref<Model> model = Model::Create(m_baseDir / filePath, defaultShader, *this);
     model->SetHandle(UUID::Generate());
 
 #if DEBUG_RESOURCE_CREATION_HANDLE
@@ -84,6 +96,34 @@ Ref<Model> AssetManager::CreateModel(const std::filesystem::path& filePath, Ref<
 #endif
     
     return model;
+}
+
+void AssetManager::Update()
+{
+    for (auto& [pathStr, item] : m_shaderCache)
+    {
+        try 
+        {
+            auto currentWriteTime = std::filesystem::last_write_time(pathStr);
+            
+            if (currentWriteTime > item.lastWrite)
+            {
+                if (item.shader->Reload())
+                {
+                    std::cout << "AssetManager::Update " << pathStr << '\n';
+                    item.lastWrite = currentWriteTime;
+                }
+                else
+                {
+                    item.lastWrite = currentWriteTime; 
+                }
+            }
+        }
+        catch (const std::filesystem::filesystem_error& e)
+        {
+            std::cerr << e.what() << std::endl;
+        }
+    }
 }
 
 

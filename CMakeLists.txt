@@ -148,16 +148,13 @@ if(BOLERO_BUILD_SANDBOX)
         "${CMAKE_CURRENT_SOURCE_DIR}/sandbox/main.cpp")
 
     target_compile_features(BoleroSandbox PRIVATE cxx_std_17)
-
     target_link_libraries(BoleroSandbox PRIVATE Bolero)
 
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/assets)
-        add_custom_target(copy_assets ALL
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_SOURCE_DIR}/assets
-                $<TARGET_FILE_DIR:BoleroSandbox>/assets
-            COMMENT "Copying assets to BoleroSandbox"
-        )
-        add_dependencies(BoleroSandbox copy_assets)
-    endif()
+    target_compile_definitions(BoleroSandbox PRIVATE 
+        SANDBOX_ROOT_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
+    set_target_properties(BoleroSandbox PROPERTIES 
+        VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
 endif()

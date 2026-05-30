@@ -13,10 +13,11 @@ namespace blr::core
 
 
 Shader::Shader(const std::filesystem::path& filePath)
+    : m_filePath(filePath)
 {
-    std::string src = ReadFile(filePath);
+    std::string src = ReadFile(m_filePath);
     auto shaderSources = PreProcess(src);
-    Compile(shaderSources);
+    m_rendererID = Compile(shaderSources);
 }
 
 Shader::~Shader()
@@ -88,7 +89,7 @@ std::unordered_map<GLenum, std::string> Shader::PreProcess(const std::string& sr
     return shaderSources;
 }
 
-void Shader::Compile(const std::unordered_map<GLenum, std::string>& shaderSources)
+GLuint Shader::Compile(const std::unordered_map<GLenum, std::string>& shaderSources)
 {
     GLuint program = glCreateProgram();
     std::vector<GLuint> glShaderIDs;
@@ -119,7 +120,29 @@ void Shader::Compile(const std::unordered_map<GLenum, std::string>& shaderSource
         glDeleteShader(id);
     }
 
-    m_rendererID = program;
+    return program;
+}
+
+bool Shader::Reload()
+{
+    std::string src = ReadFile(m_filePath);
+    
+    auto shaderSources = PreProcess(src);
+
+    GLuint newProgramID = Compile(shaderSources); 
+
+    if (newProgramID == 0) 
+    {
+        std::cerr << "Shader::Reload failed for: " << m_filePath << "\n";
+        return false; 
+    }
+
+    glDeleteProgram(m_rendererID);
+    m_rendererID = newProgramID;
+
+    m_uniformLocCache.clear();
+    
+    return true;
 }
 
 void Shader::SetBool(std::string_view name, bool value)
@@ -187,7 +210,7 @@ void Shader::CheckCompileErrors(GLuint object, std::string_view type)
         if (!success)
         {
             glGetShaderInfoLog(object, 1024, nullptr, infoLog);
-            std::cerr << "| ERROR::SHADER: Compile-time error\n" << infoLog << "\n" << std::endl;
+            std::cerr << m_filePath.c_str() << " | ERROR::SHADER: Compile-time error\n" << infoLog << "\n" << std::endl;
         }
     }
     else
@@ -196,7 +219,7 @@ void Shader::CheckCompileErrors(GLuint object, std::string_view type)
         if (!success)
         {
             glGetProgramInfoLog(object, 1024, nullptr, infoLog);
-            std::cerr << "| ERROR::SHADER: Link-time error\n" << infoLog << "\n" << std::endl;
+            std::cerr << m_filePath.c_str() << " | ERROR::SHADER: Link-time error\n" << infoLog << "\n" << std::endl;
         }
     }
 }

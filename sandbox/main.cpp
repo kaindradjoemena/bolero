@@ -3,12 +3,22 @@
 #include <bolero.hpp>
 #include "passes/opaque.hpp"  // light pass
 #include "passes/shadow.hpp"  // shadow pass
+#include "passes/post.hpp"
 
 #include <iostream>
 
 namespace blrc = blr::core;
 namespace blra = blr::app;
 
+
+#define XSTR(s) STR(s)
+#define STR(s) #s
+
+#ifdef SANDBOX_ROOT_DIR
+    const std::string ROOT_DIR = XSTR(SANDBOX_ROOT_DIR);
+#else
+    const std::string ROOT_DIR = "";
+#endif
 
 constexpr int         DEFAULT_WINDOW_WIDTH  = 1280;
 constexpr int         DEFAULT_WINDOW_HEIGHT = 720;
@@ -51,13 +61,13 @@ int main()
             });
 
     
-    blrc::AssetManager assetManager;
+    blrc::AssetManager assetManager(ROOT_DIR);
     blrc::Scene        scene;
     scene.SetCam(&cam);
     
     // Model
-    auto shader = assetManager.CreateShader(std::filesystem::path("assets/shaders/light_pass.glsl"));
-    auto model_squaresAndthings = assetManager.CreateModel(std::filesystem::path("assets/models/squares_and_things.gltf"), shader);
+    auto opaqueShader = assetManager.CreateShader(std::filesystem::path("assets/shaders/light_pass.glsl"));
+    auto model_squaresAndthings = assetManager.CreateModel(std::filesystem::path("assets/models/squares_and_things.gltf"), opaqueShader);
     blrc::Transform transform;
     scene.AddEntity(model_squaresAndthings, transform);
 
@@ -67,23 +77,42 @@ int main()
     sun.base.color = blrc::vec3(1.0f, 1.0f, 0.95f);
     scene.AddLight(sun);
 
-    auto depthShader = assetManager.CreateShader("assets/shaders/shadow_pass.glsl");
-
     blrc::Renderer::Init();
     blrc::RenderPipeline shadowMapping;
 
-    blrc::Ref<ShadowPass> shadowPass = std::make_shared<ShadowPass>(depthShader);
-    blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(shader, shadowPass);
+    window.AddResizeCallback([&shadowMapping](uint32_t w, uint32_t h) {
+            shadowMapping.OnResize(w, h);
+        });
 
+    // Render Passes
+    auto depthShader = assetManager.CreateShader("assets/shaders/shadow_pass.glsl");
+    blrc::Ref<ShadowPass> shadowPass = std::make_shared<ShadowPass>(depthShader);
+    
+    blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, opaqueShader, shadowPass);
+    
+    auto postShader = assetManager.CreateShader("assets/shaders/post_pass.glsl");
+    blrc::Ref<PostPass>   postPass   = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader, opaquePass);
+
+    // Add Passes to the pipeline
     shadowMapping.AddPass(shadowPass);
     shadowMapping.AddPass(opaquePass);
+    shadowMapping.AddPass(postPass);
 
 
+    float hotReloadTimer = 0.0;
     while (!window.ShouldClose())
     {
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
+        hotReloadTimer += deltaTime;
+        if (hotReloadTimer > 1.0f)
+        {
+            std::cout << "checking for updates" << "\n";
+            assetManager.Update();
+            hotReloadTimer = 0.0f;
+        }
 
         window.PollEvents();
 
@@ -95,8 +124,15 @@ int main()
 
         shadowMapping.Execute(scene);  // pass scene
 
-        blrc::Renderer::DrawQueue();
-        
+        for (const auto& pass : shadowMapping.GetPasses())
+        {
+            const auto& passStats = pass->GetStats();
+            std::cout << "  [" << pass->GetName() << "] " 
+                      << " CPU: " << passStats.cpuTimeMs << "ms"
+                      << " | GPU: " << passStats.gpuTimeMs << "ms"
+                      << " | Draws: " << passStats.drawCalls << "\n";
+        }
+
         window.SwapBuffers();
     }
 

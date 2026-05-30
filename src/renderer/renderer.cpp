@@ -43,7 +43,7 @@ void Renderer::Init()
     s_lightSSBO = ShaderStorageBuffer::Create();
     s_lightSSBO->Bind(2);
 
-    s_emptyVAO = VertexArray::Create();    
+    s_emptyVAO = VertexArray::Create();
 }
 
 void Renderer::Shutdown()
@@ -59,6 +59,8 @@ void Renderer::BeginFrame()
     s_dirLightBuffer.clear();
     s_pointLightBuffer.clear();
     s_spotLightBuffer.clear();
+
+    s_stats.Reset();
 }
 
 void Renderer::UpdateCameraUBO(const Camera& camera)
@@ -180,6 +182,8 @@ void Renderer::DrawQueue(Shader* overrideShader)
         }
 
         glDrawElements(GL_TRIANGLES, task.mesh->GetIBO()->GetCount(), GL_UNSIGNED_INT, nullptr);
+    
+        s_stats.drawCalls++;
     }
 }
 
@@ -187,6 +191,8 @@ void Renderer::DrawFullscreenQuad()
 {
     s_emptyVAO->Bind();
     glDrawArrays(GL_TRIANGLES, 0, 3);   // make the triangle in the vertex shader
+
+    s_stats.drawCalls++;
 }
 
 

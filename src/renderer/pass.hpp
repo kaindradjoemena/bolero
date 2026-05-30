@@ -4,11 +4,19 @@
 
 #include "core/types.hpp"
 #include <string>
+#include "utils/gpu_timer.hpp"
 
 
 namespace blr::core
 {
 
+
+struct PassStats
+{
+    float    cpuTimeMs = 0.0f;
+    float    gpuTimeMs = 0.0f;
+    uint32_t drawCalls = 0;
+};
 
 class Scene;
 
@@ -25,13 +33,27 @@ public:
     // Called every frame.
     virtual void Execute(Scene& scene) = 0;
 
+    // Resizing behavior.
+    // Useful for enabling window responsiveness
+    virtual void OnResize(uint32_t width, uint32_t height)
+    {
+    }
+
     // Called when done
     virtual void Shutdown() = 0;
 
     const std::string& GetName() const { return m_name; }
 
+    utils::GpuTimer& GetGpuTimer() { return m_gpuTimer; }
+    PassStats&       GetStats()    { return m_stats; }
+    const PassStats& GetStats() const { return m_stats; }
+
 protected:
     std::string m_name;
+
+private:
+    utils::GpuTimer m_gpuTimer;
+    PassStats       m_stats;
 };
 
 
