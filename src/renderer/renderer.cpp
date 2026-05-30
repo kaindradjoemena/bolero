@@ -63,11 +63,16 @@ void Renderer::BeginFrame()
 
 void Renderer::UpdateCameraUBO(const Camera& camera)
 {
+    Renderer::UpdateCameraUBO(camera.GetViewMat(), camera.GetProjMat(), camera.GetPos());
+}
+
+void Renderer::UpdateCameraUBO(const mat4& view, const mat4& proj, const vec3& pos)
+{
     CameraFrameData camData;
-    camData.view = camera.GetViewMat();
-    camData.projection = camera.GetProjMat();
-    camData.viewProj = camData.projection * camData.view;
-    camData.cameraPosAndTime = vec4(camera.GetPos(), (float)glfwGetTime());
+    camData.view             = view;
+    camData.projection       = proj;
+    camData.viewProj         = camData.projection * camData.view;
+    camData.cameraPosAndTime = vec4(pos, (float)glfwGetTime());
 
     s_cameraUBO->SetData(&camData, sizeof(CameraFrameData), 0);
 }

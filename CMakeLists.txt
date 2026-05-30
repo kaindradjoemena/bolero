@@ -7,23 +7,21 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# ── Options ───────────────────────────────────────────────────────────────────
+
 option(BOLERO_BUILD_SHARED  "Build Bolero as a shared library" OFF)
 option(BOLERO_BUILD_SANDBOX "Build the sandbox executable"     ON)
 
-# If Bolero is being consumed via add_subdirectory() in another project, 
-# do not build the sandbox testbench by default.
+
 if(NOT CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(BOLERO_BUILD_SANDBOX OFF)
 endif()
 
-# ── Output dirs ───────────────────────────────────────────────────────────────
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# ── Dependencies ──────────────────────────────────────────────────────────────
-# Try to find packages locally first (useful for vcpkg/system package managers)
+
 find_package(glfw3  QUIET)
 find_package(glm    QUIET)
 find_package(assimp QUIET)
@@ -55,7 +53,6 @@ if(NOT assimp_FOUND)
         GIT_TAG        v6.0.5
         GIT_SHALLOW    TRUE)
     
-    # The Assimp Diet: Turn off everything except the importers we actually need
     set(ASSIMP_BUILD_TESTS                    OFF CACHE BOOL "" FORCE)
     set(ASSIMP_BUILD_ASSIMP_TOOLS             OFF CACHE BOOL "" FORCE)
     set(ASSIMP_INSTALL                        OFF CACHE BOOL "" FORCE)
@@ -65,14 +62,14 @@ if(NOT assimp_FOUND)
     set(ASSIMP_BUILD_GLTF_IMPORTER            ON  CACHE BOOL "" FORCE)
     set(ASSIMP_BUILD_OBJ_IMPORTER             ON  CACHE BOOL "" FORCE)
     set(ASSIMP_BUILD_FBX_IMPORTER             ON  CACHE BOOL "" FORCE)
-    set(ASSIMP_NO_EXPORT                      ON  CACHE BOOL "" FORCE) # Massive speedup
+    set(ASSIMP_NO_EXPORT                      ON  CACHE BOOL "" FORCE)
     set(ASSIMP_BUILD_ZLIB                     ON  CACHE BOOL "" FORCE)
     set(ASSIMP_WARNINGS_AS_ERRORS             OFF CACHE BOOL "" FORCE)
     set(BUILD_SHARED_LIBS                     OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(assimp)
 endif()
 
-# ── GLAD ──────────────────────────────────────────────────────────────────────
+
 set(GLAD_C_SOURCE    ${CMAKE_CURRENT_SOURCE_DIR}/extern/glad/src/glad.c)
 set(GLAD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/glad/include)
 
@@ -82,7 +79,7 @@ if(NOT EXISTS ${GLAD_C_SOURCE})
         "Generate GLAD (https://glad.dav1d.de) and place it in extern/glad/")
 endif()
 
-# ── Engine library ────────────────────────────────────────────────────────────
+
 file(GLOB_RECURSE BOLERO_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
@@ -95,8 +92,6 @@ else()
     add_library(Bolero STATIC ${BOLERO_SOURCES})
 endif()
 
-# PUBLIC:  Consumers get these automatically when they link Bolero
-# PRIVATE: Only needed when compiling Bolero itself
 target_include_directories(Bolero PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
     $<BUILD_INTERFACE:${GLAD_INCLUDE_DIR}>
@@ -108,11 +103,10 @@ target_include_directories(Bolero PRIVATE
     $<$<NOT:$<BOOL:${assimp_FOUND}>>:${assimp_SOURCE_DIR}/include>
 )
 
-# Export GLFW and GLM to users. Hide Assimp so it doesn't pollute their namespace.
 target_link_libraries(Bolero PUBLIC  glfw glm::glm)
 target_link_libraries(Bolero PRIVATE assimp)
 
-# ── Platform ──────────────────────────────────────────────────────────────────
+
 if(WIN32)
     target_compile_definitions(Bolero PUBLIC BOLERO_PLATFORM_WINDOWS)
     target_link_libraries(Bolero PRIVATE opengl32)
@@ -141,24 +135,22 @@ elseif(UNIX)
     target_link_libraries(Bolero PRIVATE OpenGL::GL ${CMAKE_DL_LIBS})
 endif()
 
-# ── Warnings ──────────────────────────────────────────────────────────────────
+
 if(MSVC)
     target_compile_options(Bolero PRIVATE /W4 /permissive-)
 else()
     target_compile_options(Bolero PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-# ── Sandbox ───────────────────────────────────────────────────────────────────
+
 if(BOLERO_BUILD_SANDBOX)
     add_executable(BoleroSandbox
         "${CMAKE_CURRENT_SOURCE_DIR}/sandbox/main.cpp")
-    
-    # Enforce C++17 for the sandbox testbench
+
     target_compile_features(BoleroSandbox PRIVATE cxx_std_17)
 
     target_link_libraries(BoleroSandbox PRIVATE Bolero)
 
-    # Copy assets from the root to the sandbox binary directory
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/assets)
         add_custom_target(copy_assets ALL
             COMMAND ${CMAKE_COMMAND} -E copy_directory

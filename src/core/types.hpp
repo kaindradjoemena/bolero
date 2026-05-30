@@ -51,6 +51,9 @@ inline
 quat EulToQuat(vec3 e) { return quat(e); }
 
 inline
+vec3 EulToDir(vec3 e) { return glm::normalize(glm::quat(glm::radians(e)) * glm::vec3(0.0f, 0.0f, -1.0f)); }
+
+inline
 vec3 Norm(vec3 v) { return glm::normalize(v); }
 
 inline
@@ -73,6 +76,9 @@ mat4 LookAt(const vec3& eye, const vec3& center, const vec3& up) { return glm::l
 
 inline
 mat4 Perspective(float rad, float aspect, float near, float far) { return glm::perspective(rad, aspect, near, far); }
+
+inline
+mat4 Ortho(float left, float right, float bottom, float top, float near, float far) { return glm::ortho(left, right, bottom, top, near, far); }
 
 /* ===== TRANSFORMS ===== */
 struct Transform

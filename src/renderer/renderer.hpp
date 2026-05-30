@@ -99,6 +99,7 @@ public:
     static void BeginFrame();
 
     static void UpdateCameraUBO(const Camera& camera);
+    static void UpdateCameraUBO(const mat4& view, const mat4& proj, const vec3& pos);
     static void UploadBuffers(); 
     
     static void Submit(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform);

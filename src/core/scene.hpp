@@ -44,6 +44,10 @@ public:
     void SetCam(Camera* camera) { m_cam = camera; }
     Camera* GetCam() const { return m_cam; }
 
+    const std::vector<DirLight>& GetDirLights() const { return m_dirLights; }
+    const std::vector<PointLight>& GetPointLights() const { return m_pointLights; }
+    const std::vector<SpotLight>& GetSpotLights() const { return m_spotLights; }
+
     void AddEntity(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform);
     void AddEntity(const Ref<Model>& model, const Transform& transform);
     void AddLight(const DirLight& light);
@@ -58,9 +62,9 @@ private:
     Camera* m_cam = nullptr;
 
     std::vector<Renderable> m_renderables;
-    std::vector<DirLight> m_dirLights;
+    std::vector<DirLight>   m_dirLights;
     std::vector<PointLight> m_pointLights;
-    std::vector<SpotLight> m_spotLights;
+    std::vector<SpotLight>  m_spotLights;
 };
 
 

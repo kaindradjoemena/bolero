@@ -68,7 +68,7 @@ Ref<Mesh> AssetManager::CreateMesh(std::vector<Vertex> vertices, std::vector<uin
     mesh->SetHandle(UUID::Generate());
 
 #if DEBUG_RESOURCE_CREATION_HANDLE
-    std::cout << "AssetManager::CreateMesh" << mesh->GetHandle() << std::endl;
+    std::cout << "AssetManager::CreateMesh " << mesh->GetHandle() << std::endl;
 #endif    
 
     return mesh;

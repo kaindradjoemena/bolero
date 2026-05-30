@@ -31,3 +31,14 @@
 #include "core/material.hpp"
 #include "core/shader.hpp"
 #include "core/lights.hpp"
+
+
+// Force GPU usage
+#ifdef _WIN32
+    extern "C"
+    {
+        __declspec(dllexport) uint32_t NvOptimusEnablement = 1;
+        
+        __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+    }
+#endif
