@@ -2,6 +2,7 @@
 
 #include <bolero.hpp>
 #include "passes/opaque.hpp"
+#include "core/render_context.hpp"
 
 namespace blrc = blr::core;
 
@@ -22,7 +23,7 @@ public:
     {
     }
 
-    void Execute(blrc::Scene& scene) override
+    void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
         glDisable(GL_DEPTH_TEST);     
         glDisable(GL_CULL_FACE);
@@ -35,7 +36,7 @@ public:
         m_postShader->Bind();
 
         m_postShader->SetInt("u_ScreenTexture", 15);
-        glBindTextureUnit(15, m_opaquePass->GetColorMap());
+        glBindTextureUnit(15, renderCtx.GetTexture("OPAQUE_PASS_TEX"));
 
         blrc::Renderer::DrawFullscreenQuad();
 

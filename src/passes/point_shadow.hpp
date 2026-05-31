@@ -2,6 +2,7 @@
 
 #include <bolero.hpp>
 #include "core/lights.hpp"
+#include "core/render_context.hpp"
 
 namespace blrc = blr::core;
 
@@ -20,7 +21,7 @@ public:
         m_fbo = blrc::FrameBuffer::Create({ 1024, 1024, { {blrc::ImgFmt::Depth32F, true} } });
     }
 
-    void Execute(blrc::Scene& scene) override
+    void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
         m_fbo->Bind();
 
@@ -65,11 +66,12 @@ public:
 
         glCullFace(GL_BACK);
         m_fbo->Unbind();
+
+
+        renderCtx.SetTexture("u_PointDepthMapTex", m_fbo->GetDepthAttachmentID());
     }
 
     void Shutdown() override {}
-
-    GLuint GetDepthMap() const { return m_fbo->GetDepthAttachmentID(); }
 
 private:
     blrc::Ref<blrc::FrameBuffer> m_fbo;

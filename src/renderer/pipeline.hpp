@@ -14,6 +14,8 @@ namespace blr::core
 {
 
 
+class RenderContext;
+
 class RenderPipeline
 {
 public:
@@ -30,7 +32,7 @@ public:
         m_passes.push_back(pass);
     }
 
-    void Execute(Scene& scene)
+    void Execute(Scene& scene, RenderContext& renderCtx)
     {
         // Submits the scene data (renderables, lights, transforms) to the GPU
         scene.SubmitToRenderer();
@@ -47,7 +49,7 @@ public:
             
             {
                 utils::CpuTimer cpuTimer(cpuTime);
-                pass->Execute(scene);
+                pass->Execute(scene, renderCtx);
             }
             
             pass->GetGpuTimer().Stop();

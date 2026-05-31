@@ -3,6 +3,7 @@
 #pragma once
 
 #include "core/types.hpp"
+#include "core/render_context.hpp"
 #include <string>
 #include "utils/gpu_timer.hpp"
 
@@ -31,7 +32,7 @@ public:
 
     // This is where you configure GL state and issue Renderer draw commands.
     // Called every frame.
-    virtual void Execute(Scene& scene) = 0;
+    virtual void Execute(Scene& scene, RenderContext& renderCtx) = 0;
 
     // Resizing behavior.
     // Useful for enabling window responsiveness

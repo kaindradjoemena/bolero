@@ -20,7 +20,7 @@ public:
         m_fbo = blrc::FrameBuffer::Create({ 1024, 1024, { blrc::ImgFmt::Depth32F } });
     }
 
-    void Execute(blrc::Scene& scene) override
+    void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
         m_fbo->Bind();
 
@@ -44,24 +44,26 @@ public:
         float shadowDist     = 40.0f;
         blrc::vec3 lightPos  = targetPos - (lightDir * shadowDist);
 
-        blrc::mat4 lightView = blrc::LookAt(lightPos, targetPos, blrc::vec3(0.0f, 1.0f, 0.0f));
-        blrc::mat4 lightProj = blrc::Ortho(-40.0f, 40.0f, -40.0f, 40.0f, 1.0f, 80.0f);
-        m_lightSpaceMatrix   = lightProj * lightView;
+        blrc::mat4 lightView          = blrc::LookAt(lightPos, targetPos, blrc::vec3(0.0f, 1.0f, 0.0f));
+        blrc::mat4 lightProj          = blrc::Ortho(-40.0f, 40.0f, -40.0f, 40.0f, 1.0f, 80.0f);
+        blrc::mat4 u_lightSpaceMatrix = lightProj * lightView;
 
         blrc::Renderer::UpdateCameraUBO(lightView, lightProj, lightPos);
         blrc::Renderer::DrawQueue(m_depthShader.get()); 
 
         glCullFace(GL_BACK);
         m_fbo->Unbind();
+
+
+        renderCtx.SetTexture("u_DirDepthMapTex", m_fbo->GetDepthAttachmentID());
+        renderCtx.SetMat4("u_DirLightSpaceMat", u_lightSpaceMatrix);
     }
 
-    void Shutdown() override {}
-
-    GLuint GetDepthMap() const { return m_fbo->GetDepthAttachmentID(); }
-    const blrc::mat4& GetLightSpaceMat() const { return m_lightSpaceMatrix; }
+    void Shutdown() override
+    {
+    }
 
 private:
     blrc::Ref<blrc::FrameBuffer> m_fbo;
-    blrc::mat4 m_lightSpaceMatrix;
     blrc::Ref<blrc::Shader> m_depthShader;
 };

@@ -6,6 +6,7 @@
 #include "passes/spot_shadow.hpp"
 #include "passes/point_shadow.hpp"
 #include "passes/post.hpp"
+#include "core/render_context.hpp"
 
 #include <iostream>
 
@@ -128,19 +129,15 @@ int main()
         });
 
     // Render Passes
-    auto depthShader = assetManager.CreateShader("assets/shaders/shadow_pass.glsl");
+    auto depthShader      = assetManager.CreateShader("assets/shaders/shadow_pass.glsl");
     auto pointDepthShader = assetManager.CreateShader("assets/shaders/point_shadow_pass.glsl");
-    blrc::Ref<DirShadowPass> dirShadowPass     = std::make_shared<DirShadowPass>(depthShader);
-    blrc::Ref<SpotShadowPass> spotShadowPass   = std::make_shared<SpotShadowPass>(depthShader);
+    blrc::Ref<DirShadowPass>   dirShadowPass   = std::make_shared<DirShadowPass>(depthShader);
+    blrc::Ref<SpotShadowPass>  spotShadowPass  = std::make_shared<SpotShadowPass>(depthShader);
     blrc::Ref<PointShadowPass> pointShadowPass = std::make_shared<PointShadowPass>(pointDepthShader);
-
-    blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, opaqueShader
-                                                                   , dirShadowPass
-                                                                   , spotShadowPass
-                                                                   , pointShadowPass);
+    blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, opaqueShader);
     
     auto postShader = assetManager.CreateShader("assets/shaders/post_pass.glsl");
-    blrc::Ref<PostPass>   postPass   = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader, opaquePass);
+    blrc::Ref<PostPass> postPass = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader, opaquePass);
 
     // Add Passes to the pipeline
     shadowMapping.AddPass(dirShadowPass);
@@ -149,6 +146,8 @@ int main()
     shadowMapping.AddPass(opaquePass);
     shadowMapping.AddPass(postPass);
 
+
+    blrc::RenderContext renderCtx;  // Render pass interface
 
     float hotReloadTimer = 0.0;
     while (!window.ShouldClose())
@@ -172,7 +171,8 @@ int main()
         
         scene.Update(deltaTime, true);
 
-        shadowMapping.Execute(scene);  // pass scene
+        renderCtx.Clear();
+        shadowMapping.Execute(scene, renderCtx);  // pass scene
 
         // for (const auto& pass : shadowMapping.GetPasses())
         // {

@@ -2,6 +2,7 @@
 
 #include <bolero.hpp>
 #include "core/lights.hpp"
+#include "core/render_context.hpp"
 
 namespace blrc = blr::core;
 
@@ -20,7 +21,7 @@ public:
         m_fbo = blrc::FrameBuffer::Create({ 1024, 1024, { blrc::ImgFmt::Depth32F } });
     }
 
-    void Execute(blrc::Scene& scene) override
+    void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
         m_fbo->Bind();
 
@@ -49,22 +50,22 @@ public:
         float fov = acos(spot.outerCos) * 2.0f;
         blrc::mat4 lightProj = blrc::Perspective(fov, 1.0f, 1.0f, 100.0f);
         
-        m_lightSpaceMatrix = lightProj * lightView;
+        blrc::mat4 u_lightSpaceMatrix = lightProj * lightView;
 
         blrc::Renderer::UpdateCameraUBO(lightView, lightProj, lightPos);
         blrc::Renderer::DrawQueue(m_depthShader.get()); 
 
         glCullFace(GL_BACK);
         m_fbo->Unbind();
+
+
+        renderCtx.SetTexture("u_SpotDepthMapTex", m_fbo->GetDepthAttachmentID());
+        renderCtx.SetMat4("u_SpotLightSpaceMat", u_lightSpaceMatrix);
     }
 
     void Shutdown() override {}
 
-    GLuint GetDepthMap() const { return m_fbo->GetDepthAttachmentID(); }
-    const blrc::mat4& GetLightSpaceMat() const { return m_lightSpaceMatrix; }
-
 private:
     blrc::Ref<blrc::FrameBuffer> m_fbo;
-    blrc::mat4 m_lightSpaceMatrix;
     blrc::Ref<blrc::Shader> m_depthShader;
 };
