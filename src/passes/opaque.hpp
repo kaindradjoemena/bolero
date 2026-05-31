@@ -1,7 +1,9 @@
 #pragma once
 
 #include <bolero.hpp>
-#include "shadow.hpp"
+#include "dir_shadow.hpp"
+#include "spot_shadow.hpp"
+#include "point_shadow.hpp"
 
 namespace blrc = blr::core;
 
@@ -9,12 +11,17 @@ namespace blrc = blr::core;
 class OpaquePass : public blrc::RenderPass
 {
 public:
-    OpaquePass(uint32_t initW, uint32_t initH, const blrc::Ref<blrc::Shader>& lightShader, const blrc::Ref<ShadowPass>& shadowPass)
+    OpaquePass(uint32_t initW, uint32_t initH, const blrc::Ref<blrc::Shader>& lightShader
+              , const blrc::Ref<DirShadowPass>& dirShadowPass
+              , const blrc::Ref<SpotShadowPass>& spotShadowPass
+              , const blrc::Ref<PointShadowPass>& pointShadowPass)
     : RenderPass("Main Opaque Pass")
     , m_initW(initW)
     , m_initH(initH)
     , m_lightShader(lightShader)
-    , m_shadowPass(shadowPass)
+    , m_dirShadowPass(dirShadowPass)
+    , m_spotShadowPass(spotShadowPass)
+    , m_pointShadowPass(pointShadowPass)
     {
     }
 
@@ -37,10 +44,18 @@ public:
 
         blrc::Renderer::UpdateCameraUBO(*scene.GetCam());
 
-        m_lightShader->SetMat4("u_LightSpaceMat", m_shadowPass->GetLightSpaceMat());
-        
-        m_lightShader->SetInt("u_depthMapTex", 10);
-        glBindTextureUnit(10, m_shadowPass->GetDepthMap());
+        m_lightShader->SetMat4("u_DirLightSpaceMat", m_dirShadowPass->GetLightSpaceMat());
+        m_lightShader->SetMat4("u_SpotLightSpaceMat", m_spotShadowPass->GetLightSpaceMat());
+
+        m_lightShader->SetInt("u_DirDepthMapTex", 10);
+        glBindTextureUnit(10, m_dirShadowPass->GetDepthMap());
+
+        m_lightShader->SetInt("u_SpotDepthMapTex", 11);
+        glBindTextureUnit(11, m_spotShadowPass->GetDepthMap());
+
+        m_lightShader->SetInt("u_PointDepthMapTex", 12);
+        glBindTextureUnit(12, m_pointShadowPass->GetDepthMap());
+        m_lightShader->SetFloat("u_PointFarPlane", scene.GetPointLights()[0].range);
 
         blrc::Renderer::DrawQueue(nullptr);
 
@@ -62,5 +77,8 @@ private:
 
     blrc::Ref<blrc::FrameBuffer> m_fbo;
     blrc::Ref<blrc::Shader> m_lightShader;
-    blrc::Ref<ShadowPass>   m_shadowPass;
+
+    blrc::Ref<DirShadowPass>   m_dirShadowPass;
+    blrc::Ref<SpotShadowPass>  m_spotShadowPass;
+    blrc::Ref<PointShadowPass> m_pointShadowPass;
 };

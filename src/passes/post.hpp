@@ -25,7 +25,7 @@ public:
     void Execute(blrc::Scene& scene) override
     {
         glDisable(GL_DEPTH_TEST);     
-        glDisable(GL_CULL_FACE);  
+        glDisable(GL_CULL_FACE);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, m_windowW, m_windowH); 
@@ -34,8 +34,8 @@ public:
 
         m_postShader->Bind();
 
-        m_postShader->SetInt("u_ScreenTexture", 11);
-        glBindTextureUnit(11, m_opaquePass->GetColorMap());
+        m_postShader->SetInt("u_ScreenTexture", 15);
+        glBindTextureUnit(15, m_opaquePass->GetColorMap());
 
         blrc::Renderer::DrawFullscreenQuad();
 

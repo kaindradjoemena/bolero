@@ -234,9 +234,14 @@ struct TexSpec
 
 struct FBAttachmentSpec
 {
-    ImgFmt format = ImgFmt::None;
+    ImgFmt format  = ImgFmt::None;
+    bool isCubemap = false;
+
     FBAttachmentSpec() = default;
-    FBAttachmentSpec(ImgFmt fmt) : format(fmt) {} 
+    FBAttachmentSpec(ImgFmt fmt, bool cubemap = false)
+    : format(fmt), isCubemap(cubemap)
+    {
+    } 
 };
 
 struct FBSpec

@@ -6,11 +6,11 @@
 namespace blrc = blr::core;
 
 
-class ShadowPass : public blrc::RenderPass
+class SpotShadowPass : public blrc::RenderPass
 {
 public:
-    ShadowPass(const blrc::Ref<blrc::Shader>& depthShader)
-    : RenderPass("Shadow Pass")
+    SpotShadowPass(const blrc::Ref<blrc::Shader>& depthShader)
+    : RenderPass("Spot Shadow Pass")
     , m_depthShader(depthShader)
     {
     }
@@ -30,20 +30,26 @@ public:
         glCullFace(GL_FRONT);
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        auto dirLights = scene.GetDirLights();
-        if (dirLights.empty()) 
+        auto spotLights = scene.GetSpotLights();
+        if (spotLights.empty()) 
+        {
+            m_fbo->Unbind();
             return;
-            
-        blrc::DirLight sun = dirLights[0];
+        }
 
-        blrc::vec3 lightDir  = blrc::Norm(sun.direction);
-        blrc::vec3 targetPos = blrc::vec3(0.0f, 0.0f, 0.0f);
-        float shadowDist     = 40.0f;
-        blrc::vec3 lightPos  = targetPos - (lightDir * shadowDist);
+        blrc::SpotLight spot = spotLights[0];
 
-        blrc::mat4 lightView = blrc::LookAt(lightPos, targetPos, blrc::vec3(0.0f, 1.0f, 0.0f));
-        blrc::mat4 lightProj = blrc::Ortho(-40.0f, 40.0f, -40.0f, 40.0f, 1.0f, 80.0f);
-        m_lightSpaceMatrix   = lightProj * lightView;
+        blrc::vec3 lightPos = spot.position;
+        blrc::vec3 lightDir = blrc::Norm(spot.direction);
+
+        blrc::vec3 up = (abs(lightDir.y) > 0.999f) ? blrc::vec3(0.0f, 0.0f, 1.0f) : blrc::vec3(0.0f, 1.0f, 0.0f);
+
+        blrc::mat4 lightView = blrc::LookAt(lightPos, lightPos + lightDir, up);
+        
+        float fov = acos(spot.outerCos) * 2.0f;
+        blrc::mat4 lightProj = blrc::Perspective(fov, 1.0f, 1.0f, 100.0f);
+        
+        m_lightSpaceMatrix = lightProj * lightView;
 
         blrc::Renderer::UpdateCameraUBO(lightView, lightProj, lightPos);
         blrc::Renderer::DrawQueue(m_depthShader.get()); 

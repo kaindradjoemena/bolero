@@ -2,7 +2,9 @@
 
 #include <bolero.hpp>
 #include "passes/opaque.hpp"  // light pass
-#include "passes/shadow.hpp"  // shadow pass
+#include "passes/dir_shadow.hpp"  // shadow pass
+#include "passes/spot_shadow.hpp"
+#include "passes/point_shadow.hpp"
 #include "passes/post.hpp"
 
 #include <iostream>
@@ -75,7 +77,27 @@ int main()
     blrc::DirLight sun;
     sun.direction  = blrc::EulToDir({ -45.0f, 45.0f, 0.0f });
     sun.base.color = blrc::vec3(1.0f, 1.0f, 0.95f);
+    sun.base.power = 0.0;
     scene.AddLight(sun);
+
+    // Spot light
+    blrc::SpotLight spotLight;
+    spotLight.position   = blrc::vec3(0.0f, 10.0f, 0.0f);
+    spotLight.direction  = blrc::EulToDir({ -90.0f, 0.0f, 0.0f });
+    spotLight.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
+    spotLight.base.power = 0.0f;
+    spotLight.length     = 50.0f;
+    spotLight.innerCos   = std::cos(blrc::DegToRad(12.5f)); 
+    spotLight.outerCos   = std::cos(blrc::DegToRad(17.5f));
+    scene.AddLight(spotLight);
+
+    // Point light
+    blrc::PointLight pointLight;
+    pointLight.position   = blrc::vec3(0.0f, 5.0f, 0.0f);
+    pointLight.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
+    pointLight.range      = 50.0f;
+    pointLight.base.power = 50.0f;
+    scene.AddLight(pointLight);
 
     blrc::Renderer::Init();
     blrc::RenderPipeline shadowMapping;
@@ -86,15 +108,23 @@ int main()
 
     // Render Passes
     auto depthShader = assetManager.CreateShader("assets/shaders/shadow_pass.glsl");
-    blrc::Ref<ShadowPass> shadowPass = std::make_shared<ShadowPass>(depthShader);
-    
-    blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, opaqueShader, shadowPass);
+    auto pointDepthShader = assetManager.CreateShader("assets/shaders/point_shadow_pass.glsl");
+    blrc::Ref<DirShadowPass> dirShadowPass     = std::make_shared<DirShadowPass>(depthShader);
+    blrc::Ref<SpotShadowPass> spotShadowPass   = std::make_shared<SpotShadowPass>(depthShader);
+    blrc::Ref<PointShadowPass> pointShadowPass = std::make_shared<PointShadowPass>(pointDepthShader);
+
+    blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, opaqueShader
+                                                                   , dirShadowPass
+                                                                   , spotShadowPass
+                                                                   , pointShadowPass);
     
     auto postShader = assetManager.CreateShader("assets/shaders/post_pass.glsl");
     blrc::Ref<PostPass>   postPass   = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader, opaquePass);
 
     // Add Passes to the pipeline
-    shadowMapping.AddPass(shadowPass);
+    shadowMapping.AddPass(dirShadowPass);
+    shadowMapping.AddPass(spotShadowPass);
+    shadowMapping.AddPass(pointShadowPass);
     shadowMapping.AddPass(opaquePass);
     shadowMapping.AddPass(postPass);
 

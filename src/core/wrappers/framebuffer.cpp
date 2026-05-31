@@ -54,6 +54,7 @@ void FrameBuffer::Invalidate()
 
     glCreateFramebuffers(1, &m_rendererID);
 
+    // Color
     if (!m_colorSpecs.empty())
     {
         m_colorAttachments.resize(m_colorSpecs.size());
@@ -74,22 +75,42 @@ void FrameBuffer::Invalidate()
         }
     }
 
+    // Depth
     if (m_depthSpec.format != ImgFmt::None)
     {
-        glCreateTextures(GL_TEXTURE_2D, 1, &m_depthAttachment);
-
         GLenum internalFormat = ImgFmtToGLFmt(m_depthSpec.format);
-        glTextureStorage2D(m_depthAttachment, 1, internalFormat, m_spec.w, m_spec.h);
-        
-        glTextureParameteri(m_depthAttachment, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTextureParameteri(m_depthAttachment, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        glTextureParameterfv(m_depthAttachment, GL_TEXTURE_BORDER_COLOR, borderColor);
+        GLenum attachmentType = (m_depthSpec.format == ImgFmt::Depth24Stencil8)
+                                ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
 
-        GLenum attachmentType = (m_depthSpec.format == ImgFmt::Depth24Stencil8) ? GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT;
-        glNamedFramebufferTexture(m_rendererID, attachmentType, m_depthAttachment, 0);
+        // For cubemaps
+        if (m_depthSpec.isCubemap)
+        {
+            glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_depthAttachment);
+            
+            glTextureStorage2D(m_depthAttachment, 1, internalFormat, m_spec.w, m_spec.h);
+            
+            glTextureParameteri(m_depthAttachment, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTextureParameteri(m_depthAttachment, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+            glNamedFramebufferTexture(m_rendererID, attachmentType, m_depthAttachment, 0);
+        }
+        else
+        {
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_depthAttachment);
+            glTextureStorage2D(m_depthAttachment, 1, internalFormat, m_spec.w, m_spec.h);
+            
+            glTextureParameteri(m_depthAttachment, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTextureParameteri(m_depthAttachment, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTextureParameteri(m_depthAttachment, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+            float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+            glTextureParameterfv(m_depthAttachment, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+            glNamedFramebufferTexture(m_rendererID, attachmentType, m_depthAttachment, 0);
+        }
     }
 
     if (m_colorAttachments.empty())
