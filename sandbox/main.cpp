@@ -69,7 +69,7 @@ int main()
     
     // Model
     auto opaqueShader = assetManager.CreateShader(std::filesystem::path("assets/shaders/light_pass.glsl"));
-    auto model_squaresAndthings = assetManager.CreateModel(std::filesystem::path("assets/models/squares_and_things.gltf"), opaqueShader);
+    auto model_squaresAndthings = assetManager.CreateModel(std::filesystem::path("assets/models/metal_rough_balls.gltf"), opaqueShader);
     blrc::Transform transform;
     scene.AddEntity(model_squaresAndthings, transform);
 
@@ -92,12 +92,33 @@ int main()
     scene.AddLight(spotLight);
 
     // Point light
-    blrc::PointLight pointLight;
-    pointLight.position   = blrc::vec3(0.0f, 5.0f, 0.0f);
-    pointLight.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
-    pointLight.range      = 50.0f;
-    pointLight.base.power = 50.0f;
-    scene.AddLight(pointLight);
+    blrc::PointLight pointLight1;
+    pointLight1.position   = blrc::vec3(10.0f, 10.0f, 10.0f);
+    pointLight1.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
+    pointLight1.range      = 40.0f;
+    pointLight1.base.power = 1000.0f;
+    scene.AddLight(pointLight1);
+        
+    blrc::PointLight pointLight2;
+    pointLight2.position   = blrc::vec3(-10.0f, 10.0f, 10.0f);
+    pointLight2.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
+    pointLight2.range      = 40.0f;
+    pointLight2.base.power = 1000.0f;
+    scene.AddLight(pointLight2);
+    
+    blrc::PointLight pointLight3;
+    pointLight3.position   = blrc::vec3(10.0f, -10.0f, 10.0f);
+    pointLight3.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
+    pointLight3.range      = 40.0f;
+    pointLight3.base.power = 1000.0f;
+    scene.AddLight(pointLight3);
+    
+    blrc::PointLight pointLight4;
+    pointLight4.position   = blrc::vec3(-10.0f, -10.0f, 10.0f);
+    pointLight4.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
+    pointLight4.range      = 40.0f;
+    pointLight4.base.power = 1000.0f;
+    scene.AddLight(pointLight4);
 
     blrc::Renderer::Init();
     blrc::RenderPipeline shadowMapping;
@@ -139,7 +160,6 @@ int main()
         hotReloadTimer += deltaTime;
         if (hotReloadTimer > 1.0f)
         {
-            std::cout << "checking for updates" << "\n";
             assetManager.Update();
             hotReloadTimer = 0.0f;
         }
@@ -154,14 +174,14 @@ int main()
 
         shadowMapping.Execute(scene);  // pass scene
 
-        for (const auto& pass : shadowMapping.GetPasses())
-        {
-            const auto& passStats = pass->GetStats();
-            std::cout << "  [" << pass->GetName() << "] " 
-                      << " CPU: " << passStats.cpuTimeMs << "ms"
-                      << " | GPU: " << passStats.gpuTimeMs << "ms"
-                      << " | Draws: " << passStats.drawCalls << "\n";
-        }
+        // for (const auto& pass : shadowMapping.GetPasses())
+        // {
+        //     const auto& passStats = pass->GetStats();
+        //     std::cout << "  [" << pass->GetName() << "] " 
+        //               << " CPU: " << passStats.cpuTimeMs << "ms"
+        //               << " | GPU: " << passStats.gpuTimeMs << "ms"
+        //               << " | Draws: " << passStats.drawCalls << "\n";
+        // }
 
         window.SwapBuffers();
     }

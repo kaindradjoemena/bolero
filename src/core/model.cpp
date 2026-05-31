@@ -51,24 +51,20 @@ void Model::ProcessMaterials(const aiScene* scene, AssetManager& assetManager)
 
         aiString texPathStr;
 
-        // Albedo
+        // Albedo (Texture)
         if (aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &texPathStr) == AI_SUCCESS ||
             aiMat->GetTexture(aiTextureType_BASE_COLOR, 0, &texPathStr) == AI_SUCCESS)
         {
-            // Has texture
             std::filesystem::path texPath = m_directory / texPathStr.C_Str();
             mat->SetAlbedoMap(assetManager.CreateTex(texPath));
         }
-        else
+
+        // Albedo (Scalar)
+        aiColor4D baseColor(1.0f, 0.0f, 1.0f, 1.0f);
+        if (aiMat->Get(AI_MATKEY_BASE_COLOR, baseColor) == AI_SUCCESS ||
+            aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor) == AI_SUCCESS)
         {
-            // No texture, default to magenta
-            aiColor4D baseColor(1.0f, 0.0f, 1.0f, 1.0f);
-            
-            if (aiMat->Get(AI_MATKEY_BASE_COLOR, baseColor) == AI_SUCCESS ||
-                aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor) == AI_SUCCESS)
-            {
-                mat->SetAlbedoFactor(blr::core::vec3(baseColor.r, baseColor.g, baseColor.b));
-            }
+            mat->SetAlbedoFactor(blr::core::vec3(baseColor.r, baseColor.g, baseColor.b));
         }
 
         // Normal
@@ -78,14 +74,14 @@ void Model::ProcessMaterials(const aiScene* scene, AssetManager& assetManager)
             mat->SetNormalMap(assetManager.CreateTex(texPath));
         }
 
-        // Metallic / Roughness
+        // Metallic / Roughness (Texture)
         if (aiMat->GetTexture(aiTextureType_UNKNOWN, 0, &texPathStr) == AI_SUCCESS)
         {
-            std::filesystem::path texPath = m_directory / texPathStr.C_Str();
-            Ref<Tex> packedMap = assetManager.CreateTex(texPath);
-            
-            mat->SetMetallicMap(packedMap);
-            mat->SetRoughnessMap(packedMap);
+            // ORM
+            Ref<Tex> packedMap = assetManager.CreateTex(m_directory / texPathStr.C_Str());
+            mat->SetMetallicMap(packedMap);     // Blue channel
+            mat->SetRoughnessMap(packedMap);    // Green channel
+            mat->SetAoMap(packedMap);           // Red channel
         }
         else
         {
@@ -94,6 +90,19 @@ void Model::ProcessMaterials(const aiScene* scene, AssetManager& assetManager)
                 
             if (aiMat->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texPathStr) == AI_SUCCESS)
                 mat->SetRoughnessMap(assetManager.CreateTex(m_directory / texPathStr.C_Str()));
+        }
+
+        // Metallic / Roughness (Scalar)
+        float metallicFactor = 0.0f;
+        if (aiMat->Get(AI_MATKEY_METALLIC_FACTOR, metallicFactor) == AI_SUCCESS)
+        {
+            mat->SetMetallicFactor(metallicFactor);
+        }
+
+        float roughnessFactor = 0.5f;
+        if (aiMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughnessFactor) == AI_SUCCESS)
+        {
+            mat->SetRoughnessFactor(roughnessFactor);
         }
 
         m_materials.emplace_back(mat);

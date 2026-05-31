@@ -27,7 +27,7 @@ public:
 
     void Init() override
     {
-        m_fbo = blrc::FrameBuffer::Create({ m_initW, m_initH, { blrc::ImgFmt::RGBA8, blrc::ImgFmt::Depth32F} });
+        m_fbo = blrc::FrameBuffer::Create({ m_initW, m_initH, { blrc::ImgFmt::RGBA16F, blrc::ImgFmt::Depth32F} });
     }
 
     void Execute(blrc::Scene& scene) override
@@ -39,7 +39,7 @@ public:
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.03f, 0.03f, 0.03f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         blrc::Renderer::UpdateCameraUBO(*scene.GetCam());
