@@ -42,7 +42,6 @@ layout(std140, binding = 0) uniform CameraBuffer
 {
     mat4 u_View;
     mat4 u_Projection;
-    mat4 u_ViewProj;
     vec4 u_CameraPosAndTime;
 };
 layout(std430, binding = 1) readonly buffer InstanceBuffer
@@ -90,7 +89,7 @@ void main()
 	vs_out.v_FragPosDirLightSpace  = u_DirLightSpaceMat * vec4(vs_out.v_FragPos, 1);
 	vs_out.v_FragPosSpotLightSpace = u_SpotLightSpaceMat * vec4(vs_out.v_FragPos, 1);
     
-	gl_Position = u_ViewProj * modelMat * vec4(a_Pos, 1.0);		// world space transformation
+	gl_Position = u_Projection * u_View * modelMat * vec4(a_Pos, 1.0);		// world space transformation
 }
 
 
@@ -122,7 +121,6 @@ layout(std140, binding = 0) uniform CameraBuffer
 {
     mat4 u_View;
     mat4 u_Projection;
-    mat4 u_ViewProj;
     vec4 u_CameraPosAndTime;
 };
 layout(std430, binding = 2) readonly buffer LightBuffer
@@ -157,7 +155,6 @@ uniform float u_PointFarPlane;
 uniform samplerCube u_IrradianceMap;    // 13
 uniform samplerCube u_PrefilterMap;     // 14
 uniform sampler2D   u_BrdfLut;          // 15
-
 
 uniform sampler2D u_albedoMap;     uniform bool u_hasAlbedoMap;     uniform vec3  u_albedoFactor;
 uniform sampler2D u_normalMap;	   uniform bool u_hasNormalMap;

@@ -73,7 +73,6 @@ void Renderer::UpdateCameraUBO(const mat4& view, const mat4& proj, const vec3& p
     CameraFrameData camData;
     camData.view             = view;
     camData.projection       = proj;
-    camData.viewProj         = camData.projection * camData.view;
     camData.cameraPosAndTime = vec4(pos, (float)glfwGetTime());
 
     s_cameraUBO->SetData(&camData, sizeof(CameraFrameData), 0);

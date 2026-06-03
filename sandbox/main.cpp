@@ -137,7 +137,7 @@ int main()
     blrc::RenderContext renderCtx;
 
     // IBL Skybox Setup Pass
-    auto hdrMap = assetManager.CreateTex("assets/textures/newman_cafeteria_2k.hdr");
+    auto hdrMap = assetManager.CreateTex("assets/hdri/newman_cafeteria_2k.hdr");
     auto eqToCubeShader = assetManager.CreateShader("assets/shaders/equirect_to_cubemap.glsl");
     blrc::Ref<IBLSetupPass> iblPass = std::make_shared<IBLSetupPass>(eqToCubeShader, hdrMap);
     // Scene Irradiance Pass

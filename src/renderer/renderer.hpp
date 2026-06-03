@@ -86,7 +86,6 @@ struct CameraFrameData
 {
     mat4 view;
     mat4 projection;
-    mat4 viewProj;
     vec4 cameraPosAndTime; // xyz = position, w = time
 };
 

@@ -37,7 +37,6 @@ layout(std140, binding = 0) uniform CameraBuffer
 {
     mat4 u_View;
     mat4 u_Projection;
-    mat4 u_ViewProj;
     vec4 u_CameraPosAndTime;
 };
 layout(std430, binding = 1) readonly buffer InstanceBuffer
@@ -62,7 +61,7 @@ void main()
 {
 	mat4 modelMat = u_Instances[u_TransformIndex].model;
 
-	gl_Position = u_ViewProj * modelMat * vec4(a_Pos, 1.0);
+	gl_Position = u_Projection * u_View * modelMat * vec4(a_Pos, 1.0);
 }
 
 
