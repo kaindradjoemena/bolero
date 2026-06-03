@@ -1,9 +1,8 @@
+// passes/opaque.hpp
+
 #pragma once
 
 #include <bolero.hpp>
-#include "dir_shadow.hpp"
-#include "spot_shadow.hpp"
-#include "point_shadow.hpp"
 #include "core/render_context.hpp"
 
 namespace blrc = blr::core;
@@ -12,11 +11,12 @@ namespace blrc = blr::core;
 class OpaquePass : public blrc::RenderPass
 {
 public:
-    OpaquePass(uint32_t initW, uint32_t initH, const blrc::Ref<blrc::Shader>& lightShader)
+    OpaquePass(uint32_t initW, uint32_t initH, const blrc::Ref<blrc::Shader>& lightShader, const blrc::Ref<blrc::Shader>& skyboxShader)
     : RenderPass("Main Opaque Pass")
     , m_initW(initW)
     , m_initH(initH)
     , m_lightShader(lightShader)
+    , m_skyboxShader(skyboxShader)
     {
     }
 
@@ -52,7 +52,30 @@ public:
         glBindTextureUnit(12, renderCtx.GetTexture("u_PointDepthMapTex"));
         m_lightShader->SetFloat("u_PointFarPlane", scene.GetPointLights()[0].range);
 
+        // Irradiance Map
+        m_lightShader->SetInt("u_IrradianceMap", 13);
+        glBindTextureUnit(13, renderCtx.GetTexture("u_IrradianceMap"));
+        // Pre Filtered Environment Map
+        m_lightShader->SetInt("u_PrefilterMap", 14);
+        glBindTextureUnit(14, renderCtx.GetTexture("u_PrefilterMap"));
+        // BRDF LUT
+        m_lightShader->SetInt("u_BrdfLut", 15);
+        glBindTextureUnit(15, renderCtx.GetTexture("u_BrdfLut"));
+
         blrc::Renderer::DrawQueue(nullptr);
+
+        // Skybox
+        glDepthFunc(GL_LEQUAL);
+
+        m_skyboxShader->Bind();
+        m_skyboxShader->SetInt("u_EnvMap", 16);
+        glBindTextureUnit(16, renderCtx.GetTexture("u_EnvMap"));
+        
+        blrc::Renderer::DrawCube();
+
+        glDepthFunc(GL_LESS);
+
+
 
         m_fbo->Unbind();
 
@@ -73,4 +96,5 @@ private:
 
     blrc::Ref<blrc::FrameBuffer> m_fbo;
     blrc::Ref<blrc::Shader> m_lightShader;
+    blrc::Ref<blrc::Shader> m_skyboxShader;
 };

@@ -195,5 +195,13 @@ void Renderer::DrawFullscreenQuad()
     s_stats.drawCalls++;
 }
 
+void Renderer::DrawCube()
+{
+    s_emptyVAO->Bind();
+    glDrawArrays(GL_TRIANGLES, 0, 36);   
+
+    s_stats.drawCalls++;
+}
+
 
 } /* namespace blr::core */

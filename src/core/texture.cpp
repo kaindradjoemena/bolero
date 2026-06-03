@@ -20,13 +20,13 @@ Tex::Tex(const std::filesystem::path& texPath, const TexSpec& texSpec)
 
     if (isHDR)
     {
-        imgData = stbi_loadf(texPath.string().c_str(), &width, &height, &channels, 4);
+        imgData = stbi_loadf(texPath.string().c_str(), &width, &height, &channels, 0);
         if (m_texSpec.format == ImgFmt::None)
             m_texSpec.format = (channels == 4) ? ImgFmt::RGBA16F : ImgFmt::RGB16F;
     }
     else
     {
-        imgData = stbi_load(texPath.string().c_str(), &width, &height, &channels, 4);
+        imgData = stbi_load(texPath.string().c_str(), &width, &height, &channels, 0);
         if (m_texSpec.format == ImgFmt::None)
         {
             if (channels == 4)      m_texSpec.format = ImgFmt::RGBA8;

@@ -154,6 +154,11 @@ uniform sampler2D u_SpotDepthMapTex;    // 11
 uniform samplerCube u_PointDepthMapTex; // 12
 uniform float u_PointFarPlane;
 
+uniform samplerCube u_IrradianceMap;    // 13
+uniform samplerCube u_PrefilterMap;     // 14
+uniform sampler2D   u_BrdfLut;          // 15
+
+
 uniform sampler2D u_albedoMap;     uniform bool u_hasAlbedoMap;     uniform vec3  u_albedoFactor;
 uniform sampler2D u_normalMap;	   uniform bool u_hasNormalMap;
 uniform sampler2D u_metallicMap;   uniform bool u_hasMetallicMap;   uniform float u_metallicFactor;
@@ -170,6 +175,7 @@ float NDF_GGXTR(vec3 N, vec3 H, float roughness);
 float G_SchlickGGX(float NdotV, float roughness);
 float G_Smith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 F_Schlick(float cosTheta, vec3 F0);
+vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness);
 
 // Material Reflections
 vec3 calcDirLight(DirLightData light, vec3 N, vec3 V, float shadow, vec3 ALBEDO, float ROUGHNESS, float METALLIC, vec3 F0);
@@ -221,11 +227,31 @@ void main()
         Lo += calcPointLight(u_PointLights[i], N, V, fs_in.v_FragPos, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
     }
 
-	// No IBL, use predefined ambient
-	vec3 ambient = vec3(0.03) * ALBEDO * AO;
-	vec3 color = ambient + Lo;
+	vec3 F = F_SchlickR(max(dot(N, V), 0.0), F0, ROUGHNESS);
 
-	FragColor = vec4(color, 1.0);
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - METALLIC;
+
+	// --- Diffuse IBL ---
+	vec3 irradiance = texture(u_IrradianceMap, N).rgb;
+	vec3 diffuse = irradiance * ALBEDO;
+
+	// --- Specular IBL ---
+    vec3 R = reflect(-V, N); 
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(u_PrefilterMap, R, ROUGHNESS * MAX_REFLECTION_LOD).rgb;
+	// Sample the BRDF LUT using the view angle and roughness
+    vec2 envBRDF = texture(u_BrdfLut, vec2(max(dot(N, V), 0.0), ROUGHNESS)).rg;
+    // F0 * Scale + Bias
+    vec3 specular = prefilteredColor * (F0 * envBRDF.x + envBRDF.y);
+
+    vec3 ambient = (kD * diffuse + specular) * AO;
+
+    vec3 color = ambient + Lo;
+    FragColor = vec4(color, 1.0);
+
+	FragColor = vec4(ambient + Lo, 1.0);
 }
 
 
@@ -240,8 +266,8 @@ vec3 calcDirLight(DirLightData light, vec3 N, vec3 V, float shadow, vec3 ALBEDO,
     
     // Cook-Torrance BRDF
     float NDF = NDF_GGXTR(N, H, ROUGHNESS);   
-    float G   = G_Smith(N, V, L, ROUGHNESS);      
-    vec3  F   = F_Schlick(max(dot(H, V), 0.0), F0);
+    float G   = G_Smith(N, V, L, ROUGHNESS);
+	vec3  F   = F_SchlickR(max(dot(N, V), 0.0), F0, ROUGHNESS);
     
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
@@ -275,7 +301,7 @@ vec3 calcSpotLight(SpotLightData light, vec3 N, vec3 V, vec3 fragPos, float shad
     // Cook-Torrance BRDF
     float NDF = NDF_GGXTR(N, H, ROUGHNESS);   
     float G   = G_Smith(N, V, L, ROUGHNESS);      
-    vec3  F   = F_Schlick(max(dot(H, V), 0.0), F0);
+    vec3  F   = F_SchlickR(max(dot(H, V), 0.0), F0, ROUGHNESS);
     
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
@@ -304,7 +330,7 @@ vec3 calcPointLight(PointLightData light, vec3 N, vec3 V, vec3 fragPos, float sh
     // Cook-Torrance BRDF
     float NDF = NDF_GGXTR(N, H, ROUGHNESS);   
     float G   = G_Smith(N, V, L, ROUGHNESS);      
-    vec3  F   = F_Schlick(max(dot(H, V), 0.0), F0);
+    vec3  F   = F_SchlickR(max(dot(H, V), 0.0), F0, ROUGHNESS);
     
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
@@ -359,6 +385,11 @@ float G_Smith(vec3 N, vec3 V, vec3 L, float roughness)
 vec3 F_Schlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 // ===== SHADOW FACTOR HELPERS =====

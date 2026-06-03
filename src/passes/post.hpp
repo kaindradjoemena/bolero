@@ -1,7 +1,8 @@
+// passes/post.hpp
+
 #pragma once
 
 #include <bolero.hpp>
-#include "passes/opaque.hpp"
 #include "core/render_context.hpp"
 
 namespace blrc = blr::core;
@@ -10,12 +11,11 @@ namespace blrc = blr::core;
 class PostPass : public blrc::RenderPass
 {
 public:
-    PostPass(uint32_t width, uint32_t height, const blrc::Ref<blrc::Shader>& postShader, const blrc::Ref<OpaquePass>& opaquePass)
+    PostPass(uint32_t width, uint32_t height, const blrc::Ref<blrc::Shader>& postShader)
     : RenderPass("Post Pass")
     , m_windowW(width)
     , m_windowH(height)
     , m_postShader(postShader)
-    , m_opaquePass(opaquePass)
     {
     }
 
@@ -35,8 +35,10 @@ public:
 
         m_postShader->Bind();
 
-        m_postShader->SetInt("u_ScreenTexture", 15);
-        glBindTextureUnit(15, renderCtx.GetTexture("OPAQUE_PASS_TEX"));
+        m_postShader->SetFloat("u_Exposure", 1.0f);
+
+        m_postShader->SetInt("u_ScreenTexture", 20);
+        glBindTextureUnit(20, renderCtx.GetTexture("OPAQUE_PASS_TEX"));
 
         blrc::Renderer::DrawFullscreenQuad();
 
@@ -56,5 +58,4 @@ private:
     uint32_t m_windowH;
 
     blrc::Ref<blrc::Shader> m_postShader;
-    blrc::Ref<OpaquePass> m_opaquePass;
 };

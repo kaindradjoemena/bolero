@@ -121,6 +121,7 @@ public:
 
     static void DrawQueue(Shader* overrideShader = nullptr);
     static void DrawFullscreenQuad();
+    static void DrawCube();
 
 private:
     inline static std::vector<RenderTask>   s_renderQueue;

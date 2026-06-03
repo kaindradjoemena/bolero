@@ -5,6 +5,10 @@
 #include "passes/dir_shadow.hpp"  // shadow pass
 #include "passes/spot_shadow.hpp"
 #include "passes/point_shadow.hpp"
+#include "passes/ibl_setup.hpp"
+#include "passes/irradiance.hpp"
+#include "passes/prefilter.hpp"
+#include "passes/brdf_lut.hpp"
 #include "passes/post.hpp"
 #include "core/render_context.hpp"
 
@@ -97,57 +101,81 @@ int main()
     pointLight1.position   = blrc::vec3(10.0f, 10.0f, 10.0f);
     pointLight1.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
     pointLight1.range      = 40.0f;
-    pointLight1.base.power = 1000.0f;
+    pointLight1.base.power = 0.0f;
     scene.AddLight(pointLight1);
         
     blrc::PointLight pointLight2;
     pointLight2.position   = blrc::vec3(-10.0f, 10.0f, 10.0f);
     pointLight2.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
     pointLight2.range      = 40.0f;
-    pointLight2.base.power = 1000.0f;
+    pointLight2.base.power = 0.0f;
     scene.AddLight(pointLight2);
     
     blrc::PointLight pointLight3;
     pointLight3.position   = blrc::vec3(10.0f, -10.0f, 10.0f);
     pointLight3.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
     pointLight3.range      = 40.0f;
-    pointLight3.base.power = 1000.0f;
+    pointLight3.base.power = 0.0f;
     scene.AddLight(pointLight3);
     
     blrc::PointLight pointLight4;
     pointLight4.position   = blrc::vec3(-10.0f, -10.0f, 10.0f);
     pointLight4.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
     pointLight4.range      = 40.0f;
-    pointLight4.base.power = 1000.0f;
+    pointLight4.base.power = 0.0f;
     scene.AddLight(pointLight4);
 
     blrc::Renderer::Init();
-    blrc::RenderPipeline shadowMapping;
+    blrc::RenderPipeline CookTorrancePBR;
 
-    window.AddResizeCallback([&shadowMapping](uint32_t w, uint32_t h) {
-            shadowMapping.OnResize(w, h);
+    window.AddResizeCallback([&CookTorrancePBR](uint32_t w, uint32_t h) {
+            CookTorrancePBR.OnResize(w, h);
         });
 
-    // Render Passes
+
+    // Render pass interface
+    blrc::RenderContext renderCtx;
+
+    // IBL Skybox Setup Pass
+    auto hdrMap = assetManager.CreateTex("assets/textures/newman_cafeteria_2k.hdr");
+    auto eqToCubeShader = assetManager.CreateShader("assets/shaders/equirect_to_cubemap.glsl");
+    blrc::Ref<IBLSetupPass> iblPass = std::make_shared<IBLSetupPass>(eqToCubeShader, hdrMap);
+    // Scene Irradiance Pass
+    auto convolutionShader = assetManager.CreateShader("assets/shaders/cubemap_convolution.glsl");
+    blrc::Ref<IrradiancePass> irradiancePass = std::make_shared<IrradiancePass>(convolutionShader);
+    // Environment Map Prefiltering Pass
+    auto prefilterShader = assetManager.CreateShader("assets/shaders/prefilter.glsl");
+    blrc::Ref<PrefilterPass> prefilterPass = std::make_shared<PrefilterPass>(prefilterShader);
+    // BRDF LUT Pre Computation
+    auto brdfLutShader = assetManager.CreateShader("assets/shaders/brdf_lut.glsl");
+    blrc::Ref<BrdfLutPass> brdfLutPass = std::make_shared<BrdfLutPass>(assetManager, brdfLutShader);
+
+    // Scene Depth Pass (Shadow Mapping)
     auto depthShader      = assetManager.CreateShader("assets/shaders/shadow_pass.glsl");
     auto pointDepthShader = assetManager.CreateShader("assets/shaders/point_shadow_pass.glsl");
     blrc::Ref<DirShadowPass>   dirShadowPass   = std::make_shared<DirShadowPass>(depthShader);
     blrc::Ref<SpotShadowPass>  spotShadowPass  = std::make_shared<SpotShadowPass>(depthShader);
     blrc::Ref<PointShadowPass> pointShadowPass = std::make_shared<PointShadowPass>(pointDepthShader);
-    blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, opaqueShader);
-    
+    // Opaque Pass (Skybox, Mesh)
+    auto skyboxShader = assetManager.CreateShader("assets/shaders/skybox.glsl");
+    blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+                                                                   , opaqueShader, skyboxShader);
+    // Post Process Pass
     auto postShader = assetManager.CreateShader("assets/shaders/post_pass.glsl");
-    blrc::Ref<PostPass> postPass = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader, opaquePass);
+    blrc::Ref<PostPass> postPass = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader);
+
 
     // Add Passes to the pipeline
-    shadowMapping.AddPass(dirShadowPass);
-    shadowMapping.AddPass(spotShadowPass);
-    shadowMapping.AddPass(pointShadowPass);
-    shadowMapping.AddPass(opaquePass);
-    shadowMapping.AddPass(postPass);
+    CookTorrancePBR.AddPass(iblPass);
+    CookTorrancePBR.AddPass(irradiancePass);
+    CookTorrancePBR.AddPass(prefilterPass);
+    CookTorrancePBR.AddPass(brdfLutPass);
+    CookTorrancePBR.AddPass(dirShadowPass);
+    CookTorrancePBR.AddPass(spotShadowPass);
+    CookTorrancePBR.AddPass(pointShadowPass);
+    CookTorrancePBR.AddPass(opaquePass);
+    CookTorrancePBR.AddPass(postPass);
 
-
-    blrc::RenderContext renderCtx;  // Render pass interface
 
     float hotReloadTimer = 0.0;
     while (!window.ShouldClose())
@@ -172,9 +200,9 @@ int main()
         scene.Update(deltaTime, true);
 
         renderCtx.Clear();
-        shadowMapping.Execute(scene, renderCtx);  // pass scene
+        CookTorrancePBR.Execute(scene, renderCtx);  // pass scene
 
-        // for (const auto& pass : shadowMapping.GetPasses())
+        // for (const auto& pass : CookTorrancePBR.GetPasses())
         // {
         //     const auto& passStats = pass->GetStats();
         //     std::cout << "  [" << pass->GetName() << "] " 

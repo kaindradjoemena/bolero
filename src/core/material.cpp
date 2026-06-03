@@ -22,7 +22,7 @@ void Material::Bind() const
 
     // NOTE: might have to reserve some slots for the irradiance and prefilter maps
     // and textures would start at slot 3(?)
-    uint32_t slot = 0;
+    uint32_t slot = 3;
 
     if (m_albedoMap)
     {
