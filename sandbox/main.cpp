@@ -10,6 +10,7 @@
 #include "passes/prefilter.hpp"
 #include "passes/brdf_lut.hpp"
 #include "passes/post.hpp"
+#include "passes/ui.hpp"
 #include "core/render_context.hpp"
 
 #include <iostream>
@@ -17,6 +18,15 @@
 namespace blrc = blr::core;
 namespace blra = blr::app;
 
+// Force GPU usage
+#ifdef _WIN32
+    extern "C"
+    {
+        __declspec(dllexport) uint32_t NvOptimusEnablement = 1;
+        
+        __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+    }
+#endif
 
 #define XSTR(s) STR(s)
 #define STR(s) #s
@@ -149,7 +159,6 @@ int main()
     // BRDF LUT Pre Computation
     auto brdfLutShader = assetManager.CreateShader("assets/shaders/brdf_lut.glsl");
     blrc::Ref<BrdfLutPass> brdfLutPass = std::make_shared<BrdfLutPass>(assetManager, brdfLutShader);
-
     // Scene Depth Pass (Shadow Mapping)
     auto depthShader      = assetManager.CreateShader("assets/shaders/shadow_pass.glsl");
     auto pointDepthShader = assetManager.CreateShader("assets/shaders/point_shadow_pass.glsl");
@@ -163,7 +172,8 @@ int main()
     // Post Process Pass
     auto postShader = assetManager.CreateShader("assets/shaders/post_pass.glsl");
     blrc::Ref<PostPass> postPass = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader);
-
+    // UI Pass
+    blrc::Ref<UIPass> uiPass = std::make_shared<UIPass>(window.GetNativeWindow(), CookTorrancePBR.GetPasses());
 
     // Add Passes to the pipeline
     CookTorrancePBR.AddPass(iblPass);
@@ -175,6 +185,7 @@ int main()
     CookTorrancePBR.AddPass(pointShadowPass);
     CookTorrancePBR.AddPass(opaquePass);
     CookTorrancePBR.AddPass(postPass);
+    CookTorrancePBR.AddPass(uiPass);
 
 
     float hotReloadTimer = 0.0;
@@ -201,15 +212,6 @@ int main()
 
         renderCtx.Clear();
         CookTorrancePBR.Execute(scene, renderCtx);  // pass scene
-
-        // for (const auto& pass : CookTorrancePBR.GetPasses())
-        // {
-        //     const auto& passStats = pass->GetStats();
-        //     std::cout << "  [" << pass->GetName() << "] " 
-        //               << " CPU: " << passStats.cpuTimeMs << "ms"
-        //               << " | GPU: " << passStats.gpuTimeMs << "ms"
-        //               << " | Draws: " << passStats.drawCalls << "\n";
-        // }
 
         window.SwapBuffers();
     }

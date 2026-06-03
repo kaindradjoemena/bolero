@@ -80,11 +80,40 @@ if(NOT EXISTS ${GLAD_C_SOURCE})
 endif()
 
 
+set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui)
+set(IMGUI_SOURCES
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/imgui_impl_opengl3.cpp
+)
+
+if(NOT EXISTS ${IMGUI_DIR}/imgui.cpp)
+    message(FATAL_ERROR
+        "ImGui not found at ${IMGUI_DIR}.\n"
+        "Please download ImGui and place the core files + glfw/opengl3 backends in extern/imgui/")
+endif()
+
+set(IMPLOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/implot)
+set(IMPLOT_SOURCES
+    ${IMPLOT_DIR}/implot.cpp
+    ${IMPLOT_DIR}/implot_items.cpp
+)
+
+if(NOT EXISTS ${IMPLOT_DIR}/implot.cpp)
+    message(FATAL_ERROR
+        "ImPlot not found at ${IMPLOT_DIR}.\n"
+        "Please download ImPlot and place it in extern/implot/")
+endif()
+
 file(GLOB_RECURSE BOLERO_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
 )
-list(APPEND BOLERO_SOURCES ${GLAD_C_SOURCE})
+
+list(APPEND BOLERO_SOURCES ${GLAD_C_SOURCE} ${IMGUI_SOURCES} ${IMPLOT_SOURCES})
 
 if(BOLERO_BUILD_SHARED)
     add_library(Bolero SHARED ${BOLERO_SOURCES})
@@ -95,6 +124,8 @@ endif()
 target_include_directories(Bolero PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
     $<BUILD_INTERFACE:${GLAD_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${IMGUI_DIR}>
+    $<BUILD_INTERFACE:${IMPLOT_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 target_include_directories(Bolero PRIVATE
@@ -102,6 +133,8 @@ target_include_directories(Bolero PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb
     $<$<NOT:$<BOOL:${assimp_FOUND}>>:${assimp_SOURCE_DIR}/include>
 )
+
+target_compile_definitions(Bolero PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)
 
 target_link_libraries(Bolero PUBLIC  glfw glm::glm)
 target_link_libraries(Bolero PRIVATE assimp)

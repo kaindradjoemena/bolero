@@ -42,11 +42,11 @@ public:
     void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
         // note: comment/uncomment to optimize/renderdoc debug
-        // if (m_hasExecuted)
-        // {
-        //     renderCtx.SetTexture("u_BrdfLut", m_brdfTexture->GetID());
-        //     return;
-        // }
+        if (m_hasExecuted)
+        {
+            renderCtx.SetTexture("u_BrdfLut", m_brdfTex->GetID());
+            return;
+        }
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
         glViewport(0, 0, 512, 512); 

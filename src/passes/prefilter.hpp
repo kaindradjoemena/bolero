@@ -42,11 +42,11 @@ public:
     void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
         // note: comment/uncomment to optimize/renderdoc debug
-        // if (m_hasExecuted) 
-        // {
-        //     renderCtx.SetTexture("u_PrefilterMap", m_prefilteredMap->GetID());
-        //     return;
-        // }
+        if (m_hasExecuted) 
+        {
+            renderCtx.SetTexture("u_PrefilterMap", m_prefilteredMap->GetID());
+            return;
+        }
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
 

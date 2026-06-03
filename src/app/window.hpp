@@ -44,6 +44,8 @@ public:
 
     void PollEvents() const;
     
+    GLFWwindow* GetNativeWindow() const { return m_window; }
+
     Input& GetInput() { return m_input; }
     uint32_t GetWidth() const { return m_width; }
     uint32_t GetHeight() const { return m_height; }

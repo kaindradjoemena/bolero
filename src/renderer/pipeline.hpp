@@ -56,6 +56,7 @@ public:
             
             // Profiling
             PassStats& stats = pass->GetStats();
+            stats.name       = pass->GetName();
             stats.cpuTimeMs  = cpuTime;
             stats.gpuTimeMs  = pass->GetGpuTimer().GetElapsedMs();
             stats.drawCalls  = Renderer::GetRenderStats().drawCalls - drawCallsBefore;

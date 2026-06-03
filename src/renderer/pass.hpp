@@ -14,6 +14,7 @@ namespace blr::core
 
 struct PassStats
 {
+    std::string name;
     float    cpuTimeMs = 0.0f;
     float    gpuTimeMs = 0.0f;
     uint32_t drawCalls = 0;
