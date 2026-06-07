@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "types.hpp"
+#include "utils/base.hpp"
 #include "resource.hpp"
 
 #include <vector>

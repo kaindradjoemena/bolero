@@ -2,14 +2,34 @@
 
 #pragma once
 
-#include "../types.hpp"
+#include "utils/base.hpp"
+#include "core/image_format.hpp"
+
+#include <vector>
 
 
 namespace blr::core
 {
 
-struct FBSpec;
-struct FBAttachmentSpec;
+
+struct FBAttachmentSpec
+{
+    ImgFmt format  = ImgFmt::None;
+    bool isCubemap = false;
+
+    FBAttachmentSpec() = default;
+    FBAttachmentSpec(ImgFmt fmt, bool cubemap = false)
+    : format(fmt), isCubemap(cubemap)
+    {
+    } 
+};
+struct FBSpec
+{
+    uint32_t w = 0;
+    uint32_t h = 0;
+    std::vector<FBAttachmentSpec> attachments;
+};
+
 
 class FrameBuffer
 {

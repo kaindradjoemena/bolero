@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "types.hpp"
+#include "utils/math.hpp"
 
 
 namespace blr::core

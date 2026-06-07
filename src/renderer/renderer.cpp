@@ -8,6 +8,7 @@
 #include "core/wrappers/buffer.hpp"
 #include "core/wrappers/vertex_array.hpp"
 #include "core/wrappers/buffer.hpp"
+#include "core/lights.hpp"
 #include "utils/debug.hpp"
 
 #include <algorithm>

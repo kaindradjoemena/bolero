@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "core/types.hpp"
 #include "core/render_context.hpp"
-#include <string>
 #include "utils/gpu_timer.hpp"
+
+#include <string>
 
 
 namespace blr::core

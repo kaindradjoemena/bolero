@@ -2,9 +2,11 @@
 
 #pragma once
 
-#include "../types.hpp"
+#include "utils/base.hpp"
+#include "core/shader.hpp"
 
 #include <vector>
+#include <cstdint>
 
 
 namespace blr::core

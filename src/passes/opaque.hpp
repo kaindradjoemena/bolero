@@ -1,7 +1,6 @@
 #pragma once
 
 #include <bolero.hpp>
-#include "core/render_context.hpp"
 
 namespace blrc = blr::core;
 

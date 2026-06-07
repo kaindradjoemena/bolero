@@ -4,6 +4,8 @@
 
 #include <stb_image.h>
 
+#include <cmath>
+
 
 namespace blr::core
 {

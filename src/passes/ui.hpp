@@ -3,7 +3,6 @@
 #pragma once
 
 #include <bolero.hpp>
-#include "core/render_context.hpp"
 #include "ui/ui.hpp"
 
 namespace blrc = blr::core;

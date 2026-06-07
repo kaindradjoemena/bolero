@@ -2,8 +2,13 @@
 
 #pragma once
 
-#include "../types.hpp"
+#include <glad/glad.h>
+
+#include "utils/base.hpp"
+#include "core/texture.hpp"
+
 #include <cmath>
+#include <cstdint>
 #include <algorithm>
 
 

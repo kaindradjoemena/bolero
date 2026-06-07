@@ -2,10 +2,12 @@
 
 #pragma once
 
-#include "types.hpp"
+#include "utils/base.hpp"
+#include "texture.hpp"
 
 #include <filesystem>
 #include <unordered_map>
+#include <vector>
 
 
 namespace blr::core

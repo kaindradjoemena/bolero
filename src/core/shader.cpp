@@ -1,12 +1,12 @@
 // core/shader.cpp
 
 #include "shader.hpp"
-#include "types.hpp"
 
 #include <fstream>
 #include <vector>
 #include <iostream>
 #include <cstring>
+
 
 namespace blr::core
 {

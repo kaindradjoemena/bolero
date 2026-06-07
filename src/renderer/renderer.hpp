@@ -2,8 +2,9 @@
 
 #pragma once
 
-#include "core/types.hpp"
-#include "core/lights.hpp"
+#include "utils/base.hpp"
+#include "utils/math.hpp"
+#include "core/transform.hpp"
 
 #include <vector>
 #include <cstdint>
@@ -30,6 +31,9 @@ class Shader;
 class UniformBuffer;
 class VertexArray;
 class ShaderStorageBuffer;
+struct DirLight;
+struct PointLight;
+struct SpotLight;
 
 struct DirLightData
 {

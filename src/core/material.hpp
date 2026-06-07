@@ -2,10 +2,11 @@
 
 #pragma once
 
-#include <vector>
-
-#include "types.hpp"
+#include "utils/base.hpp"
+#include "utils/math.hpp"
 #include "resource.hpp"
+
+#include <vector>
 
 
 namespace blr::core

@@ -2,10 +2,11 @@
 
 #pragma once
 
-#include "../types.hpp"
-
 #include <glad/glad.h>
-#include <memory>
+
+#include "utils/base.hpp"
+
+#include <vector>
 
 
 namespace blr::core

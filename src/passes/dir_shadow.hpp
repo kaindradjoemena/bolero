@@ -1,7 +1,6 @@
 #pragma once
 
 #include <bolero.hpp>
-#include "core/lights.hpp"
 
 
 namespace blrc = blr::core;

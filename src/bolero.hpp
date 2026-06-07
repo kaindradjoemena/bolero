@@ -9,13 +9,18 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+// Utils
+#include "utils/base.hpp"
+#include "utils/math.hpp"
+#include "utils/debug.hpp"
+
 // Application Layer
 #include "app/window.hpp"
 #include "app/input.hpp"
 #include "utils/debug.hpp"
 
 // Core Framework & State
-#include "core/types.hpp"
+#include "core/image_format.hpp"
 #include "core/asset_manager.hpp"
 #include "core/scene.hpp"
 #include "core/camera.hpp"
@@ -25,6 +30,7 @@
 #include "renderer/pass.hpp"
 #include "renderer/pipeline.hpp"
 #include "core/wrappers/framebuffer.hpp"
+#include "core/render_context.hpp"
 
 // Resources
 #include "core/model.hpp"

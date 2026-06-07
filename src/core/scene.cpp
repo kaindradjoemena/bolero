@@ -4,6 +4,8 @@
 #include "core/model.hpp"
 #include "core/mesh.hpp"
 #include "core/material.hpp"
+#include "core/lights.hpp"
+#include "core/transform.hpp"
 #include "renderer/renderer.hpp"
 
 #include <iostream>
