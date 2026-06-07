@@ -210,7 +210,7 @@ void Shader::CheckCompileErrors(GLuint object, std::string_view type)
         if (!success)
         {
             glGetShaderInfoLog(object, 1024, nullptr, infoLog);
-            std::cerr << m_filePath.c_str() << " | ERROR::SHADER: Compile-time error\n" << infoLog << "\n" << std::endl;
+            std::cerr << m_filePath.string() << " | ERROR::SHADER: Compile-time error\n" << infoLog << "\n" << std::endl;
         }
     }
     else
@@ -219,7 +219,7 @@ void Shader::CheckCompileErrors(GLuint object, std::string_view type)
         if (!success)
         {
             glGetProgramInfoLog(object, 1024, nullptr, infoLog);
-            std::cerr << m_filePath.c_str() << " | ERROR::SHADER: Link-time error\n" << infoLog << "\n" << std::endl;
+            std::cerr << m_filePath.string() << " | ERROR::SHADER: Link-time error\n" << infoLog << "\n" << std::endl;
         }
     }
 }

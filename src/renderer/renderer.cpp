@@ -48,14 +48,21 @@ void Renderer::Init()
 
 void Renderer::Shutdown()
 {
-    s_renderQueue.clear();
+    s_opaqueQueue.clear();
+    s_transparentQueue.clear();
+    s_shadowCasterQueue.clear();
+
     s_instanceBuffer.clear();
 }
 
 void Renderer::BeginFrame()
 {
-    s_renderQueue.clear();
+    s_opaqueQueue.clear();
+    s_transparentQueue.clear();
+    s_shadowCasterQueue.clear();
+
     s_instanceBuffer.clear();
+
     s_dirLightBuffer.clear();
     s_pointLightBuffer.clear();
     s_spotLightBuffer.clear();
@@ -98,7 +105,7 @@ void Renderer::UploadBuffers()
     s_lightSSBO->SetData(&lightBuffer, sizeof(GPULightBuffer));
 }
 
-void Renderer::Submit(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform)
+void Renderer::Submit(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform, bool castsShadow)
 {
     mat4 normalMat = Transpose(Inverse(transform.GetModelMat()));
 
@@ -113,50 +120,57 @@ void Renderer::Submit(const Ref<Mesh>& mesh, const Ref<Material>& material, cons
 
     uint64_t sortKey = (depthBits << 48) | (shaderBits << 32) | (materialBits << 16) | meshBits;
 
-    s_renderQueue.push_back({
-        sortKey,
-        mesh.get(),
-        material.get(),
-        transformIndex});
+    RenderTask renderTask = { sortKey, mesh.get(), material.get(), transformIndex };
+
+
+    if (castsShadow)
+        s_shadowCasterQueue.emplace_back(renderTask);
+
+    s_opaqueQueue.emplace_back(renderTask);
 }
 
-void Renderer::Submit(const DirLight& l)
+void Renderer::Submit(const DirLight& l, int shadowIndex)
 {
     s_dirLightBuffer.push_back({
         vec4(l.direction, l.base.power),
-        vec4(l.base.color, 1.0f)});
+        vec4(l.base.color, static_cast<float>(shadowIndex))});
 }
 
-void Renderer::Submit(const PointLight& l)
+void Renderer::Submit(const PointLight& l, int shadowIndex)
 {
     s_pointLightBuffer.push_back({
         vec4(l.position, l.range),
-        vec4(l.base.color, l.base.power)});
+        vec4(l.base.color, l.base.power),
+        vec4(static_cast<float>(shadowIndex), 0.0f, 0.0f, 0.0f)});
 }
 
-void Renderer::Submit(const SpotLight& l)
+void Renderer::Submit(const SpotLight& l, int shadowIndex)
 {
     s_spotLightBuffer.push_back({
         vec4(l.position, l.length),
         vec4(l.direction, l.innerCos),
         vec4(l.base.color, l.outerCos),
-        vec4(l.base.power, vec3(1.0f))});
+        vec4(l.base.power, static_cast<float>(shadowIndex), 0.0f, 0.0f)});
 }
 
-void Renderer::DrawQueue(Shader* overrideShader)
+void Renderer::DrawQueue(RenderQueueType queueType, Shader* overrideShader)
 {
-    if (s_renderQueue.empty())
+    std::vector<RenderTask>* targetQueue = &s_opaqueQueue;
+    if (queueType == RenderQueueType::SHADOW_CASTER) targetQueue = &s_shadowCasterQueue;
+    else if (queueType == RenderQueueType::TRANSPARENT) targetQueue = &s_transparentQueue;
+
+    if (targetQueue->empty())
         return;
 
-    // Sort queue
-    std::sort(s_renderQueue.begin(), s_renderQueue.end());
+    // Sort requested queue
+    std::sort(targetQueue->begin(), targetQueue->end());
 
     if (overrideShader)
         overrideShader->Bind();
     
     uint64_t lastMaterialID = 0;
     uint64_t lastMeshID = 0;
-    for (const RenderTask& task : s_renderQueue)
+    for (const RenderTask& task : *targetQueue)
     {
         if (!overrideShader)
         {

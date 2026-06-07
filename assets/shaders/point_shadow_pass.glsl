@@ -21,6 +21,7 @@ void main()
     gl_Position = u_Instances[u_TransformIndex].model * vec4(a_Pos, 1.0);
 }
 
+
 #TYPE GEOMETRY
 #version 460 core
 layout (triangles) in;

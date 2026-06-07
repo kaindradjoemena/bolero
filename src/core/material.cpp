@@ -11,25 +11,19 @@ namespace blr::core
 
 
 Material::Material(Ref<Shader> shader)
-    : m_shader(shader) {}
+: m_shader(shader)
+{
+}
 
 void Material::Bind() const
 {
     if (!m_shader)
-     return;
-
-    m_shader->Bind();
-
-    // NOTE: might have to reserve some slots for the irradiance and prefilter maps
-    // and textures would start at slot 3(?)
-    uint32_t slot = 3;
+        return;
 
     if (m_albedoMap)
     {
-        m_albedoMap->Bind(slot);
-        m_shader->SetInt("u_albedoMap", slot);
+        m_albedoMap->Bind(0); 
         m_shader->SetBool("u_hasAlbedoMap", true);
-        slot++;
     }
     else
     {
@@ -39,10 +33,8 @@ void Material::Bind() const
 
     if (m_normalMap)
     {
-        m_normalMap->Bind(slot);
-        m_shader->SetInt("u_normalMap", slot);
+        m_normalMap->Bind(1);
         m_shader->SetBool("u_hasNormalMap", true);
-        slot++;
     }
     else
     {
@@ -51,10 +43,8 @@ void Material::Bind() const
 
     if (m_metallicMap)
     {
-        m_metallicMap->Bind(slot);
-        m_shader->SetInt("u_metallicMap", slot);
+        m_metallicMap->Bind(2);
         m_shader->SetBool("u_hasMetallicMap", true);
-        slot++;
     }
     else
     {
@@ -64,10 +54,8 @@ void Material::Bind() const
 
     if (m_roughnessMap)
     {
-        m_roughnessMap->Bind(slot);
-        m_shader->SetInt("u_roughnessMap", slot);
+        m_roughnessMap->Bind(3);
         m_shader->SetBool("u_hasRoughnessMap", true);
-        slot++;
     }
     else
     {
@@ -77,10 +65,8 @@ void Material::Bind() const
 
     if (m_aoMap)
     {
-        m_aoMap->Bind(slot);
-        m_shader->SetInt("u_aoMap", slot);
+        m_aoMap->Bind(4);
         m_shader->SetBool("u_hasAOMap", true);
-        slot++;
     }
     else
     {
@@ -88,5 +74,6 @@ void Material::Bind() const
         m_shader->SetBool("u_hasAOMap", false);
     }
 }
+
 
 } /* namespace blr::core */

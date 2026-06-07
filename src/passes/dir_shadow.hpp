@@ -3,12 +3,14 @@
 #include <bolero.hpp>
 #include "core/lights.hpp"
 
-namespace blrc = blr::core;
 
+namespace blrc = blr::core;
 
 class DirShadowPass : public blrc::RenderPass
 {
 public:
+    static constexpr int MAX_DIR_LIGHTS = 4;
+
     DirShadowPass(const blrc::Ref<blrc::Shader>& depthShader)
     : RenderPass("Directional Shadow Pass")
     , m_depthShader(depthShader)
@@ -17,53 +19,67 @@ public:
 
     void Init() override
     {
-        m_fbo = blrc::FrameBuffer::Create({ 1024, 1024, { blrc::ImgFmt::Depth32F } });
+        for (size_t i = 0; i < MAX_DIR_LIGHTS; i++)
+            m_fbos.emplace_back(blrc::FrameBuffer::Create({ 512, 512, { blrc::ImgFmt::Depth32F } }));
     }
 
     void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
-        m_fbo->Bind();
+        auto dirLights = scene.GetDirLights();
+        if (dirLights.empty())
+            return;
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
-        glClear(GL_DEPTH_BUFFER_BIT);
 
-        auto dirLights = scene.GetDirLights();
-        if (dirLights.empty()) 
+        m_depthShader->Bind();
+
+        blrc::vec3 targetPos = blrc::vec3(0.0f); 
+
+        int shadowMapIndex = 0;
+        for (const auto& l : dirLights)
         {
-            m_fbo->Unbind();
-            return;
-        }
+            if (!l.castsShadow)
+                continue;
             
-        blrc::DirLight sun = dirLights[0];
+            if (shadowMapIndex >= MAX_DIR_LIGHTS)
+                break;
 
-        blrc::vec3 lightDir  = blrc::Norm(sun.direction);
-        blrc::vec3 targetPos = blrc::vec3(0.0f, 0.0f, 0.0f);
-        float shadowDist     = 40.0f;
-        blrc::vec3 lightPos  = targetPos - (lightDir * shadowDist);
+            m_fbos[shadowMapIndex]->Bind();
+            
+            glClear(GL_DEPTH_BUFFER_BIT);
 
-        blrc::mat4 lightView          = blrc::LookAt(lightPos, targetPos, blrc::vec3(0.0f, 1.0f, 0.0f));
-        blrc::mat4 lightProj          = blrc::Ortho(-40.0f, 40.0f, -40.0f, 40.0f, 1.0f, 80.0f);
-        blrc::mat4 u_lightSpaceMatrix = lightProj * lightView;
+            blrc::mat4 lightSpaceMat = l.GetLightSpaceMat(targetPos);
+            m_depthShader->SetMat4("u_LightSpaceMat", lightSpaceMat);
 
-        blrc::Renderer::UpdateCameraUBO(lightView, lightProj, lightPos);
-        blrc::Renderer::DrawQueue(m_depthShader.get()); 
+            blrc::Renderer::DrawQueue(blrc::RenderQueueType::SHADOW_CASTER, m_depthShader.get()); 
+
+            m_fbos[shadowMapIndex]->Unbind();
+
+
+            // Pass to render context
+            std::string texName = "u_DirDepthMapTex_" + std::to_string(shadowMapIndex);
+            std::string matName = "u_DirLightSpaceMat_" + std::to_string(shadowMapIndex);
+            renderCtx.SetTexture(texName, m_fbos[shadowMapIndex]->GetDepthAttachmentID());
+            renderCtx.SetMat4(matName, lightSpaceMat);
+
+            shadowMapIndex++;
+        }
 
         glCullFace(GL_BACK);
-        m_fbo->Unbind();
 
 
-        renderCtx.SetTexture("u_DirDepthMapTex", m_fbo->GetDepthAttachmentID());
-        renderCtx.SetMat4("u_DirLightSpaceMat", u_lightSpaceMatrix);
+        renderCtx.SetInt("u_NumDirShadows", shadowMapIndex);
     }
 
     void Shutdown() override
     {
+        m_fbos.clear();
     }
 
 private:
-    blrc::Ref<blrc::FrameBuffer> m_fbo;
+    std::vector<blrc::Ref<blrc::FrameBuffer>> m_fbos;
     blrc::Ref<blrc::Shader> m_depthShader;
 };

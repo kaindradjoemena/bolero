@@ -34,21 +34,22 @@ class ShaderStorageBuffer;
 struct DirLightData
 {
     vec4 directionAndPower; // xyz = direction, w = power
-    vec4 color;             // xyz = color, w = padding (1.0f)
+    vec4 colorAndShadow;    // xyz = color,     w = shadow (-1 = no shadows)
 };
 
 struct PointLightData
 {
-    vec4 positionAndRange; // xyz = position, w = range
-    vec4 colorAndPower;    // xyz = color, w = power
+    vec4 positionAndRange; // xyz = position,               w = range
+    vec4 colorAndPower;    // xyz = color,                  w = power
+    vec4 shadow;           // x = shadow (-1 = no shadows), yzw = padding (0.0f)
 };
 
 struct SpotLightData
 {
-    vec4 positionAndLength; // xyz = position, w = length
+    vec4 positionAndLength; // xyz = position,  w = length
     vec4 directionAndInner; // xyz = direction, w = innerCos
-    vec4 colorAndOuter;     // xyz = color, w = outerCos
-    vec4 PowerAndPadding;   // x = power, yzw = padding (1.0f)
+    vec4 colorAndOuter;     // xyz = color,     w = outerCos
+    vec4 PowerAndShadow;    // x = power,       y = shadow (-1.0f = no shadows), zw = padding (0.0f)
 };
 
 struct GPULightBuffer
@@ -58,9 +59,16 @@ struct GPULightBuffer
     uint32_t spotCount{0};
     uint32_t padding{0};
     
-    DirLightData dirLights[16];
-    PointLightData pointLights[1024];
-    SpotLightData spotLights[512];
+    DirLightData dirLights[4];
+    PointLightData pointLights[4];
+    SpotLightData spotLights[4];
+};
+
+enum class RenderQueueType
+{
+    OPAQUE,
+    TRANSPARENT,
+    SHADOW_CASTER
 };
 
 struct RenderTask
@@ -113,17 +121,20 @@ public:
     static void UpdateCameraUBO(const mat4& view, const mat4& proj, const vec3& pos);
     static void UploadBuffers(); 
     
-    static void Submit(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform);
-    static void Submit(const DirLight& l);
-    static void Submit(const PointLight& l);
-    static void Submit(const SpotLight& l);
+    static void Submit(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform, bool castsShadow = true);
+    static void Submit(const DirLight& l, int shadowIndex);
+    static void Submit(const PointLight& l, int shadowIndex);
+    static void Submit(const SpotLight& l, int shadowIndex);
 
-    static void DrawQueue(Shader* overrideShader = nullptr);
+    static void DrawQueue(RenderQueueType queueType, Shader* overrideShader = nullptr);
     static void DrawFullscreenQuad();
     static void DrawCube();
 
 private:
-    inline static std::vector<RenderTask>   s_renderQueue;
+    inline static std::vector<RenderTask> s_opaqueQueue;
+    inline static std::vector<RenderTask> s_transparentQueue;
+    inline static std::vector<RenderTask> s_shadowCasterQueue;
+
     inline static std::vector<InstanceData> s_instanceBuffer;
 
     inline static std::vector<DirLightData>   s_dirLightBuffer;

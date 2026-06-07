@@ -84,56 +84,9 @@ int main()
     
     // Model
     auto opaqueShader = assetManager.CreateShader(std::filesystem::path("assets/shaders/light_pass.glsl"));
-    auto model_squaresAndthings = assetManager.CreateModel(std::filesystem::path("assets/models/metal_rough_balls.gltf"), opaqueShader);
+    auto model_squaresAndthings = assetManager.CreateModel(std::filesystem::path("assets/models/squares_and_things.gltf"), opaqueShader);
     blrc::Transform transform;
     scene.AddEntity(model_squaresAndthings, transform);
-
-    // Directional light
-    blrc::DirLight sun;
-    sun.direction  = blrc::EulToDir({ -45.0f, 45.0f, 0.0f });
-    sun.base.color = blrc::vec3(1.0f, 1.0f, 0.95f);
-    sun.base.power = 0.0;
-    scene.AddLight(sun);
-
-    // Spot light
-    blrc::SpotLight spotLight;
-    spotLight.position   = blrc::vec3(0.0f, 10.0f, 0.0f);
-    spotLight.direction  = blrc::EulToDir({ -90.0f, 0.0f, 0.0f });
-    spotLight.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
-    spotLight.base.power = 0.0f;
-    spotLight.length     = 50.0f;
-    spotLight.innerCos   = std::cos(blrc::DegToRad(12.5f)); 
-    spotLight.outerCos   = std::cos(blrc::DegToRad(17.5f));
-    scene.AddLight(spotLight);
-
-    // Point light
-    blrc::PointLight pointLight1;
-    pointLight1.position   = blrc::vec3(10.0f, 10.0f, 10.0f);
-    pointLight1.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
-    pointLight1.range      = 40.0f;
-    pointLight1.base.power = 0.0f;
-    scene.AddLight(pointLight1);
-        
-    blrc::PointLight pointLight2;
-    pointLight2.position   = blrc::vec3(-10.0f, 10.0f, 10.0f);
-    pointLight2.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
-    pointLight2.range      = 40.0f;
-    pointLight2.base.power = 0.0f;
-    scene.AddLight(pointLight2);
-    
-    blrc::PointLight pointLight3;
-    pointLight3.position   = blrc::vec3(10.0f, -10.0f, 10.0f);
-    pointLight3.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
-    pointLight3.range      = 40.0f;
-    pointLight3.base.power = 0.0f;
-    scene.AddLight(pointLight3);
-    
-    blrc::PointLight pointLight4;
-    pointLight4.position   = blrc::vec3(-10.0f, -10.0f, 10.0f);
-    pointLight4.base.color = blrc::vec3(1.0f, 1.0f, 1.0f);
-    pointLight4.range      = 40.0f;
-    pointLight4.base.power = 0.0f;
-    scene.AddLight(pointLight4);
 
     blrc::Renderer::Init();
     blrc::RenderPipeline CookTorrancePBR;

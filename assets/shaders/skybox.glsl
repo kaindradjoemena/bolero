@@ -43,7 +43,7 @@ void main()
 out vec4 FragColor;
 in vec3 v_TexCoords;
 
-uniform samplerCube u_EnvMap;
+layout(binding = 25) uniform samplerCube u_EnvMap;
 
 void main()
 {    

@@ -10,6 +10,8 @@ namespace blrc = blr::core;
 class PointShadowPass : public blrc::RenderPass
 {
 public:
+    static constexpr int MAX_POINT_LIGHTS = 4;
+
     PointShadowPass(const blrc::Ref<blrc::Shader>& depthShader)
     : RenderPass("Point Shadow Pass")
     , m_depthShader(depthShader)
@@ -18,62 +20,67 @@ public:
 
     void Init() override
     {
-        m_fbo = blrc::FrameBuffer::Create({ 1024, 1024, { {blrc::ImgFmt::Depth32F, true} } });
+        for (size_t i = 0; i < MAX_POINT_LIGHTS; i++)
+            m_fbos.emplace_back(blrc::FrameBuffer::Create({ 512, 512, { {blrc::ImgFmt::Depth32F, true} } }));
     }
 
     void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
-        m_fbo->Bind();
+        auto pointLights = scene.GetPointLights();
+        if (pointLights.empty())
+            return;
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        auto pointLights = scene.GetPointLights();
-        if (pointLights.empty()) 
-        {
-            m_fbo->Unbind();
-            return;
-        }
-
-        blrc::PointLight point = pointLights[0];
-        blrc::vec3 lightPos = point.position;
-
-        float aspect = 1.0f;
-        float near   = 1.0f;
-        float far    = point.range;
-        blrc::mat4 shadowProj = blrc::Perspective(blrc::DegToRad(90.0f), aspect, near, far);
-
-        std::vector<blrc::mat4> shadowTransforms;
-        shadowTransforms.push_back(shadowProj * blrc::LookAt(lightPos, lightPos + blrc::vec3( 1, 0, 0), blrc::vec3(0,-1, 0))); // +X
-        shadowTransforms.push_back(shadowProj * blrc::LookAt(lightPos, lightPos + blrc::vec3(-1, 0, 0), blrc::vec3(0,-1, 0))); // -X
-        shadowTransforms.push_back(shadowProj * blrc::LookAt(lightPos, lightPos + blrc::vec3( 0, 1, 0), blrc::vec3(0, 0, 1))); // +Y
-        shadowTransforms.push_back(shadowProj * blrc::LookAt(lightPos, lightPos + blrc::vec3( 0,-1, 0), blrc::vec3(0, 0,-1))); // -Y
-        shadowTransforms.push_back(shadowProj * blrc::LookAt(lightPos, lightPos + blrc::vec3( 0, 0, 1), blrc::vec3(0,-1, 0))); // +Z
-        shadowTransforms.push_back(shadowProj * blrc::LookAt(lightPos, lightPos + blrc::vec3( 0, 0,-1), blrc::vec3(0,-1, 0))); // -Z
 
         m_depthShader->Bind();
-        for (int i = 0; i < 6; ++i)
-        {
-            m_depthShader->SetMat4("u_ShadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
-        }
-        m_depthShader->SetFloat("u_FarPlane", far);
-        m_depthShader->SetVec3("u_LightPos", lightPos);
 
-        blrc::Renderer::DrawQueue(m_depthShader.get()); 
+        int shadowMapIndex = 0;
+        for (const auto& l : pointLights)
+        {
+            if (!l.castsShadow)
+                continue;
+            
+            if (shadowMapIndex >= MAX_POINT_LIGHTS)
+                break;
+
+
+            m_fbos[shadowMapIndex]->Bind();
+
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            for (int i = 0; i < 6; i++)
+                m_depthShader->SetMat4("u_ShadowMatrices[" + std::to_string(i) + "]", l.GetLightSpaceMatrices()[i]);
+
+            m_depthShader->SetFloat("u_FarPlane", l.range);
+            m_depthShader->SetVec3("u_LightPos", l.position);
+
+            blrc::Renderer::DrawQueue(blrc::RenderQueueType::SHADOW_CASTER, m_depthShader.get()); 
+
+            m_fbos[shadowMapIndex]->Unbind();
+
+
+            // Pass to render context
+            std::string texName = "u_PointDepthMapTex_" + std::to_string(shadowMapIndex);
+            renderCtx.SetTexture(texName, m_fbos[shadowMapIndex]->GetDepthAttachmentID());
+
+            shadowMapIndex++;
+        }
 
         glCullFace(GL_BACK);
-        m_fbo->Unbind();
 
 
-        renderCtx.SetTexture("u_PointDepthMapTex", m_fbo->GetDepthAttachmentID());
+        renderCtx.SetInt("u_NumPointShadows", shadowMapIndex);
     }
 
-    void Shutdown() override {}
+    void Shutdown() override
+    {
+        m_fbos.clear();
+    }
 
 private:
-    blrc::Ref<blrc::FrameBuffer> m_fbo;
+    std::vector<blrc::Ref<blrc::FrameBuffer>> m_fbos;
     blrc::Ref<blrc::Shader> m_depthShader;
 };

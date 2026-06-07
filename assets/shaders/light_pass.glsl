@@ -12,22 +12,23 @@ layout (location = 1) in vec3 a_Normal;
 layout (location = 2) in vec2 a_TexCoords;
 
 // ===== Light Structs =====
-struct PointLightData
+struct DirLightData			// Directional Lights
 {
-    vec4 positionAndRange; 
-    vec4 colorAndPower;    
+    vec4 directionAndPower; // xyz = direction, w = power
+    vec4 colorAndShadow;    // xyz = color,     w = shadow (-1 = no shadows)
 };
-struct DirLightData
+struct PointLightData		// Point Lights
 {
-    vec4 directionAndPower;
-    vec4 color;
+    vec4 positionAndRange; 	// xyz = position,               w = range
+    vec4 colorAndPower;    	// xyz = color,                  w = power
+    vec4 shadow;           	// x = shadow (-1 = no shadows), yzw = padding (0.0f)
 };
-struct SpotLightData
+struct SpotLightData		// Spot Lights
 {
-    vec4 positionAndLength;
-    vec4 directionAndInner;
-    vec4 colorAndOuter;
-    vec4 powerAndPadding;
+    vec4 positionAndLength; // xyz = position,  w = length
+    vec4 directionAndInner; // xyz = direction, w = innerCos
+    vec4 colorAndOuter;     // xyz = color,     w = outerCos
+    vec4 powerAndShadow;    // x = power,       y = shadow (-1.0f = no shadows), zw = padding (0.0f)
 };
 
 // ===== Instance Mats =====
@@ -55,26 +56,26 @@ layout(std430, binding = 2) readonly buffer LightBuffer
     uint u_SpotCount;
     uint u_Padding;
     
-    DirLightData   u_DirLights[16];
-    PointLightData u_PointLights[1024];
-    SpotLightData  u_SpotLights[512];
+    DirLightData   u_DirLights[4];
+    PointLightData u_PointLights[4];
+    SpotLightData  u_SpotLights[4];
 };
 
 uniform uint u_TransformIndex;
 
-// ===== VERTEX SHADER OUT =====
+uniform mat4 u_DirLightSpaceMat[4];
+uniform mat4 u_SpotLightSpaceMat[4];
 
+// ===== VERTEX SHADER OUT =====
 out VS_OUT {
     vec3 v_FragPos;
     vec3 v_Normal;
     vec2 v_TexCoords;
-    vec4 v_FragPosDirLightSpace;
-    vec4 v_FragPosSpotLightSpace;
+
+    vec4 v_FragPosDirLightSpace[4];
+    vec4 v_FragPosSpotLightSpace[4];
 } vs_out;
 
-// Shadow Mapping
-uniform mat4 u_DirLightSpaceMat;
-uniform mat4 u_SpotLightSpaceMat;
 
 void main() 
 {
@@ -86,8 +87,11 @@ void main()
 	vs_out.v_TexCoords 		   = a_TexCoords;
 
 	// fragment position in light space
-	vs_out.v_FragPosDirLightSpace  = u_DirLightSpaceMat * vec4(vs_out.v_FragPos, 1);
-	vs_out.v_FragPosSpotLightSpace = u_SpotLightSpaceMat * vec4(vs_out.v_FragPos, 1);
+    for(int i = 0; i < 4; i++)
+	{
+        vs_out.v_FragPosDirLightSpace[i]  = u_DirLightSpaceMat[i] * vec4(vs_out.v_FragPos, 1);
+        vs_out.v_FragPosSpotLightSpace[i] = u_SpotLightSpaceMat[i] * vec4(vs_out.v_FragPos, 1);
+    }
     
 	gl_Position = u_Projection * u_View * modelMat * vec4(a_Pos, 1.0);		// world space transformation
 }
@@ -99,22 +103,23 @@ void main()
 const float PI = 3.141592653589793;
 
 // ===== Light Structs =====
-struct PointLightData
+struct DirLightData			// Directional Lights
 {
-    vec4 positionAndRange; 
-    vec4 colorAndPower;    
+    vec4 directionAndPower; // xyz = direction, w = power
+    vec4 colorAndShadow;    // xyz = color,     w = shadow (-1 = no shadows)
 };
-struct DirLightData
+struct PointLightData		// Point Lights
 {
-    vec4 directionAndPower;
-    vec4 color;
+    vec4 positionAndRange; 	// xyz = position,               w = range
+    vec4 colorAndPower;    	// xyz = color,                  w = power
+    vec4 shadow;           	// x = shadow (-1 = no shadows), yzw = padding (0.0f)
 };
-struct SpotLightData
+struct SpotLightData		// Spot Lights
 {
-    vec4 positionAndLength;
-    vec4 directionAndInner;
-    vec4 colorAndOuter;
-    vec4 powerAndPadding;
+    vec4 positionAndLength; // xyz = position,  w = length
+    vec4 directionAndInner; // xyz = direction, w = innerCos
+    vec4 colorAndOuter;     // xyz = color,     w = outerCos
+    vec4 powerAndShadow;    // x = power,       y = shadow (-1.0f = no shadows), zw = padding (0.0f)
 };
 
 layout(std140, binding = 0) uniform CameraBuffer
@@ -130,9 +135,9 @@ layout(std430, binding = 2) readonly buffer LightBuffer
     uint u_SpotCount;
     uint u_Padding;
     
-    DirLightData   u_DirLights[16];
-    PointLightData u_PointLights[1024];
-    SpotLightData  u_SpotLights[512];
+    DirLightData   u_DirLights[4];
+    PointLightData u_PointLights[4];
+    SpotLightData  u_SpotLights[4];
 };
 
 
@@ -140,32 +145,33 @@ in VS_OUT {
     vec3 v_FragPos;
     vec3 v_Normal;
     vec2 v_TexCoords;
-    vec4 v_FragPosDirLightSpace;
-    vec4 v_FragPosSpotLightSpace;
+
+    vec4 v_FragPosDirLightSpace[4];
+    vec4 v_FragPosSpotLightSpace[4];
 } fs_in;
 
 out vec4 FragColor;
 
-// Shadow Mapping
-uniform sampler2D u_DirDepthMapTex;	    // 10
-uniform sampler2D u_SpotDepthMapTex;    // 11
-uniform samplerCube u_PointDepthMapTex; // 12
-uniform float u_PointFarPlane;
+layout(binding = 0) uniform sampler2D u_albedoMap;     uniform bool u_hasAlbedoMap;     uniform vec3  u_albedoFactor;
+layout(binding = 1) uniform sampler2D u_normalMap;	   uniform bool u_hasNormalMap;
+layout(binding = 2) uniform sampler2D u_metallicMap;   uniform bool u_hasMetallicMap;   uniform float u_metallicFactor;
+layout(binding = 3) uniform sampler2D u_roughnessMap;  uniform bool u_hasRoughnessMap;  uniform float u_roughnessFactor;
+layout(binding = 4) uniform sampler2D u_aoMap;		   uniform bool u_hasAOMap;		    uniform float u_AOFactor;
 
-uniform samplerCube u_IrradianceMap;    // 13
-uniform samplerCube u_PrefilterMap;     // 14
-uniform sampler2D   u_BrdfLut;          // 15
+// IBL MAPS
+layout(binding = 5) uniform samplerCube u_IrradianceMap;
+layout(binding = 6) uniform samplerCube u_PrefilterMap;
+layout(binding = 7) uniform sampler2D   u_BrdfLut;
 
-uniform sampler2D u_albedoMap;     uniform bool u_hasAlbedoMap;     uniform vec3  u_albedoFactor;
-uniform sampler2D u_normalMap;	   uniform bool u_hasNormalMap;
-uniform sampler2D u_metallicMap;   uniform bool u_hasMetallicMap;   uniform float u_metallicFactor;
-uniform sampler2D u_roughnessMap;  uniform bool u_hasRoughnessMap;  uniform float u_roughnessFactor;
-uniform sampler2D u_aoMap;		   uniform bool u_hasAOMap;		    uniform float u_AOFactor;
+// SHADOW MAP ARRAYS
+layout(binding = 10) uniform sampler2D   u_DirShadowMaps[4];
+layout(binding = 14) uniform sampler2D   u_SpotShadowMaps[4];
+layout(binding = 18) uniform samplerCube u_PointShadowMaps[4];
 
 
 // Shadow Calculation Helpers
 float calcShadow(sampler2D shadowMap, vec4 fragPosLightSpace, float bias = 0.05);
-float calcPointShadow(vec3 fragPos, vec3 lightPos, float farPlane, float bias = 0.05);
+float calcPointShadow(samplerCube shadowMap, vec3 fragPos, vec3 lightPos, float farPlane, float bias);
 
 // Cook-Torrance BRDF Helpers
 float NDF_GGXTR(vec3 N, vec3 H, float roughness);
@@ -203,26 +209,41 @@ void main()
 
 	// ----- PBR Reflections -----
     // Directional Lights
-    for(uint i = 0; i < u_DirCount; i++)
-    {
-        float shadow = (i == 0)
-					   ? calcShadow(u_DirDepthMapTex, fs_in.v_FragPosDirLightSpace, shadowBias) : 0.0;
-        Lo += calcDirLight(u_DirLights[i], N, V, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
-    }
+	for	(uint i = 0; i < u_DirCount; i++)
+	{
+		float shadow = 0.0;
+		int shadowIdx = int(u_DirLights[i].colorAndShadow.w);
+
+		if (shadowIdx >= 0)
+			shadow = calcShadow(u_DirShadowMaps[shadowIdx], fs_in.v_FragPosDirLightSpace[shadowIdx], shadowBias);
+	
+		Lo += calcDirLight(u_DirLights[i], N, V, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
+	}
     // Spot Ligts
-	for(uint i = 0; i < u_SpotCount; i++)
-    {
-        float shadow = (i == 0)
-					   ? calcShadow(u_SpotDepthMapTex, fs_in.v_FragPosSpotLightSpace, shadowBias) : 0.0;
-        Lo += calcSpotLight(u_SpotLights[i], N, V, fs_in.v_FragPos, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
-    }
-	// Point Lights
-	for(uint i = 0; i < u_PointCount; i++)
-    {
-        float shadow = (i == 0)
-					   ? calcPointShadow(fs_in.v_FragPos, u_PointLights[i].positionAndRange.xyz, u_PointFarPlane, shadowBias) : 0.0;
-        Lo += calcPointLight(u_PointLights[i], N, V, fs_in.v_FragPos, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
-    }
+	for (uint i = 0; i < u_SpotCount; i++)
+	{
+		float shadow = 0.0;
+		int shadowIdx = int(u_SpotLights[i].powerAndShadow.y);
+
+		if (shadowIdx >= 0)
+			shadow = calcShadow(u_SpotShadowMaps[shadowIdx], fs_in.v_FragPosSpotLightSpace[shadowIdx], shadowBias);
+		
+		Lo += calcSpotLight(u_SpotLights[i], N, V, fs_in.v_FragPos, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
+	}
+	// Point Lights Loop
+	for (uint i = 0; i < u_PointCount; i++)
+	{
+		float shadow = 0.0;
+		int shadowIdx = int(u_PointLights[i].shadow.x);
+
+		if (shadowIdx >= 0)
+		{
+			float lightRange = u_PointLights[i].positionAndRange.w;
+			shadow = calcPointShadow(u_PointShadowMaps[shadowIdx], fs_in.v_FragPos, u_PointLights[i].positionAndRange.xyz, lightRange, shadowBias);
+		}
+
+		Lo += calcPointLight(u_PointLights[i], N, V, fs_in.v_FragPos, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
+	}
 
 	vec3 F = F_SchlickR(max(dot(N, V), 0.0), F0, ROUGHNESS);
 
@@ -246,7 +267,6 @@ void main()
     vec3 ambient = (kD * diffuse + specular) * AO;
 
     vec3 color = ambient + Lo;
-    FragColor = vec4(color, 1.0);
 
 	FragColor = vec4(ambient + Lo, 1.0);
 }
@@ -258,10 +278,8 @@ vec3 calcDirLight(DirLightData light, vec3 N, vec3 V, float shadow, vec3 ALBEDO,
 {
     vec3 L = normalize(-light.directionAndPower.xyz);
     vec3 H = normalize(V + L);
-
-    vec3 radiance = light.color.rgb * light.directionAndPower.w;
+    vec3 radiance = light.colorAndShadow.rgb * light.directionAndPower.w;
     
-    // Cook-Torrance BRDF
     float NDF = NDF_GGXTR(N, H, ROUGHNESS);   
     float G   = G_Smith(N, V, L, ROUGHNESS);
 	vec3  F   = F_SchlickR(max(dot(N, V), 0.0), F0, ROUGHNESS);
@@ -273,7 +291,6 @@ vec3 calcDirLight(DirLightData light, vec3 N, vec3 V, float shadow, vec3 ALBEDO,
     vec3 numerator    = NDF * G * F; 
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; 
     vec3 specular     = numerator / denominator;
-    
     float NdotL = max(dot(N, L), 0.0);
     
     return (kD * ALBEDO / PI + specular) * radiance * NdotL * (1.0 - shadow);
@@ -284,18 +301,15 @@ vec3 calcSpotLight(SpotLightData light, vec3 N, vec3 V, vec3 fragPos, float shad
     vec3 L = normalize(light.positionAndLength.xyz - fragPos);
     vec3 H = normalize(V + L);
     
-    // Distance Attenuation
     float dist = length(light.positionAndLength.xyz - fragPos);
     float attenuation = 1.0 / (dist * dist);
     
-    // Spotlight Cone Intensity
     float theta = dot(L, normalize(-light.directionAndInner.xyz)); 
-    float epsilon = light.directionAndInner.w - light.colorAndOuter.w; // innerCos - outerCos
+    float epsilon = light.directionAndInner.w - light.colorAndOuter.w; 
     float intensity = clamp((theta - light.colorAndOuter.w) / epsilon, 0.0, 1.0); 
     
-    vec3 radiance = light.colorAndOuter.rgb * light.powerAndPadding.x * attenuation * intensity;
+    vec3 radiance = light.colorAndOuter.rgb * light.powerAndShadow.x * attenuation * intensity;
     
-    // Cook-Torrance BRDF
     float NDF = NDF_GGXTR(N, H, ROUGHNESS);   
     float G   = G_Smith(N, V, L, ROUGHNESS);      
     vec3  F   = F_SchlickR(max(dot(H, V), 0.0), F0, ROUGHNESS);
@@ -307,7 +321,6 @@ vec3 calcSpotLight(SpotLightData light, vec3 N, vec3 V, vec3 fragPos, float shad
     vec3 numerator    = NDF * G * F; 
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; 
     vec3 specular     = numerator / denominator;
-    
     float NdotL = max(dot(N, L), 0.0);
     
     return (kD * ALBEDO / PI + specular) * radiance * NdotL * (1.0 - shadow);
@@ -318,13 +331,10 @@ vec3 calcPointLight(PointLightData light, vec3 N, vec3 V, vec3 fragPos, float sh
     vec3 L = normalize(light.positionAndRange.xyz - fragPos);
     vec3 H = normalize(V + L);
     
-    // Distance Attenuation
     float dist = length(light.positionAndRange.xyz - fragPos);
     float attenuation = 1.0 / (dist * dist);
-    
     vec3 radiance = light.colorAndPower.rgb * light.colorAndPower.w * attenuation;
 
-    // Cook-Torrance BRDF
     float NDF = NDF_GGXTR(N, H, ROUGHNESS);   
     float G   = G_Smith(N, V, L, ROUGHNESS);      
     vec3  F   = F_SchlickR(max(dot(H, V), 0.0), F0, ROUGHNESS);
@@ -336,7 +346,6 @@ vec3 calcPointLight(PointLightData light, vec3 N, vec3 V, vec3 fragPos, float sh
     vec3 numerator    = NDF * G * F; 
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; 
     vec3 specular     = numerator / denominator;
-    
     float NdotL = max(dot(N, L), 0.0);
     
     return (kD * ALBEDO / PI + specular) * radiance * NdotL * (1.0 - shadow);
@@ -390,7 +399,7 @@ vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness)
 }
 
 // ===== SHADOW FACTOR HELPERS =====
-float calcShadow(sampler2D shadowMap, vec4 fragPosLightSpace, float bias = 0.0f)
+float calcShadow(sampler2D shadowMap, vec4 fragPosLightSpace, float bias)
 {
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
 	projCoords = projCoords * 0.5 + 0.5;
@@ -404,14 +413,14 @@ float calcShadow(sampler2D shadowMap, vec4 fragPosLightSpace, float bias = 0.0f)
 	return currentDepth - bias > closestDepth ? 1.0 : 0.0;
 }
 
-float calcPointShadow(vec3 fragPos, vec3 lightPos, float farPlane, float bias = 0.05)
+float calcPointShadow(samplerCube shadowMap, vec3 fragPos, vec3 lightPos, float farPlane, float bias)
 {
     vec3 fragToLight = fragPos - lightPos;
 
-    float closestDepth = texture(u_PointDepthMapTex, fragToLight).r;
+    float closestDepth = texture(shadowMap, fragToLight).r;
 
     closestDepth *= farPlane;
-    
+
     float currentDepth = length(fragToLight);
 
     return currentDepth - bias > closestDepth ? 1.0 : 0.0;

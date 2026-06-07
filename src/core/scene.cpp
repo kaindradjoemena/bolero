@@ -12,15 +12,15 @@
 namespace blr::core
 {
 
-void Scene::AddEntity(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform)
+void Scene::AddEntity(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform, bool castShadows)
 {
-    m_renderables.push_back({ mesh, material, transform });
+    m_renderables.push_back({ mesh, material, transform, castShadows });
 }
 
-void Scene::AddEntity(const Ref<Model>& model, const Transform& transform)
+void Scene::AddEntity(const Ref<Model>& model, const Transform& transform, bool castShadows)
 {
     for (const auto& mesh : model->GetMeshes())
-        m_renderables.push_back({ mesh, mesh->GetMaterial(), transform });
+        m_renderables.push_back({ mesh, mesh->GetMaterial(), transform, castShadows });
 }
 
 void Scene::AddLight(const DirLight& light)
@@ -54,13 +54,38 @@ void Scene::SubmitToRenderer()
     
     Renderer::UpdateCameraUBO(*m_cam);
 
+    // Directional Lights
+    int dirShadowIdx = 0;
     for (const auto& light : m_dirLights)
-        Renderer::Submit(light);
-    for (const auto& light : m_pointLights)
-        Renderer::Submit(light);
-    for (const auto& light : m_spotLights)
-        Renderer::Submit(light);
+    {
+        int idx = -1;
+        if (light.castsShadow && dirShadowIdx < 4)
+            idx = dirShadowIdx++;
 
+        Renderer::Submit(light, idx);
+    }
+    // Point Lights
+    int pointShadowIdx = 0;
+    for (const auto& light : m_pointLights)
+    {
+        int idx = -1;
+        if (light.castsShadow && pointShadowIdx < 4)
+            idx = pointShadowIdx++;
+
+        Renderer::Submit(light, idx);
+    }
+    // Spot Lights
+    int spotShadowIdx = 0;
+    for (const auto& light : m_spotLights)
+    {
+        int idx = -1;
+        if (light.castsShadow && spotShadowIdx < 4)
+            idx = spotShadowIdx++;
+
+        Renderer::Submit(light, idx);
+    }
+
+    // Renderables
     for (const auto& renderable : m_renderables)
         Renderer::Submit(renderable.mesh, renderable.material, renderable.transform);
 }

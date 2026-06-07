@@ -25,6 +25,7 @@ struct Renderable
     Ref<Mesh> mesh;
     Ref<Material> material;
     Transform transform;
+    bool castShadows = true;
 };
 
 class Scene
@@ -48,8 +49,8 @@ public:
     const std::vector<PointLight>& GetPointLights() const { return m_pointLights; }
     const std::vector<SpotLight>& GetSpotLights() const { return m_spotLights; }
 
-    void AddEntity(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform);
-    void AddEntity(const Ref<Model>& model, const Transform& transform);
+    void AddEntity(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform, bool castShadows = true);
+    void AddEntity(const Ref<Model>& model, const Transform& transform, bool castShadows = true);
     void AddLight(const DirLight& light);
     void AddLight(const PointLight& light);
     void AddLight(const SpotLight& light);

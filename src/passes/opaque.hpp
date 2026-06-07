@@ -1,12 +1,9 @@
-// passes/opaque.hpp
-
 #pragma once
 
 #include <bolero.hpp>
 #include "core/render_context.hpp"
 
 namespace blrc = blr::core;
-
 
 class OpaquePass : public blrc::RenderPass
 {
@@ -39,43 +36,48 @@ public:
 
         blrc::Renderer::UpdateCameraUBO(*scene.GetCam());
 
-        m_lightShader->SetMat4("u_DirLightSpaceMat", renderCtx.GetMat4("u_DirLightSpaceMat"));
-        m_lightShader->SetMat4("u_SpotLightSpaceMat", renderCtx.GetMat4("u_SpotLightSpaceMat"));
+        m_lightShader->Bind(); 
 
-        m_lightShader->SetInt("u_DirDepthMapTex", 10);
-        glBindTextureUnit(10, renderCtx.GetTexture("u_DirDepthMapTex"));
+        // IBL Maps (Slots 5, 6, 7)
+        glBindTextureUnit(5, renderCtx.GetTexture("u_IrradianceMap"));
+        glBindTextureUnit(6, renderCtx.GetTexture("u_PrefilterMap"));
+        glBindTextureUnit(7, renderCtx.GetTexture("u_BrdfLut"));
 
-        m_lightShader->SetInt("u_SpotDepthMapTex", 11);
-        glBindTextureUnit(11, renderCtx.GetTexture("u_SpotDepthMapTex"));
+        // Directional Shadows (Slots 10 - 13)
+        int numDirShadows = renderCtx.GetInt("u_NumDirShadows"); 
+        numDirShadows = std::min(numDirShadows, 4);
+        for (int i = 0; i < numDirShadows; i++)
+        {
+            glBindTextureUnit(10 + i, renderCtx.GetTexture("u_DirDepthMapTex_" + std::to_string(i)));
+            m_lightShader->SetMat4("u_DirLightSpaceMat[" + std::to_string(i) + "]", renderCtx.GetMat4("u_DirLightSpaceMat_" + std::to_string(i)));
+        }
+        // Spot Shadows (Slots 14 - 17)
+        int numSpotShadows = renderCtx.GetInt("u_NumSpotShadows");
+        numSpotShadows = std::min(numSpotShadows, 4);
+        for (int i = 0; i < numSpotShadows; i++)
+        {
+            glBindTextureUnit(14 + i, renderCtx.GetTexture("u_SpotDepthMapTex_" + std::to_string(i)));
+            m_lightShader->SetMat4("u_SpotLightSpaceMat[" + std::to_string(i) + "]", renderCtx.GetMat4("u_SpotLightSpaceMat_" + std::to_string(i)));
+        }
+        // Point Shadows (Slots 18 - 21)
+        int numPointShadows = renderCtx.GetInt("u_NumPointShadows");
+        numPointShadows = std::min(numPointShadows, 4);
+        for (int i = 0; i < numPointShadows; i++)
+        {
+            glBindTextureUnit(18 + i, renderCtx.GetTexture("u_PointDepthMapTex_" + std::to_string(i)));
+        }
 
-        m_lightShader->SetInt("u_PointDepthMapTex", 12);
-        glBindTextureUnit(12, renderCtx.GetTexture("u_PointDepthMapTex"));
-        m_lightShader->SetFloat("u_PointFarPlane", scene.GetPointLights()[0].range);
+        // Draw Opaque geometry
+        blrc::Renderer::DrawQueue(blrc::RenderQueueType::OPAQUE, nullptr);
 
-        // Irradiance Map
-        m_lightShader->SetInt("u_IrradianceMap", 13);
-        glBindTextureUnit(13, renderCtx.GetTexture("u_IrradianceMap"));
-        // Pre Filtered Environment Map
-        m_lightShader->SetInt("u_PrefilterMap", 14);
-        glBindTextureUnit(14, renderCtx.GetTexture("u_PrefilterMap"));
-        // BRDF LUT
-        m_lightShader->SetInt("u_BrdfLut", 15);
-        glBindTextureUnit(15, renderCtx.GetTexture("u_BrdfLut"));
-
-        blrc::Renderer::DrawQueue(nullptr);
-
-        // Skybox
+        // Draw Skybox
         glDepthFunc(GL_LEQUAL);
 
         m_skyboxShader->Bind();
-        m_skyboxShader->SetInt("u_EnvMap", 16);
-        glBindTextureUnit(16, renderCtx.GetTexture("u_EnvMap"));
-        
+        glBindTextureUnit(25, renderCtx.GetTexture("u_EnvMap")); 
         blrc::Renderer::DrawCube();
 
         glDepthFunc(GL_LESS);
-
-
 
         m_fbo->Unbind();
 
