@@ -1,6 +1,7 @@
 // main.cpp
 
 #include <bolero.hpp>
+
 #include "passes/opaque.hpp"  // light pass
 #include "passes/dir_shadow.hpp"  // shadow pass
 #include "passes/spot_shadow.hpp"
@@ -11,7 +12,6 @@
 #include "passes/brdf_lut.hpp"
 #include "passes/post.hpp"
 #include "passes/ui.hpp"
-#include "core/render_context.hpp"
 
 #include <iostream>
 
@@ -96,7 +96,7 @@ int main()
         });
 
 
-    // Render pass interface
+    // Render pass context
     blrc::RenderContext renderCtx;
 
     // IBL Skybox Setup Pass

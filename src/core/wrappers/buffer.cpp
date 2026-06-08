@@ -33,7 +33,7 @@ void VertexBuffer::Unbind() const
 
 // ===== IndexBuffer =====
 IndexBuffer::IndexBuffer(const uint32_t* indices, uint32_t count)
-    : m_count(count)
+: m_count(count)
 {
     glCreateBuffers(1, &m_rendererID);
     glNamedBufferStorage(m_rendererID, count * sizeof(uint32_t), indices, GL_DYNAMIC_STORAGE_BIT);

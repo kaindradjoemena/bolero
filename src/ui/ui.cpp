@@ -8,10 +8,8 @@
 
 #include <implot.h>
 
-
 #include "core/scene.hpp"
 #include "core/render_context.hpp"
-
 
 
 namespace blr::core

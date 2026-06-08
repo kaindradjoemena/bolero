@@ -14,7 +14,7 @@ static bool IsDepthFormat(ImgFmt format)
 }
 
 FrameBuffer::FrameBuffer(const FBSpec& spec)
-    : m_spec(spec)
+: m_spec(spec)
 {
     for (auto& attachSpec : m_spec.attachments)
     {

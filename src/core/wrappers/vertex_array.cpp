@@ -34,11 +34,11 @@ void VertexArray::AddVertexBuffer(const std::shared_ptr<VertexBuffer>& vBuffer)
 {
     const BufferLayout& layout = vBuffer->GetLayout();
 
-    // 1. Attach VB
+    // Attach VB
     GLuint bindingIndex = m_vertexBuffers.size();   // the index where this specific VB gets attached to the VA
     glVertexArrayVertexBuffer(m_rendererID, bindingIndex, vBuffer->GetRendererID(), 0, layout.GetStride());
 
-    // 2. For every element (pos, col, uv, norm, etc.), bind it to the VA
+    // For every element (pos, col, uv, norm, etc.), bind it to the VA
     for (const auto& e : layout)
     {
         glEnableVertexArrayAttrib(m_rendererID, m_vertexBufferIndex);

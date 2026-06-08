@@ -22,7 +22,9 @@ struct BufferElement
     bool normalized;
 
     BufferElement(ShaderDataType t, const std::string& n, bool norm = false)
-        : name(n), type(t), size(ShaderDataTypeSize(t)), offset(0), normalized(norm) {}
+    : name(n), type(t), size(ShaderDataTypeSize(t)), offset(0), normalized(norm)
+    {
+    }
 };
 
 
@@ -31,7 +33,7 @@ class BufferLayout
 public:
     BufferLayout() = default;
     BufferLayout(std::initializer_list<BufferElement> e)
-        : m_elements(e)
+    : m_elements(e)
     {
         CalculateOffsetsAndStride();
     }

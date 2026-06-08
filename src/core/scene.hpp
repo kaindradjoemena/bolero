@@ -29,6 +29,7 @@ struct Renderable
     bool castShadows = true;
 };
 
+
 class Scene
 {
 public:

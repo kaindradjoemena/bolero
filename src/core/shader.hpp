@@ -19,6 +19,7 @@ namespace blr::core
 {
 
 
+// ===== Shader Stages =====
 enum class ShaderStage
 {
     None = 0,
@@ -27,7 +28,6 @@ enum class ShaderStage
     Geometry,
     Compute
 };
-
 inline
 GLenum ShaderStageToGLEnum(ShaderStage stage)
 {
@@ -42,7 +42,6 @@ GLenum ShaderStageToGLEnum(ShaderStage stage)
     }
     return 0;
 }
-
 inline
 ShaderStage ShaderStageFromStr(const std::string& type)
 {
@@ -55,7 +54,7 @@ ShaderStage ShaderStageFromStr(const std::string& type)
     return ShaderStage::None;
 }
 
-// ----- Shader Data Types -----
+// ===== Shader Data Types =====
 enum class ShaderDataType
 {
     None = 0,

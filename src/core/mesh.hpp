@@ -29,6 +29,7 @@ struct Vertex
     vec3 bitangent;
 };
 
+
 class Mesh : public Resource
 {
 

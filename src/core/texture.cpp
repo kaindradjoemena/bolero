@@ -12,7 +12,7 @@ namespace blr::core
 
 
 Tex::Tex(const std::filesystem::path& texPath, const TexSpec& texSpec)
-    : m_texPath(texPath), m_texSpec(texSpec)
+: m_texPath(texPath), m_texSpec(texSpec)
 {
     int width, height, channels;
     stbi_set_flip_vertically_on_load(1);

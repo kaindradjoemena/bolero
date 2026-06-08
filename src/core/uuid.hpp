@@ -5,8 +5,10 @@
 #include <cstdint>
 #include <atomic>
 
+
 namespace blr::core
 {
+
 
 using AssetHandle = uint64_t;
 
@@ -19,5 +21,6 @@ public:
         return s_counter++;
     }
 };
+
 
 } /* namespace blr::core */

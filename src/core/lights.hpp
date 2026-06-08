@@ -10,6 +10,7 @@
 namespace blr::core
 {
 
+
 namespace LightBaseDefaults
 {
     static constexpr vec3  COLOR = vec3(1.0f);

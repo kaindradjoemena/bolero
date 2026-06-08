@@ -14,16 +14,6 @@ namespace blr::core
 {
 
 
-struct RenderStats
-{
-    uint32_t drawCalls = 0;
-    
-    void Reset()
-    {
-        drawCalls = 0;
-    }
-};
-
 class Mesh;
 class Material;
 class Camera;
@@ -35,19 +25,18 @@ struct DirLight;
 struct PointLight;
 struct SpotLight;
 
+// ===== GPU STRUCT LAYOUT =====
 struct DirLightData
 {
     vec4 directionAndPower; // xyz = direction, w = power
     vec4 colorAndShadow;    // xyz = color,     w = shadow (-1 = no shadows)
 };
-
 struct PointLightData
 {
     vec4 positionAndRange; // xyz = position,               w = range
     vec4 colorAndPower;    // xyz = color,                  w = power
     vec4 shadow;           // x = shadow (-1 = no shadows), yzw = padding (0.0f)
 };
-
 struct SpotLightData
 {
     vec4 positionAndLength; // xyz = position,  w = length
@@ -55,7 +44,6 @@ struct SpotLightData
     vec4 colorAndOuter;     // xyz = color,     w = outerCos
     vec4 PowerAndShadow;    // x = power,       y = shadow (-1.0f = no shadows), zw = padding (0.0f)
 };
-
 struct GPULightBuffer
 {
     uint32_t dirCount{0};
@@ -67,6 +55,17 @@ struct GPULightBuffer
     PointLightData pointLights[4];
     SpotLightData spotLights[4];
 };
+struct InstanceData
+{
+    mat4 model;
+    mat4 normal;
+};
+struct CameraFrameData
+{
+    mat4 view;
+    mat4 projection;
+    vec4 cameraPosAndTime; // xyz = position, w = time
+};
 
 enum class RenderQueueType
 {
@@ -74,7 +73,6 @@ enum class RenderQueueType
     TRANSPARENT,
     SHADOW_CASTER
 };
-
 struct RenderTask
 {
     uint64_t sortKey;
@@ -88,18 +86,16 @@ struct RenderTask
     }
 };
 
-struct InstanceData
+struct RenderStats
 {
-    mat4 model;
-    mat4 normal;
+    uint32_t drawCalls = 0;
+    
+    void Reset()
+    {
+        drawCalls = 0;
+    }
 };
 
-struct CameraFrameData
-{
-    mat4 view;
-    mat4 projection;
-    vec4 cameraPosAndTime; // xyz = position, w = time
-};
 
 class Renderer
 {

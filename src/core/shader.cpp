@@ -13,7 +13,7 @@ namespace blr::core
 
 
 Shader::Shader(const std::filesystem::path& filePath)
-    : m_filePath(filePath)
+: m_filePath(filePath)
 {
     std::string src = ReadFile(m_filePath);
     auto shaderSources = PreProcess(src);

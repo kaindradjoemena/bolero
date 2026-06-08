@@ -13,8 +13,9 @@ class CpuTimer
 {
 public:
     CpuTimer(float& outAccumulatorMs) 
-        : m_startTime(std::chrono::steady_clock::now()), m_accumulator(outAccumulatorMs) 
-    {}
+    : m_startTime(std::chrono::steady_clock::now()), m_accumulator(outAccumulatorMs) 
+    {
+    }
 
     ~CpuTimer()
     {

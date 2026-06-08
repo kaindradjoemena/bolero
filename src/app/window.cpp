@@ -52,7 +52,7 @@ static void CursorPosCallback(GLFWwindow* window, double x, double y)
 
 
 Window::Window(uint32_t width, uint32_t height, const char* title, Input& input)
-    : m_input(input), m_width(width), m_height(height), m_title(title)
+: m_input(input), m_width(width), m_height(height), m_title(title)
 {
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW");

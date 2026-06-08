@@ -8,7 +8,7 @@ namespace blr::core
 
 
 Cubemap::Cubemap(const TexSpec& spec)
-    : m_spec(spec)
+: m_spec(spec)
 {
     GLenum internalFmt = ImgFmtToGLFmt(m_spec.format);
 
