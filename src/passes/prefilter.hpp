@@ -12,20 +12,21 @@ namespace blrc = blr::core;
 class PrefilterPass : public blrc::RenderPass
 {
 public:
-    PrefilterPass(const blrc::Ref<blrc::Shader>& prefilterShader)
+    PrefilterPass(const blrc::Ref<blrc::Shader>& prefilterShader, uint32_t size = 128, uint32_t samples = 2048)
     : RenderPass("Prefilter Pass")
     , m_prefilterShader(prefilterShader)
+    , m_size(size)
+    , m_samples(samples)
     {
     }
 
     void Init() override
     {
         blrc::TexSpec spec;
-        spec.w = 128;
-        spec.h = 128;
+        spec.w = m_size;
+        spec.h = m_size;
         spec.format = blrc::ImgFmt::RGB16F; 
         spec.generateMips = true;
-        spec.numMips = 5;
         spec.minFilter = blrc::TexFilter::LinearMipmapLinear;
         spec.magFilter = blrc::TexFilter::Linear;
         spec.wrapS = blrc::TexWrap::ClampToEdge;
@@ -64,17 +65,20 @@ public:
             };
 
         m_prefilterShader->Bind();
+
+        m_prefilterShader->SetUInt("u_Samples", m_samples);
+
         for (size_t i = 0; i < 6; i++)
             m_prefilterShader->SetMat4("u_ViewProjMatrices[" + std::to_string(i) + "]", captureProj * captureViews[i]);
 
         m_prefilterShader->SetInt("u_EnvMap", 1);
         glBindTextureUnit(1, renderCtx.Get<GLuint>("u_EnvMap"));
 
-        uint32_t maxMip = 5;
+        uint32_t maxMip = m_prefilteredMap->GetSpec().numMips;
         for (size_t mip = 0; mip < maxMip; mip++)
         {
-            unsigned int mipWidth  = 128 * std::pow(0.5, mip);
-            unsigned int mipHeight = 128 * std::pow(0.5, mip);
+            unsigned int mipWidth  = m_size * std::pow(0.5, mip);
+            unsigned int mipHeight = m_size * std::pow(0.5, mip);
             glViewport(0, 0, mipWidth, mipHeight);
 
             float roughness = (float)mip / (float)(maxMip - 1);
@@ -104,6 +108,8 @@ private:
     blrc::Ref<blrc::Cubemap> m_prefilteredMap;
     
     blrc::Ref<blrc::FrameBuffer> m_fbo;
+    uint32_t m_size;
+    uint32_t m_samples;
 
     GLuint m_fboID{0};
     bool m_hasExecuted = false;

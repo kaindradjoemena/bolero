@@ -41,6 +41,7 @@ Tex::Tex(const std::filesystem::path& texPath, const TexSpec& texSpec)
     if (!imgData)
     {
         std::cerr << "Failed to load texture: " << texPath << std::endl;
+        std::cerr << stbi_failure_reason() << std::endl;
         return;
     }
 

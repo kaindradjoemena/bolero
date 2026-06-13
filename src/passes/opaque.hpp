@@ -73,7 +73,10 @@ public:
         glDepthFunc(GL_LEQUAL);
 
         m_skyboxShader->Bind();
-        glBindTextureUnit(25, renderCtx.Get<GLuint>("u_EnvMap")); 
+        glBindTextureUnit(6, renderCtx.Get<GLuint>("u_PrefilterMap"));
+        
+        m_skyboxShader->SetFloat("u_EnvironmentBlur", renderCtx.Get<float>("u_EnvironmentBlur", 0.9f));
+        
         blrc::Renderer::DrawCube();
 
         glDepthFunc(GL_LESS);

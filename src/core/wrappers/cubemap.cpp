@@ -19,6 +19,7 @@ Cubemap::Cubemap(const TexSpec& spec)
             mipLevels = m_spec.numMips;
         else
             mipLevels = static_cast<GLsizei>(std::floor(std::log2(std::max(m_spec.w, m_spec.h)))) + 1; // Auto full-chain
+            m_spec.numMips = mipLevels;
     }
 
     glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_rendererID);

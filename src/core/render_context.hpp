@@ -1,14 +1,8 @@
-// core/render_context.hpp
-
 #pragma once
-
 #include <variant>
 #include <optional>
-#include <cassert>
-
 #include <unordered_map>
 #include <string>
-
 
 namespace blr::core
 {
@@ -16,26 +10,35 @@ namespace blr::core
 
 using ContextValue = std::variant<GLuint, int, float, bool, vec4, mat4>;
 
+enum class Lifetime { TRANSIENT, PERSISTENT };
+
 class RenderContext
 {
 public:
     RenderContext() = default;
     ~RenderContext() = default;
 
-    void Set(const std::string& name, ContextValue value)
+    void Set(const std::string& name, ContextValue value, Lifetime lifetime = Lifetime::TRANSIENT)
     {
-        m_entries[name] = std::move(value);
+        if (lifetime == Lifetime::PERSISTENT)
+            m_persistent[name] = std::move(value);
+        else
+            m_transient[name] = std::move(value);
     }
 
     template<typename T>
     std::optional<T> TryGet(const std::string& name) const
     {
-        auto it = m_entries.find(name);
-        if (it == m_entries.end())
-            return std::nullopt;
-
-        const T* val = std::get_if<T>(&it->second);
-        return val ? std::optional<T>(*val) : std::nullopt;
+        for (const auto* map : { &m_transient, &m_persistent })
+        {
+            auto it = map->find(name);
+            if (it != map->end())
+            {
+                const T* val = std::get_if<T>(&it->second);
+                return val ? std::optional<T>(*val) : std::nullopt;
+            }
+        }
+        return std::nullopt;
     }
 
     template<typename T>
@@ -46,16 +49,23 @@ public:
 
     bool Has(const std::string& name) const
     {
-        return m_entries.find(name) != m_entries.end();
+        return m_transient.find(name) != m_transient.end() || m_persistent.find(name) != m_persistent.end();
     }
 
+    void ClearTransient()
+    {
+        m_transient.clear();
+    }
+    
     void Clear()
     {
-        m_entries.clear();
+        m_transient.clear();
+        m_persistent.clear();
     }
 
 private:
-    std::unordered_map<std::string, ContextValue> m_entries;
+    std::unordered_map<std::string, ContextValue> m_transient;
+    std::unordered_map<std::string, ContextValue> m_persistent;
 };
 
 

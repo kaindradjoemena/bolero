@@ -163,7 +163,7 @@ int main()
         
         scene.Update(deltaTime, true);
 
-        renderCtx.Clear();
+        renderCtx.ClearTransient();
         CookTorrancePBR.Execute(scene, renderCtx);  // pass scene
 
         window.SwapBuffers();

@@ -26,6 +26,25 @@ out vec4 FragColor;
 
 const float PI = 3.14159265359;
 
+uniform uint u_Samples;
+
+float RadicalInverse_VdC(uint bits);
+vec2 Hammersley(uint i, uint N);
+vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness);
+float GeometrySchlickGGX(float NdotV, float roughness);
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
+vec2 IntegrateBRDF(float NdotV, float roughness);
+
+
+void main() 
+{
+    // X = Viewing Angle (NdotV)
+    // Y = Material Roughness
+    vec2 integratedBRDF = IntegrateBRDF(v_TexCoords.x, v_TexCoords.y);
+
+    FragColor = vec4(integratedBRDF, 0.0, 1.0);
+}
+
 
 float RadicalInverse_VdC(uint bits) 
 {
@@ -98,11 +117,10 @@ vec2 IntegrateBRDF(float NdotV, float roughness)
     float B = 0.0; 
 
     vec3 N = vec3(0.0, 0.0, 1.0);
-    
-    const uint SAMPLE_COUNT = 1024u;
-    for(uint i = 0u; i < SAMPLE_COUNT; ++i)
+
+    for(uint i = 0u; i < u_Samples; i++)
     {
-        vec2 Xi = Hammersley(i, SAMPLE_COUNT);
+        vec2 Xi = Hammersley(i, u_Samples);
         vec3 H  = ImportanceSampleGGX(Xi, N, roughness);
         vec3 L  = normalize(2.0 * dot(V, H) * H - V);
 
@@ -121,17 +139,8 @@ vec2 IntegrateBRDF(float NdotV, float roughness)
         }
     }
     
-    A /= float(SAMPLE_COUNT);
-    B /= float(SAMPLE_COUNT);
+    A /= float(u_Samples);
+    B /= float(u_Samples);
     
     return vec2(A, B);
-}
-
-void main() 
-{
-    // X = Viewing Angle (NdotV)
-    // Y = Material Roughness
-    vec2 integratedBRDF = IntegrateBRDF(v_TexCoords.x, v_TexCoords.y);
-
-    FragColor = vec4(integratedBRDF, 0.0, 1.0);
 }

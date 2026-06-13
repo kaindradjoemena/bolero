@@ -24,6 +24,8 @@ public:
 
     void DrawPipelineStats(Scene& scene, const std::vector<Ref<RenderPass>>& passes);
 
+    void DrawProperties(Scene& scene, RenderContext& renderCtx);
+
 private:
     bool m_initialized = false;
 };

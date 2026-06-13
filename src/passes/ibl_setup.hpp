@@ -12,18 +12,19 @@ namespace blrc = blr::core;
 class IBLSetupPass : public blrc::RenderPass
 {
 public:
-    IBLSetupPass(const blrc::Ref<blrc::Shader>& eqToCubeShader, const blrc::Ref<blrc::Tex>& hdrMap)
+    IBLSetupPass(const blrc::Ref<blrc::Shader>& eqToCubeShader, const blrc::Ref<blrc::Tex>& hdrMap, uint32_t size = 512)
     : RenderPass("IBL Setup Pass")
     , m_eqToCubeShader(eqToCubeShader)
     , m_hdrMap(hdrMap)
+    , m_size(size)
     {
     }
 
     void Init() override
     {
         blrc::TexSpec spec;
-        spec.w = 512;
-        spec.h = 512;
+        spec.w = m_size;
+        spec.h = m_size;
         spec.format = blrc::ImgFmt::RGB16F; 
         spec.generateMips = true;
         spec.minFilter = blrc::TexFilter::LinearMipmapLinear;
@@ -47,7 +48,7 @@ public:
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
-        glViewport(0, 0, 512, 512);
+        glViewport(0, 0, m_size, m_size);
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
@@ -92,6 +93,7 @@ private:
     blrc::Ref<blrc::Cubemap> m_envCubemap;
     
     blrc::Ref<blrc::FrameBuffer> m_fbo;
+    uint32_t m_size;
 
     GLuint m_fboID{0};
     bool m_hasExecuted = false;

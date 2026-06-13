@@ -170,7 +170,7 @@ layout(binding = 18) uniform samplerCube u_PointShadowMaps[4];
 
 
 // Shadow Calculation Helpers
-float calcShadow(sampler2D shadowMap, vec4 fragPosLightSpace, float bias = 0.05);
+float calcShadow(sampler2D shadowMap, vec4 fragPosLightSpace, float bias);
 float calcPointShadow(samplerCube shadowMap, vec3 fragPos, vec3 lightPos, float farPlane, float bias);
 
 // Cook-Torrance BRDF Helpers

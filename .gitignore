@@ -43,3 +43,5 @@ ipch/
 Thumbs.db
 
 vcpkg_installed/
+
+imgui.ini

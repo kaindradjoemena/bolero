@@ -59,6 +59,8 @@ public:
 
     float GetYaw()   const { return m_yaw; }
     float GetPitch() const { return m_pitch; }
+    float GetDistance() const { return m_distance; }
+    vec3  GetTarget()   const { return m_target; }
 
     float GetRotSense() const { return m_rotSens; }
     float GetPanSense() const { return m_panSens; }
@@ -71,6 +73,8 @@ public:
 
     void SetYaw(float y)   { m_yaw = y; }
     void SetPitch(float p) { m_pitch = Clamp(p, MIN_PITCH, MAX_PITCH); }
+    void SetDistance(float d)     { m_distance = d; }
+    void SetTarget(const vec3& t) { m_target = t; }
 
     void SetRotSense(float s) { m_rotSens = s; }
     void SetPanSense(float s) { m_panSens = s; }

@@ -65,6 +65,62 @@ uniform float u_Roughness;
 
 const float PI = 3.14159265359;
 
+uniform uint u_Samples;
+
+float RadicalInverse_VdC(uint bits);
+vec2 Hammersley(uint i, uint N);
+vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness);
+float NDF_GGXTR(vec3 N, vec3 H, float roughness);
+
+
+void main()
+{		
+    vec3 N = normalize(g_WorldPos);    
+    vec3 R = N;
+    vec3 V = R;
+
+    if(u_Roughness == 0.0)
+    {
+        FragColor = vec4(texture(u_EnvMap, N).rgb, 1.0);
+        return;
+    }
+
+    float totalWeight = 0.0;   
+    vec3 prefilteredColor = vec3(0.0);     
+    for(uint i = 0u; i < u_Samples; i++)
+    {
+        vec2 Xi = Hammersley(i, u_Samples);
+        vec3 H  = ImportanceSampleGGX(Xi, N, u_Roughness);
+        vec3 L  = normalize(2.0 * dot(V, H) * H - V);	
+
+        float NdotL = max(dot(N, L), 0.0);
+		// Prevent artifacts
+		if(NdotL > 0.0)
+        {
+            // Calculate the Probability Density Function (PDF)
+            float D   = NDF_GGXTR(N, H, u_Roughness);
+            float NdotH = max(dot(N, H), 0.0);
+            float HdotV = max(dot(H, V), 0.0);
+            float pdf = D * NdotH / (4.0 * HdotV) + 0.0001; 
+
+            // Calculate solid angles
+            float resolution = 512.0; // The resolution of u_EnvMap
+            float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
+            float saSample = 1.0 / (float(u_Samples) * pdf + 0.0001);
+
+            // Determine which mip level to sample based on roughness and PDF
+            float mipLevel = u_Roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
+
+            prefilteredColor += textureLod(u_EnvMap, L, mipLevel).rgb * NdotL;
+            totalWeight      += NdotL;
+        }
+    }
+    prefilteredColor = prefilteredColor / totalWeight;
+
+    FragColor = vec4(prefilteredColor, 1.0);
+}
+
+
 float RadicalInverse_VdC(uint bits) 
 {
     bits = (bits << 16u) | (bits >> 16u);
@@ -116,52 +172,4 @@ float NDF_GGXTR(vec3 N, vec3 H, float roughness)
 
     return nom / denom;
 }
-
-void main()
-{		
-    vec3 N = normalize(g_WorldPos);    
-    vec3 R = N;
-    vec3 V = R;
-
-    if(u_Roughness == 0.0)
-    {
-        FragColor = vec4(texture(u_EnvMap, N).rgb, 1.0);
-        return;
-    }
-
-    const uint SAMPLE_COUNT = 1024u;
-    float totalWeight = 0.0;   
-    vec3 prefilteredColor = vec3(0.0);     
-    for(uint i = 0u; i < SAMPLE_COUNT; i++)
-    {
-        vec2 Xi = Hammersley(i, SAMPLE_COUNT);
-        vec3 H  = ImportanceSampleGGX(Xi, N, u_Roughness);
-        vec3 L  = normalize(2.0 * dot(V, H) * H - V);	
-
-        float NdotL = max(dot(N, L), 0.0);
-		// Prevent artifacts
-		if(NdotL > 0.0)
-        {
-            // Calculate the Probability Density Function (PDF)
-            float D   = NDF_GGXTR(N, H, u_Roughness);
-            float NdotH = max(dot(N, H), 0.0);
-            float HdotV = max(dot(H, V), 0.0);
-            float pdf = D * NdotH / (4.0 * HdotV) + 0.0001; 
-
-            // Calculate solid angles
-            float resolution = 512.0; // The resolution of u_EnvMap
-            float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
-            float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
-
-            // Determine which mip level to sample based on roughness and PDF
-            float mipLevel = u_Roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
-
-            prefilteredColor += textureLod(u_EnvMap, L, mipLevel).rgb * NdotL;
-            totalWeight      += NdotL;
-        }
-    }
-    prefilteredColor = prefilteredColor / totalWeight;
-
-    FragColor = vec4(prefilteredColor, 1.0);
-}  
 

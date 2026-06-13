@@ -14,18 +14,20 @@ namespace blrc = blr::core;
 class BrdfLutPass : public blrc::RenderPass
 {
 public:
-    BrdfLutPass(blrc::AssetManager& assetManager, blrc::Ref<blrc::Shader>& brdfLutShader)
+    BrdfLutPass(blrc::AssetManager& assetManager, blrc::Ref<blrc::Shader>& brdfLutShader, uint32_t size = 512, uint32_t samples = 2048)
     : RenderPass("BRDF Pre Computation Pass")
     , m_assetManager(assetManager)
     , m_brdfLutShader(brdfLutShader)
+    , m_size(size)
+    , m_samples(samples)
     {
     }
 
     void Init() override
     {
         blrc::TexSpec spec;
-        spec.w = 512;
-        spec.h = 512;
+        spec.w = m_size;
+        spec.h = m_size;
         spec.format = blrc::ImgFmt::RG16F; 
         spec.generateMips = false;
         spec.wrapS = blrc::TexWrap::ClampToEdge;
@@ -49,10 +51,12 @@ public:
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
-        glViewport(0, 0, 512, 512); 
+        glViewport(0, 0, m_size, m_size); 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_brdfLutShader->Bind();
+
+        m_brdfLutShader->SetUInt("u_Samples", m_samples);
 
         blrc::Renderer::DrawFullscreenQuad();
 
@@ -73,7 +77,9 @@ private:
     blrc::Ref<blrc::Tex> m_brdfTex;
 
     blrc::Ref<blrc::FrameBuffer> m_fbo;
-
+    uint32_t m_size;
+    uint32_t m_samples;
+    
     GLuint m_fboID{0};
     bool m_hasExecuted = false;
 };

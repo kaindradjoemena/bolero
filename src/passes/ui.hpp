@@ -29,6 +29,8 @@ public:
 
         m_ui.DrawPipelineStats(scene, m_passes);
 
+        m_ui.DrawProperties(scene, renderCtx);
+
 
         m_ui.EndFrame();
     }

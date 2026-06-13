@@ -43,11 +43,14 @@ void main()
 out vec4 FragColor;
 in vec3 v_TexCoords;
 
-layout(binding = 25) uniform samplerCube u_EnvMap;
+layout(binding = 6) uniform samplerCube u_PrefilterMap;
+
+uniform float u_EnvironmentBlur = 0.9;
+
 
 void main()
-{    
-    vec3 envColor = texture(u_EnvMap, v_TexCoords).rgb;
-    
+{
+    vec3 envColor = textureLod(u_PrefilterMap, v_TexCoords, u_EnvironmentBlur).rgb;
+	
 	FragColor = vec4(envColor, 1.0);
 }

@@ -12,17 +12,18 @@ namespace blrc = blr::core;
 class IrradiancePass : public blrc::RenderPass
 {
 public:
-    IrradiancePass(const blrc::Ref<blrc::Shader>& convolutionShader)
+    IrradiancePass(const blrc::Ref<blrc::Shader>& convolutionShader, uint32_t size = 64)
     : RenderPass("Irradiance Pass")
     , m_convolutionShader(convolutionShader)
+    , m_size(size)
     {
     }
 
     void Init() override
     {
         blrc::TexSpec spec;
-        spec.w = 32;
-        spec.h = 32;
+        spec.w = m_size;
+        spec.h = m_size;
         spec.format = blrc::ImgFmt::RGB16F; 
         spec.generateMips = false;
         spec.minFilter = blrc::TexFilter::LinearMipmapLinear;
@@ -47,7 +48,7 @@ public:
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_fboID);
-        glViewport(0, 0, 32, 32);
+        glViewport(0, 0, m_size, m_size);
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
@@ -89,6 +90,7 @@ private:
     blrc::Ref<blrc::Cubemap> m_irradianceMap;
     
     blrc::Ref<blrc::FrameBuffer> m_fbo;
+    uint32_t m_size;
 
     GLuint m_fboID{0};
     bool m_hasExecuted = false;

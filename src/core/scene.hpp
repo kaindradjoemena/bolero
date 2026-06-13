@@ -47,9 +47,9 @@ public:
     void SetCam(Camera* camera) { m_cam = camera; }
     Camera* GetCam() const { return m_cam; }
 
-    const std::vector<DirLight>& GetDirLights() const { return m_dirLights; }
-    const std::vector<PointLight>& GetPointLights() const { return m_pointLights; }
-    const std::vector<SpotLight>& GetSpotLights() const { return m_spotLights; }
+    std::vector<DirLight>& GetDirLights() { return m_dirLights; }
+    std::vector<PointLight>& GetPointLights() { return m_pointLights; }
+    std::vector<SpotLight>& GetSpotLights() { return m_spotLights; }
 
     void AddEntity(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform, bool castShadows = true);
     void AddEntity(const Ref<Model>& model, const Transform& transform, bool castShadows = true);
