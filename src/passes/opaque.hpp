@@ -38,32 +38,32 @@ public:
         m_lightShader->Bind(); 
 
         // IBL Maps (Slots 5, 6, 7)
-        glBindTextureUnit(5, renderCtx.GetTexture("u_IrradianceMap"));
-        glBindTextureUnit(6, renderCtx.GetTexture("u_PrefilterMap"));
-        glBindTextureUnit(7, renderCtx.GetTexture("u_BrdfLut"));
+        glBindTextureUnit(5, renderCtx.Get<GLuint>("u_IrradianceMap"));
+        glBindTextureUnit(6, renderCtx.Get<GLuint>("u_PrefilterMap"));
+        glBindTextureUnit(7, renderCtx.Get<GLuint>("u_BrdfLut"));
 
         // Directional Shadows (Slots 10 - 13)
-        int numDirShadows = renderCtx.GetInt("u_NumDirShadows"); 
+        int numDirShadows = renderCtx.Get<int>("u_NumDirShadows"); 
         numDirShadows = std::min(numDirShadows, 4);
         for (int i = 0; i < numDirShadows; i++)
         {
-            glBindTextureUnit(10 + i, renderCtx.GetTexture("u_DirDepthMapTex_" + std::to_string(i)));
-            m_lightShader->SetMat4("u_DirLightSpaceMat[" + std::to_string(i) + "]", renderCtx.GetMat4("u_DirLightSpaceMat_" + std::to_string(i)));
+            glBindTextureUnit(10 + i, renderCtx.Get<int>("u_DirDepthMapTex_" + std::to_string(i)));
+            m_lightShader->SetMat4("u_DirLightSpaceMat[" + std::to_string(i) + "]", renderCtx.Get<blrc::mat4>("u_DirLightSpaceMat_" + std::to_string(i)));
         }
         // Spot Shadows (Slots 14 - 17)
-        int numSpotShadows = renderCtx.GetInt("u_NumSpotShadows");
+        int numSpotShadows = renderCtx.Get<int>("u_NumSpotShadows");
         numSpotShadows = std::min(numSpotShadows, 4);
         for (int i = 0; i < numSpotShadows; i++)
         {
-            glBindTextureUnit(14 + i, renderCtx.GetTexture("u_SpotDepthMapTex_" + std::to_string(i)));
-            m_lightShader->SetMat4("u_SpotLightSpaceMat[" + std::to_string(i) + "]", renderCtx.GetMat4("u_SpotLightSpaceMat_" + std::to_string(i)));
+            glBindTextureUnit(14 + i, renderCtx.Get<GLuint>("u_SpotDepthMapTex_" + std::to_string(i)));
+            m_lightShader->SetMat4("u_SpotLightSpaceMat[" + std::to_string(i) + "]", renderCtx.Get<blrc::mat4>("u_SpotLightSpaceMat_" + std::to_string(i)));
         }
         // Point Shadows (Slots 18 - 21)
-        int numPointShadows = renderCtx.GetInt("u_NumPointShadows");
+        int numPointShadows = renderCtx.Get<int>("u_NumPointShadows");
         numPointShadows = std::min(numPointShadows, 4);
         for (int i = 0; i < numPointShadows; i++)
         {
-            glBindTextureUnit(18 + i, renderCtx.GetTexture("u_PointDepthMapTex_" + std::to_string(i)));
+            glBindTextureUnit(18 + i, renderCtx.Get<GLuint>("u_PointDepthMapTex_" + std::to_string(i)));
         }
 
         // Draw Opaque geometry
@@ -73,7 +73,7 @@ public:
         glDepthFunc(GL_LEQUAL);
 
         m_skyboxShader->Bind();
-        glBindTextureUnit(25, renderCtx.GetTexture("u_EnvMap")); 
+        glBindTextureUnit(25, renderCtx.Get<GLuint>("u_EnvMap")); 
         blrc::Renderer::DrawCube();
 
         glDepthFunc(GL_LESS);
@@ -81,7 +81,7 @@ public:
         m_fbo->Unbind();
 
 
-        renderCtx.SetTexture("OPAQUE_PASS_TEX", m_fbo->GetColorAttachmentID(0));
+        renderCtx.Set("OPAQUE_PASS_TEX", m_fbo->GetColorAttachmentID(0));
     }
 
     virtual void OnResize(uint32_t width, uint32_t height) override

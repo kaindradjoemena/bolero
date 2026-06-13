@@ -42,7 +42,7 @@ public:
         // note: comment/uncomment to optimize/renderdoc debug
         if (m_hasExecuted) 
         {
-            renderCtx.SetTexture("u_IrradianceMap", m_irradianceMap->GetID());
+            renderCtx.Set("u_IrradianceMap", m_irradianceMap->GetID());
             return;
         }
 
@@ -67,7 +67,7 @@ public:
             m_convolutionShader->SetMat4("u_ViewProjMatrices[" + std::to_string(i) + "]", captureProj * captureViews[i]);
 
         m_convolutionShader->SetInt("u_EnvMap", 1);
-        glBindTextureUnit(1, renderCtx.GetTexture("u_EnvMap"));
+        glBindTextureUnit(1, renderCtx.Get<GLuint>("u_EnvMap"));
 
         blrc::Renderer::DrawCube();
 
@@ -76,7 +76,7 @@ public:
         m_hasExecuted = true;
 
 
-        renderCtx.SetTexture("u_IrradianceMap", m_irradianceMap->GetID());
+        renderCtx.Set("u_IrradianceMap", m_irradianceMap->GetID());
     }
 
     void Shutdown() override

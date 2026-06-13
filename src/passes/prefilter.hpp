@@ -44,7 +44,7 @@ public:
         // note: comment/uncomment to optimize/renderdoc debug
         if (m_hasExecuted) 
         {
-            renderCtx.SetTexture("u_PrefilterMap", m_prefilteredMap->GetID());
+            renderCtx.Set("u_PrefilterMap", m_prefilteredMap->GetID());
             return;
         }
 
@@ -68,7 +68,7 @@ public:
             m_prefilterShader->SetMat4("u_ViewProjMatrices[" + std::to_string(i) + "]", captureProj * captureViews[i]);
 
         m_prefilterShader->SetInt("u_EnvMap", 1);
-        glBindTextureUnit(1, renderCtx.GetTexture("u_EnvMap"));
+        glBindTextureUnit(1, renderCtx.Get<GLuint>("u_EnvMap"));
 
         uint32_t maxMip = 5;
         for (size_t mip = 0; mip < maxMip; mip++)
@@ -91,7 +91,7 @@ public:
         m_hasExecuted = true;
 
 
-        renderCtx.SetTexture("u_PrefilterMap", m_prefilteredMap->GetID());
+        renderCtx.Set("u_PrefilterMap", m_prefilteredMap->GetID());
     }
 
     void Shutdown() override

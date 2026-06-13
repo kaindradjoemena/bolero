@@ -37,7 +37,7 @@ public:
         m_postShader->SetFloat("u_Exposure", 1.0f);
 
         m_postShader->SetInt("u_ScreenTexture", 20);
-        glBindTextureUnit(20, renderCtx.GetTexture("OPAQUE_PASS_TEX"));
+        glBindTextureUnit(20, renderCtx.Get<GLuint>("OPAQUE_PASS_TEX"));
 
         blrc::Renderer::DrawFullscreenQuad();
 

@@ -44,7 +44,7 @@ public:
         // note: comment/uncomment to optimize/renderdoc debug
         if (m_hasExecuted)
         {
-            renderCtx.SetTexture("u_BrdfLut", m_brdfTex->GetID());
+            renderCtx.Set("u_BrdfLut", m_brdfTex->GetID());
             return;
         }
 
@@ -59,7 +59,7 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         m_hasExecuted = true;
-        renderCtx.SetTexture("u_BrdfLut", m_brdfTex->GetID());
+        renderCtx.Set("u_BrdfLut", m_brdfTex->GetID());
     }
 
     void Shutdown() override

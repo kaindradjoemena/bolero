@@ -62,7 +62,7 @@ public:
 
             // Pass to render context
             std::string texName = "u_PointDepthMapTex_" + std::to_string(shadowMapIndex);
-            renderCtx.SetTexture(texName, m_fbos[shadowMapIndex]->GetDepthAttachmentID());
+            renderCtx.Set(texName, m_fbos[shadowMapIndex]->GetDepthAttachmentID());
 
             shadowMapIndex++;
         }
@@ -70,7 +70,7 @@ public:
         glCullFace(GL_BACK);
 
 
-        renderCtx.SetInt("u_NumPointShadows", shadowMapIndex);
+        renderCtx.Set("u_NumPointShadows", shadowMapIndex);
     }
 
     void Shutdown() override

@@ -59,8 +59,8 @@ public:
             // Pass to render context
             std::string texName = "u_SpotDepthMapTex_" + std::to_string(shadowMapIndex);
             std::string matName = "u_SpotLightSpaceMat_" + std::to_string(shadowMapIndex);
-            renderCtx.SetTexture(texName, m_fbos[shadowMapIndex]->GetDepthAttachmentID());
-            renderCtx.SetMat4(matName, lightSpaceMat);
+            renderCtx.Set(texName, m_fbos[shadowMapIndex]->GetDepthAttachmentID());
+            renderCtx.Set(matName, lightSpaceMat);
 
             shadowMapIndex++;
         }
@@ -68,7 +68,7 @@ public:
         glCullFace(GL_BACK);
 
 
-        renderCtx.SetInt("u_NumSpotShadows", shadowMapIndex);
+        renderCtx.Set("u_NumSpotShadows", shadowMapIndex);
     }
 
     void Shutdown() override

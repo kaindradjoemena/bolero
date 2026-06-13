@@ -2,6 +2,10 @@
 
 #pragma once
 
+#include <variant>
+#include <optional>
+#include <cassert>
+
 #include <unordered_map>
 #include <string>
 
@@ -10,52 +14,48 @@ namespace blr::core
 {
 
 
+using ContextValue = std::variant<GLuint, int, float, bool, vec4, mat4>;
+
 class RenderContext
 {
 public:
     RenderContext() = default;
     ~RenderContext() = default;
 
-    void SetTexture(const std::string& name, GLuint id)
+    void Set(const std::string& name, ContextValue value)
     {
-        m_textures[name] = id;
-    }
-    GLuint GetTexture(const std::string& name, int fallback = 0) const 
-    { 
-        auto it = m_textures.find(name);
-        return it != m_textures.end() ? it->second : fallback; 
+        m_entries[name] = std::move(value);
     }
 
-    void SetInt(const std::string& name, int x)
+    template<typename T>
+    std::optional<T> TryGet(const std::string& name) const
     {
-        m_nums[name] = x;
-    }
-    int GetInt(const std::string& name, int fallback = 0)
-    {
-        auto it = m_nums.find(name);
-        return it != m_nums.end() ? it->second : fallback; 
+        auto it = m_entries.find(name);
+        if (it == m_entries.end())
+            return std::nullopt;
+
+        const T* val = std::get_if<T>(&it->second);
+        return val ? std::optional<T>(*val) : std::nullopt;
     }
 
-    void SetMat4(const std::string& name, const mat4& mat)
+    template<typename T>
+    T Get(const std::string& name, T fallback = T{}) const
     {
-        m_matrices[name] = mat;
+        return TryGet<T>(name).value_or(fallback);
     }
-    mat4 GetMat4(const std::string& name, const mat4& fallback = mat4(1.0f)) const 
-    { 
-        auto it = m_matrices.find(name);
-        return it != m_matrices.end() ? it->second : fallback; 
+
+    bool Has(const std::string& name) const
+    {
+        return m_entries.find(name) != m_entries.end();
     }
 
     void Clear()
     {
-        m_textures.clear();
-        m_matrices.clear();
+        m_entries.clear();
     }
 
 private:
-    std::unordered_map<std::string, GLuint> m_textures;
-    std::unordered_map<std::string, mat4> m_matrices;
-    std::unordered_map<std::string, int> m_nums;
+    std::unordered_map<std::string, ContextValue> m_entries;
 };
 
 

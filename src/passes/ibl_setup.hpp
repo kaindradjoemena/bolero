@@ -42,7 +42,7 @@ public:
         // note: comment/uncomment to optimize/renderdoc debug
         if (m_hasExecuted) 
         {
-            renderCtx.SetTexture("u_EnvMap", m_envCubemap->GetID());
+            renderCtx.Set("u_EnvMap", m_envCubemap->GetID());
             return;
         }
 
@@ -78,7 +78,7 @@ public:
         m_hasExecuted = true;
 
 
-        renderCtx.SetTexture("u_EnvMap", m_envCubemap->GetID());
+        renderCtx.Set("u_EnvMap", m_envCubemap->GetID());
     }
 
     void Shutdown() override
