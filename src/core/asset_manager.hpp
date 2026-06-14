@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <unordered_map>
 #include <vector>
+#include <string>
+#include <string_view>
 
 
 namespace blr::core
@@ -33,7 +35,7 @@ struct ShaderCacheEntry
 class AssetManager
 {
 public:
-    AssetManager(const std::filesystem::path& baseDir = "");
+    AssetManager() = default;
     ~AssetManager() = default;
 
     // Prevent copying
@@ -45,9 +47,9 @@ public:
     AssetManager& operator=(AssetManager&& other) = delete;
 
 
-    Ref<Shader> CreateShader(const std::filesystem::path& filePath);
+    Ref<Shader> CreateShader(std::string_view filePath);
 
-    Ref<Tex> CreateTex(const std::filesystem::path& texPath, const TexSpec& texSpec = TexSpec{});
+    Ref<Tex> CreateTex(std::string_view texPath, const TexSpec& texSpec = TexSpec{});
 
     Ref<Tex> CreateTex(const TexSpec& texSpec);
 
@@ -55,13 +57,11 @@ public:
 
     Ref<Mesh> CreateMesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material);
 
-    Ref<Model> CreateModel(const std::filesystem::path& filePath, Ref<Shader> defaultShader);
+    Ref<Model> CreateModel(std::string_view filePath, Ref<Shader> defaultShader);
 
     void Update();
 
 private:
-    std::filesystem::path m_baseDir;
-
     std::unordered_map<std::string, ShaderCacheEntry> m_shaderCache;
 };
 

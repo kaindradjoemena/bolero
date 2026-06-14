@@ -12,7 +12,7 @@ namespace blrc = blr::core;
 class PrefilterPass : public blrc::RenderPass
 {
 public:
-    PrefilterPass(const blrc::Ref<blrc::Shader>& prefilterShader, uint32_t size = 128, uint32_t samples = 2048)
+    PrefilterPass(const blrc::Ref<blrc::Shader>& prefilterShader, uint32_t size = 256, uint32_t samples = 4096)
     : RenderPass("Prefilter Pass")
     , m_prefilterShader(prefilterShader)
     , m_size(size)

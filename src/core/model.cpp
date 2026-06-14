@@ -7,6 +7,7 @@
 #include "asset_manager.hpp"
 
 #include <iostream>
+#include <string>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -56,7 +57,7 @@ void Model::ProcessMaterials(const aiScene* scene, AssetManager& assetManager)
             aiMat->GetTexture(aiTextureType_BASE_COLOR, 0, &texPathStr) == AI_SUCCESS)
         {
             std::filesystem::path texPath = m_directory / texPathStr.C_Str();
-            mat->SetAlbedoMap(assetManager.CreateTex(texPath));
+            mat->SetAlbedoMap(assetManager.CreateTex(texPath.string()));
         }
 
         // Albedo (Scalar)
@@ -71,14 +72,14 @@ void Model::ProcessMaterials(const aiScene* scene, AssetManager& assetManager)
         if (aiMat->GetTexture(aiTextureType_NORMALS, 0, &texPathStr) == AI_SUCCESS)
         {
             std::filesystem::path texPath = m_directory / texPathStr.C_Str();
-            mat->SetNormalMap(assetManager.CreateTex(texPath));
+            mat->SetNormalMap(assetManager.CreateTex(texPath.string()));
         }
 
         // Metallic / Roughness (Texture)
         if (aiMat->GetTexture(aiTextureType_UNKNOWN, 0, &texPathStr) == AI_SUCCESS)
         {
             // ORM
-            Ref<Tex> packedMap = assetManager.CreateTex(m_directory / texPathStr.C_Str());
+            Ref<Tex> packedMap = assetManager.CreateTex((m_directory / texPathStr.C_Str()).string());
             mat->SetMetallicMap(packedMap);     // Blue channel
             mat->SetRoughnessMap(packedMap);    // Green channel
             mat->SetAoMap(packedMap);           // Red channel
@@ -86,10 +87,10 @@ void Model::ProcessMaterials(const aiScene* scene, AssetManager& assetManager)
         else
         {
             if (aiMat->GetTexture(aiTextureType_METALNESS, 0, &texPathStr) == AI_SUCCESS)
-                mat->SetMetallicMap(assetManager.CreateTex(m_directory / texPathStr.C_Str()));
+                mat->SetMetallicMap(assetManager.CreateTex((m_directory / texPathStr.C_Str()).string()));
                 
             if (aiMat->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texPathStr) == AI_SUCCESS)
-                mat->SetRoughnessMap(assetManager.CreateTex(m_directory / texPathStr.C_Str()));
+                mat->SetRoughnessMap(assetManager.CreateTex((m_directory / texPathStr.C_Str()).string()));
         }
 
         // Metallic / Roughness (Scalar)

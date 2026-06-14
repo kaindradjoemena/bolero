@@ -28,15 +28,6 @@ namespace blra = blr::app;
     }
 #endif
 
-#define XSTR(s) STR(s)
-#define STR(s) #s
-
-#ifdef SANDBOX_ROOT_DIR
-    const std::string ROOT_DIR = XSTR(SANDBOX_ROOT_DIR);
-#else
-    const std::string ROOT_DIR = "";
-#endif
-
 constexpr int         DEFAULT_WINDOW_WIDTH  = 1280;
 constexpr int         DEFAULT_WINDOW_HEIGHT = 720;
 constexpr const char* DEFAULT_WINDOW_TITLE  = "Bolero: Renderer";
@@ -47,6 +38,10 @@ float lastFrame = 0.0f;
 
 int main()
 {
+#ifdef BOLERO_DEV_ASSET_DIR
+    blrc::VFS::Mount("bolero://", BOLERO_DEV_ASSET_DIR);
+#endif
+
     blra::Input input;
     blra::Window window(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, input);
     window.AddResizeCallback([](uint32_t w, uint32_t h) {
@@ -78,21 +73,21 @@ int main()
             });
 
     
-    blrc::AssetManager assetManager(ROOT_DIR);
+    blrc::AssetManager assetManager;
     blrc::Scene        scene;
     scene.SetCam(&cam);
     
     // Model
-    auto opaqueShader = assetManager.CreateShader(std::filesystem::path("assets/shaders/light_pass.glsl"));
-    auto model_squaresAndthings = assetManager.CreateModel(std::filesystem::path("assets/models/squares_and_things.gltf"), opaqueShader);
+    auto opaqueShader = assetManager.CreateShader("bolero://shaders/light_pass.glsl");
+    auto model_squaresAndthings = assetManager.CreateModel("bolero://models/squares_and_things.gltf", opaqueShader);
     blrc::Transform transform;
     scene.AddEntity(model_squaresAndthings, transform);
 
     blrc::Renderer::Init();
-    blrc::RenderPipeline CookTorrancePBR;
+    blrc::RenderPipeline forwardRender;
 
-    window.AddResizeCallback([&CookTorrancePBR](uint32_t w, uint32_t h) {
-            CookTorrancePBR.OnResize(w, h);
+    window.AddResizeCallback([&forwardRender](uint32_t w, uint32_t h) {
+            forwardRender.OnResize(w, h);
         });
 
 
@@ -100,45 +95,45 @@ int main()
     blrc::RenderContext renderCtx;
 
     // IBL Skybox Setup Pass
-    auto hdrMap = assetManager.CreateTex("assets/hdri/newman_cafeteria_2k.hdr");
-    auto eqToCubeShader = assetManager.CreateShader("assets/shaders/equirect_to_cubemap.glsl");
+    auto hdrMap = assetManager.CreateTex("bolero://hdri/newman_cafeteria_2k.hdr");
+    auto eqToCubeShader = assetManager.CreateShader("bolero://shaders/equirect_to_cubemap.glsl");
     blrc::Ref<IBLSetupPass> iblPass = std::make_shared<IBLSetupPass>(eqToCubeShader, hdrMap);
     // Scene Irradiance Pass
-    auto convolutionShader = assetManager.CreateShader("assets/shaders/cubemap_convolution.glsl");
+    auto convolutionShader = assetManager.CreateShader("bolero://shaders/cubemap_convolution.glsl");
     blrc::Ref<IrradiancePass> irradiancePass = std::make_shared<IrradiancePass>(convolutionShader);
     // Environment Map Prefiltering Pass
-    auto prefilterShader = assetManager.CreateShader("assets/shaders/prefilter.glsl");
+    auto prefilterShader = assetManager.CreateShader("bolero://shaders/prefilter.glsl");
     blrc::Ref<PrefilterPass> prefilterPass = std::make_shared<PrefilterPass>(prefilterShader);
     // BRDF LUT Pre Computation
-    auto brdfLutShader = assetManager.CreateShader("assets/shaders/brdf_lut.glsl");
+    auto brdfLutShader = assetManager.CreateShader("bolero://shaders/brdf_lut.glsl");
     blrc::Ref<BrdfLutPass> brdfLutPass = std::make_shared<BrdfLutPass>(assetManager, brdfLutShader);
     // Scene Depth Pass (Shadow Mapping)
-    auto depthShader      = assetManager.CreateShader("assets/shaders/shadow_pass.glsl");
-    auto pointDepthShader = assetManager.CreateShader("assets/shaders/point_shadow_pass.glsl");
+    auto depthShader      = assetManager.CreateShader("bolero://shaders/shadow_pass.glsl");
+    auto pointDepthShader = assetManager.CreateShader("bolero://shaders/point_shadow_pass.glsl");
     blrc::Ref<DirShadowPass>   dirShadowPass   = std::make_shared<DirShadowPass>(depthShader);
     blrc::Ref<SpotShadowPass>  spotShadowPass  = std::make_shared<SpotShadowPass>(depthShader);
     blrc::Ref<PointShadowPass> pointShadowPass = std::make_shared<PointShadowPass>(pointDepthShader);
     // Opaque Pass (Skybox, Mesh)
-    auto skyboxShader = assetManager.CreateShader("assets/shaders/skybox.glsl");
+    auto skyboxShader = assetManager.CreateShader("bolero://shaders/skybox.glsl");
     blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
                                                                    , opaqueShader, skyboxShader);
     // Post Process Pass
-    auto postShader = assetManager.CreateShader("assets/shaders/post_pass.glsl");
+    auto postShader = assetManager.CreateShader("bolero://shaders/post_pass.glsl");
     blrc::Ref<PostPass> postPass = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader);
     // UI Pass
-    blrc::Ref<UIPass> uiPass = std::make_shared<UIPass>(window.GetNativeWindow(), CookTorrancePBR.GetPasses());
+    blrc::Ref<UIPass> uiPass = std::make_shared<UIPass>(window.GetNativeWindow(), forwardRender.GetPasses());
 
     // Add Passes to the pipeline
-    CookTorrancePBR.AddPass(iblPass);
-    CookTorrancePBR.AddPass(irradiancePass);
-    CookTorrancePBR.AddPass(prefilterPass);
-    CookTorrancePBR.AddPass(brdfLutPass);
-    CookTorrancePBR.AddPass(dirShadowPass);
-    CookTorrancePBR.AddPass(spotShadowPass);
-    CookTorrancePBR.AddPass(pointShadowPass);
-    CookTorrancePBR.AddPass(opaquePass);
-    CookTorrancePBR.AddPass(postPass);
-    CookTorrancePBR.AddPass(uiPass);
+    forwardRender.AddPass(iblPass);
+    forwardRender.AddPass(irradiancePass);
+    forwardRender.AddPass(prefilterPass);
+    forwardRender.AddPass(brdfLutPass);
+    forwardRender.AddPass(dirShadowPass);
+    forwardRender.AddPass(spotShadowPass);
+    forwardRender.AddPass(pointShadowPass);
+    forwardRender.AddPass(opaquePass);
+    forwardRender.AddPass(postPass);
+    forwardRender.AddPass(uiPass);
 
 
     float hotReloadTimer = 0.0;
@@ -164,7 +159,7 @@ int main()
         scene.Update(deltaTime, true);
 
         renderCtx.ClearTransient();
-        CookTorrancePBR.Execute(scene, renderCtx);  // pass scene
+        forwardRender.Execute(scene, renderCtx);  // pass scene
 
         window.SwapBuffers();
     }

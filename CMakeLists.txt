@@ -134,7 +134,10 @@ target_include_directories(Bolero PRIVATE
     $<$<NOT:$<BOOL:${assimp_FOUND}>>:${assimp_SOURCE_DIR}/include>
 )
 
-target_compile_definitions(Bolero PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)
+target_compile_definitions(Bolero PUBLIC 
+    IMGUI_IMPL_OPENGL_LOADER_GLAD
+    BOLERO_DEV_ASSET_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/assets/\"
+)
 
 target_link_libraries(Bolero PUBLIC  glfw glm::glm)
 target_link_libraries(Bolero PRIVATE assimp)
@@ -182,10 +185,6 @@ if(BOLERO_BUILD_SANDBOX)
 
     target_compile_features(BoleroSandbox PRIVATE cxx_std_17)
     target_link_libraries(BoleroSandbox PRIVATE Bolero)
-
-    target_compile_definitions(BoleroSandbox PRIVATE 
-        SANDBOX_ROOT_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-    )
 
     set_target_properties(BoleroSandbox PROPERTIES 
         VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

@@ -300,7 +300,7 @@ void UI::DrawProperties(Scene& scene, RenderContext& renderCtx)
             ImGui::SeparatorText("Environment");
             {
                 float envBlur = renderCtx.Get<float>("u_EnvironmentBlur", 0.9f);
-                if (ImGui::SliderFloat("Skybox Blur", &envBlur, 0.0f, 1.0f, "%.2f"))
+                if (ImGui::SliderFloat("Skybox Blur", &envBlur, 0.0f, 10.0f, "%.2f"))
                     renderCtx.Set("u_EnvironmentBlur", envBlur, Lifetime::PERSISTENT);
             }
 

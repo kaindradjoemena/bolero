@@ -6,7 +6,8 @@
 #include "material.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
-#include "core/uuid.hpp"
+#include "uuid.hpp"
+#include "vfs.hpp"
 #include "utils/debug.hpp"
 
 
@@ -14,33 +15,30 @@ namespace blr::core
 {
 
 
-AssetManager::AssetManager(const std::filesystem::path& baseDir)
-: m_baseDir(baseDir)
-{ 
-}
-
-Ref<Shader> AssetManager::CreateShader(const std::filesystem::path& filePath)
+Ref<Shader> AssetManager::CreateShader(std::string_view filePath)
 {
-    std::filesystem::path fullPath = m_baseDir / filePath;
+    std::filesystem::path physPath = VFS::Resolve(filePath);
 
-    if (m_shaderCache.find(fullPath.string()) != m_shaderCache.end())
-        return m_shaderCache[fullPath.string()].shader;
+    if (m_shaderCache.find(physPath.string()) != m_shaderCache.end())
+        return m_shaderCache[physPath.string()].shader;
 
-    Ref<Shader> shader = Shader::Create(fullPath);
+    Ref<Shader> shader = Shader::Create(physPath);
     shader->SetHandle(UUID::Generate());
 
 #if DEBUG_RESOURCE_CREATION_HANDLE
     std::cout << "AssetManager::CreateShader " << shader->GetHandle() << std::endl;
 #endif
 
-    m_shaderCache[fullPath.string()] = { shader, std::filesystem::last_write_time(filePath) };
+    m_shaderCache[physPath.string()] = { shader, std::filesystem::last_write_time(physPath) };
 
     return shader;
 }
 
-Ref<Tex> AssetManager::CreateTex(const std::filesystem::path& texPath, const TexSpec& texSpec)
+Ref<Tex> AssetManager::CreateTex(std::string_view texPath, const TexSpec& texSpec)
 {
-    Ref<Tex> tex = Tex::Create(m_baseDir / texPath, texSpec);
+    std::filesystem::path physPath = VFS::Resolve(texPath);
+
+    Ref<Tex> tex = Tex::Create(physPath, texSpec);
     tex->SetHandle(UUID::Generate());
 
 #if DEBUG_RESOURCE_CREATION_HANDLE
@@ -86,9 +84,11 @@ Ref<Mesh> AssetManager::CreateMesh(std::vector<Vertex> vertices, std::vector<uin
     return mesh;
 }
 
-Ref<Model> AssetManager::CreateModel(const std::filesystem::path& filePath, Ref<Shader> defaultShader)
+Ref<Model> AssetManager::CreateModel(std::string_view filePath, Ref<Shader> defaultShader)
 {
-    Ref<Model> model = Model::Create(m_baseDir / filePath, defaultShader, *this);
+    std::filesystem::path physPath = VFS::Resolve(filePath);
+
+    Ref<Model> model = Model::Create(physPath, defaultShader, *this);
     model->SetHandle(UUID::Generate());
 
 #if DEBUG_RESOURCE_CREATION_HANDLE

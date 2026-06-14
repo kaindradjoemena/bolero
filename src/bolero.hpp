@@ -24,6 +24,7 @@
 #include "core/asset_manager.hpp"
 #include "core/scene.hpp"
 #include "core/camera.hpp"
+#include "core/vfs.hpp"
 
 // Renderer & Pass Architecture
 #include "renderer/renderer.hpp"
