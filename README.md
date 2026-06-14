@@ -6,268 +6,92 @@ Bolero is a minimal boilerplate graphics testbench that uses OpenGL 4.6 to help 
 
 Heavily inspired by Dihara Wijetunga's [dwSampleFramework](https://github.com/diharaw/dw-sample-framework)
 
-![Bolero Showcase](img/shadow_mapping_example.png)
+![Bolero Showcase](img/example.png)
 
 Shadow Mapping example
 
 ## Classes
 
-* **`AssetManager`**: Handles disk I/O for assets (`Mesh`, `Material`, `Shader`, `Model`, `Tex`). Prevents duplicate loading and automatically hot-reloads `.glsl` files on save. Creation of resources routes through here
-* Wrappers: `VertexBuffer`, `IndexBuffer`, `UniformBuffer`, `ShaderStorageBuffer`. These are OpenGL buffer abstractions and uses OpenGL 4.6 DSA under the hood
+* **`AssetManager`**: Handles disk I/O for Resources (`Mesh`, `Material`, `Shader`, `Model`, `Tex`). Prevents duplicate loading and automatically hot-reloads `.glsl` files on save. Creation of resources routes through here
+* **`VFS`**: Resolves virtual URIs (bolero://shaders/) to absolute paths
+* Wrappers: `VertexBuffer`, `IndexBuffer`, `UniformBuffer`, `ShaderStorageBuffer`, `Cubemap`, `Framebuffer`, . These are OpenGL buffer abstractions and uses OpenGL 4.6 DSA under the hood
 * **`Scene`**: Has helper methods like `AddEntity()` and `AddLight()` to help out with scene management
 * **`Renderer`**: A purely static class that only renders. It computes 64-bit sort keys (sorting by depth, shader, material, and mesh), uploads SSBOs, and issues `glDrawElements` calls
-* **`RenderPass` & `RenderPipeline`**: Passes encapsulate specific OpenGL states (FBO bindings, culling) and tell the Renderer what to draw. The Pipeline executes them sequentially and profiles their CPU/GPU execution time automatically
+* **`RenderPass`, `RenderPipeline`, `RenderContext`**: Passes encapsulate specific OpenGL states (FBO bindings, culling) and tell the Renderer what to draw. The Pipeline executes them sequentially and profiles their CPU/GPU execution time automatically. The `RenderContext` gets passed around passes to allow for modularity
 
 ## Usage Example
 
-To create a new rendering pass, simply inherit from `RenderPass`. Here is a basic example of a shadow mapping pipeline:
-
-#### 1. Shadow Pass
+Here is a basic example of a forward rendering pipeline:
 
 ```cpp
-#pragma once
+// IBL Skybox Setup Pass
+auto hdrMap = assetManager.CreateTex("bolero://hdri/newman_cafeteria_2k.hdr");
+auto eqToCubeShader = assetManager.CreateShader("bolero://shaders/equirect_to_cubemap.glsl");
+blrc::Ref<IBLSetupPass> iblPass = std::make_shared<IBLSetupPass>(eqToCubeShader, hdrMap);
+// Scene Irradiance Pass
+auto convolutionShader = assetManager.CreateShader("bolero://shaders/cubemap_convolution.glsl");
+blrc::Ref<IrradiancePass> irradiancePass = std::make_shared<IrradiancePass>(convolutionShader);
+// Environment Map Prefiltering Pass
+auto prefilterShader = assetManager.CreateShader("bolero://shaders/prefilter.glsl");
+blrc::Ref<PrefilterPass> prefilterPass = std::make_shared<PrefilterPass>(prefilterShader);
+// BRDF LUT Pre Computation
+auto brdfLutShader = assetManager.CreateShader("bolero://shaders/brdf_lut.glsl");
+blrc::Ref<BrdfLutPass> brdfLutPass = std::make_shared<BrdfLutPass>(assetManager, brdfLutShader);
+// Scene Depth Pass (Shadow Mapping)
+auto depthShader      = assetManager.CreateShader("bolero://shaders/shadow_pass.glsl");
+auto pointDepthShader = assetManager.CreateShader("bolero://shaders/point_shadow_pass.glsl");
+blrc::Ref<DirShadowPass>   dirShadowPass   = std::make_shared<DirShadowPass>(depthShader);
+blrc::Ref<SpotShadowPass>  spotShadowPass  = std::make_shared<SpotShadowPass>(depthShader);
+blrc::Ref<PointShadowPass> pointShadowPass = std::make_shared<PointShadowPass>(pointDepthShader);
+// Opaque Pass (Skybox, Mesh)
+auto skyboxShader = assetManager.CreateShader("bolero://shaders/skybox.glsl");
+blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+                                                                , opaqueShader, skyboxShader);
+// Post Process Pass
+auto postShader = assetManager.CreateShader("bolero://shaders/post_pass.glsl");
+blrc::Ref<PostPass> postPass = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader);
+// UI Pass
+blrc::Ref<UIPass> uiPass = std::make_shared<UIPass>(window.GetNativeWindow(), forwardRender.GetPasses());
 
-#include <bolero.hpp>
-#include "core/lights.hpp"
-
-namespace blrc = blr::core;
-
-
-class ShadowPass : public blrc::RenderPass
-{
-public:
-    ShadowPass(const blrc::Ref<blrc::Shader>& depthShader)
-    : RenderPass("Shadow Pass")
-    , m_depthShader(depthShader)
-    {
-    }
-
-    void Init() override
-    {
-        m_fbo = blrc::FrameBuffer::Create({ 1024, 1024, { blrc::ImgFmt::Depth32F } });
-    }
-
-    void Execute(blrc::Scene& scene) override
-    {
-        m_fbo->Bind();
-
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        auto dirLights = scene.GetDirLights();
-        if (dirLights.empty()) 
-            return;
-            
-        blrc::DirLight sun = dirLights[0];
-
-        blrc::vec3 lightDir  = blrc::Norm(sun.direction);
-        blrc::vec3 targetPos = blrc::vec3(0.0f, 0.0f, 0.0f);
-        float shadowDist     = 40.0f;
-        blrc::vec3 lightPos  = targetPos - (lightDir * shadowDist);
-
-        blrc::mat4 lightView = blrc::LookAt(lightPos, targetPos, blrc::vec3(0.0f, 1.0f, 0.0f));
-        blrc::mat4 lightProj = blrc::Ortho(-40.0f, 40.0f, -40.0f, 40.0f, 1.0f, 80.0f);
-        m_lightSpaceMatrix   = lightProj * lightView;
-
-        blrc::Renderer::UpdateCameraUBO(lightView, lightProj, lightPos);
-        blrc::Renderer::DrawQueue(m_depthShader.get()); 
-
-        glCullFace(GL_BACK);
-        m_fbo->Unbind();
-    }
-
-    void Shutdown() override {}
-
-    GLuint GetDepthMap() const { return m_fbo->GetDepthAttachmentID(); }
-    const blrc::mat4& GetLightSpaceMat() const { return m_lightSpaceMatrix; }
-
-private:
-    blrc::Ref<blrc::FrameBuffer> m_fbo;
-    blrc::mat4 m_lightSpaceMatrix;
-    blrc::Ref<blrc::Shader> m_depthShader;
-};
+// Add Passes to the pipeline
+forwardRender.AddPass(iblPass);
+forwardRender.AddPass(irradiancePass);
+forwardRender.AddPass(prefilterPass);
+forwardRender.AddPass(brdfLutPass);
+forwardRender.AddPass(dirShadowPass);
+forwardRender.AddPass(spotShadowPass);
+forwardRender.AddPass(pointShadowPass);
+forwardRender.AddPass(opaquePass);
+forwardRender.AddPass(postPass);
+forwardRender.AddPass(uiPass);
 ```
 
-#### 2. Opaque Pass
+In the main loop:
 
 ```cpp
-#pragma once
+float currentFrame = static_cast<float>(glfwGetTime());
+deltaTime = currentFrame - lastFrame;
+lastFrame = currentFrame;
 
-#include <bolero.hpp>
-#include "shadow.hpp"
-
-namespace blrc = blr::core;
-
-
-class OpaquePass : public blrc::RenderPass
+hotReloadTimer += deltaTime;
+if (hotReloadTimer > 1.0f)
 {
-public:
-    OpaquePass(uint32_t initW, uint32_t initH, const blrc::Ref<blrc::Shader>& lightShader, const blrc::Ref<ShadowPass>& shadowPass)
-    : RenderPass("Main Opaque Pass")
-    , m_initW(initW)
-    , m_initH(initH)
-    , m_lightShader(lightShader)
-    , m_shadowPass(shadowPass)
-    {
-    }
-
-    void Init() override
-    {
-        m_fbo = blrc::FrameBuffer::Create({ m_initW, m_initH, { blrc::ImgFmt::RGBA8, blrc::ImgFmt::Depth32F} });
-    }
-
-    void Execute(blrc::Scene& scene) override
-    {
-        m_fbo->Bind(); 
-
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        blrc::Renderer::UpdateCameraUBO(*scene.GetCam());
-
-        m_lightShader->SetMat4("u_LightSpaceMat", m_shadowPass->GetLightSpaceMat());
-        
-        m_lightShader->SetInt("u_depthMapTex", 10);
-        glBindTextureUnit(10, m_shadowPass->GetDepthMap());
-
-        blrc::Renderer::DrawQueue(nullptr);
-
-        m_fbo->Unbind();
-    }
-
-    virtual void OnResize(uint32_t width, uint32_t height) override
-    {
-        m_fbo->Resize(width, height);
-    }
-
-    void Shutdown() override {}
-
-    GLuint GetColorMap() const { return m_fbo->GetColorAttachmentID(0); }
-
-private:
-    uint32_t m_initW;
-    uint32_t m_initH;
-
-    blrc::Ref<blrc::FrameBuffer> m_fbo;
-    blrc::Ref<blrc::Shader> m_lightShader;
-    blrc::Ref<ShadowPass>   m_shadowPass;
-};
-```
-
-#### 3. Post Process Pass
-
-```cpp
-#pragma once
-
-#include <bolero.hpp>
-#include "passes/opaque.hpp"
-
-namespace blrc = blr::core;
-
-
-class PostPass : public blrc::RenderPass
-{
-public:
-    PostPass(uint32_t width, uint32_t height, const blrc::Ref<blrc::Shader>& postShader, const blrc::Ref<OpaquePass>& opaquePass)
-    : RenderPass("Post Pass")
-    , m_windowW(width)
-    , m_windowH(height)
-    , m_postShader(postShader)
-    , m_opaquePass(opaquePass)
-    {
-    }
-
-    void Init() override
-    {
-    }
-
-    void Execute(blrc::Scene& scene) override
-    {
-        glDisable(GL_DEPTH_TEST);     
-        glDisable(GL_CULL_FACE);  
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, m_windowW, m_windowH); 
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        m_postShader->Bind();
-
-        m_postShader->SetInt("u_ScreenTexture", 11);
-        glBindTextureUnit(11, m_opaquePass->GetColorMap());
-
-        blrc::Renderer::DrawFullscreenQuad();
-
-        m_postShader->Unbind();
-    }
-
-    virtual void OnResize(uint32_t width, uint32_t height) override
-    {
-        m_windowW = width;
-        m_windowH = height;
-    }
-
-    void Shutdown() override {}
-
-private:
-    uint32_t m_windowW;
-    uint32_t m_windowH;
-
-    blrc::Ref<blrc::Shader> m_postShader;
-    blrc::Ref<OpaquePass> m_opaquePass;
-};
-```
-
-### Chaining the passes
-
-```cpp
-// 1. Setup Scene Data
-auto opaqueShader = assetManager.CreateShader("assets/shaders/light_pass.glsl");
-auto model        = assetManager.CreateModel("assets/models/squares_and_things.gltf", opaqueShader);
-
-scene.AddEntity(model, blrc::Transform{});
-
-blrc::DirLight sun;
-sun.direction  = blrc::EulToDir({ -45.0f, 45.0f, 0.0f });
-sun.base.color = blrc::vec3(1.0f, 1.0f, 0.95f);
-scene.AddLight(sun);
-
-// 2. Initialize Renderer & Pipeline
-blrc::Renderer::Init();
-blrc::RenderPipeline shadowMapping;
-
-// 3. Instantiate & Link Passes
-auto depthShader = assetManager.CreateShader("assets/shaders/shadow_pass.glsl");
-auto shadowPass  = std::make_shared<ShadowPass>(depthShader);
-auto opaquePass  = std::make_shared<OpaquePass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, opaqueShader, shadowPass);
-
-auto postShader = assetManager.CreateShader("assets/shaders/post_pass.glsl");
-auto postPass   = std::make_shared<PostPass>(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, postShader, opaquePass);
-
-shadowMapping.AddPass(shadowPass);
-shadowMapping.AddPass(opaquePass);
-shadowMapping.AddPass(postPass);
-
-// 4. Main Loop Execution
-while (!window.ShouldClose())
-{
-    assetManager.Update();         // Hot-reloads modified shaders automatically
-    scene.Update(deltaTime, true); 
-    
-    blrc::Renderer::BeginFrame();
-    
-    shadowMapping.Execute(scene);  // Executes passes & profiles hardware time
-    
-    window.SwapBuffers();
+    assetManager.Update();
+    hotReloadTimer = 0.0f;
 }
+
+window.PollEvents();
+
+cam.HandleDrag(glm::vec2(input.GetMouseX(), input.GetMouseY()));
+
+blrc::Renderer::BeginFrame();
+
+scene.Update(deltaTime, true);
+
+renderCtx.ClearTransient();
+forwardRender.Execute(scene, renderCtx);  // pass scene
+
+window.SwapBuffers();
 ```
 
 ## Building
@@ -296,7 +120,7 @@ add_executable(RendererApp main.cpp)
 target_link_libraries(RendererApp PRIVATE Bolero)
 ```
 
-NOTE: `GLAD`, `stb`, `GLFW` and `GLM` are exposed, such that you can use them in your projects
+NOTE: `GLAD`, `stb`, `GLFW`, `GLM`, `ImGui`, and `ImPlot` are exposed, such that you can use them in your projects
 
 ## Dependencies
 
@@ -305,9 +129,10 @@ via `FetchContent`
 - GLM
 - Assimp
 
-included in `extern/glad`
-- stb (included in `extern/glad`)
-- GLAD (included in `extern/glad`)
+included in `extern/`
+- stb
+- GLAD
+- Dear ImGui & ImPlot
 
 ## TODOs
 
