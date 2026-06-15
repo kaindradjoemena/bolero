@@ -12,7 +12,7 @@ namespace blrc = blr::core;
 class PrefilterPass : public blrc::RenderPass
 {
 public:
-    PrefilterPass(const blrc::Ref<blrc::Shader>& prefilterShader, uint32_t size = 256, uint32_t samples = 4096)
+    PrefilterPass(const blrc::Ref<blrc::Shader>& prefilterShader, uint32_t size = 512, uint32_t samples = 4096)
     : RenderPass("Prefilter Pass")
     , m_prefilterShader(prefilterShader)
     , m_size(size)
@@ -67,12 +67,12 @@ public:
         m_prefilterShader->Bind();
 
         m_prefilterShader->SetUInt("u_Samples", m_samples);
+        m_prefilterShader->SetUInt("u_EnvMapRes", m_size);
 
         for (size_t i = 0; i < 6; i++)
             m_prefilterShader->SetMat4("u_ViewProjMatrices[" + std::to_string(i) + "]", captureProj * captureViews[i]);
 
-        m_prefilterShader->SetInt("u_EnvMap", 1);
-        glBindTextureUnit(1, renderCtx.Get<GLuint>("u_EnvMap"));
+        glBindTextureUnit(18, renderCtx.Get<GLuint>("u_EnvMap"));
 
         uint32_t maxMip = m_prefilteredMap->GetSpec().numMips;
         for (size_t mip = 0; mip < maxMip; mip++)

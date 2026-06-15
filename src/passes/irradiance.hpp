@@ -67,8 +67,7 @@ public:
         for (size_t i = 0; i < 6; i++)
             m_convolutionShader->SetMat4("u_ViewProjMatrices[" + std::to_string(i) + "]", captureProj * captureViews[i]);
 
-        m_convolutionShader->SetInt("u_EnvMap", 1);
-        glBindTextureUnit(1, renderCtx.Get<GLuint>("u_EnvMap"));
+        glBindTextureUnit(18, renderCtx.Get<GLuint>("u_EnvMap"));
 
         blrc::Renderer::DrawCube();
 

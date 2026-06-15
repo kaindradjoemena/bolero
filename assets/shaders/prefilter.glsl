@@ -60,7 +60,8 @@ in vec3 g_WorldPos;
 
 out vec4 FragColor;
 
-uniform samplerCube u_EnvMap;
+layout(binding = 18) uniform samplerCube u_EnvMap;
+uniform uint u_EnvMapRes;
 uniform float u_Roughness;
 
 const float PI = 3.14159265359;
@@ -71,6 +72,11 @@ float RadicalInverse_VdC(uint bits);
 vec2 Hammersley(uint i, uint N);
 vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness);
 float NDF_GGXTR(vec3 N, vec3 H, float roughness);
+
+float Luminance(vec3 color) 
+{
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
 
 
 void main()
@@ -104,15 +110,19 @@ void main()
             float pdf = D * NdotH / (4.0 * HdotV) + 0.0001; 
 
             // Calculate solid angles
-            float resolution = 512.0; // The resolution of u_EnvMap
+            float resolution = float(u_EnvMapRes);
             float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
             float saSample = 1.0 / (float(u_Samples) * pdf + 0.0001);
 
             // Determine which mip level to sample based on roughness and PDF
-            float mipLevel = u_Roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
+			float mipLevel = u_Roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
 
-            prefilteredColor += textureLod(u_EnvMap, L, mipLevel).rgb * NdotL;
-            totalWeight      += NdotL;
+            vec3 sampleColor = textureLod(u_EnvMap, L, mipLevel).rgb;
+            
+			float karisWeight = 1.0 / (1.0 + Luminance(sampleColor));
+            
+            prefilteredColor += sampleColor * NdotL * karisWeight;
+            totalWeight      += NdotL * karisWeight;
         }
     }
     prefilteredColor = prefilteredColor / totalWeight;

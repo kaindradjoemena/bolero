@@ -25,6 +25,16 @@ Tex::Tex(const std::filesystem::path& texPath, const TexSpec& texSpec)
         imgData = stbi_loadf(texPath.string().c_str(), &width, &height, &channels, 0);
         if (m_texSpec.format == ImgFmt::None)
             m_texSpec.format = (channels == 4) ? ImgFmt::RGBA16F : ImgFmt::RGB16F;
+    
+        // Clamp hdr data to prevent +infinity values
+        if (imgData)
+        {
+            float* fData = static_cast<float*>(imgData);
+            size_t totalElements = static_cast<size_t>(width) * height * channels;
+            
+            for (size_t i = 0; i < totalElements; ++i)
+                fData[i] = std::min(fData[i], 65000.0f);
+        }
     }
     else
     {

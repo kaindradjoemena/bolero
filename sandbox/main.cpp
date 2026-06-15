@@ -53,6 +53,10 @@ int main()
     blrc::Camera cam;
     cam.SetAspect((float)window.GetWidth() / (float)window.GetHeight());
     window.AddResizeCallback([&cam](uint32_t w, uint32_t h) {
+            // For minimized windows
+            if (w == 0 || h == 0)
+                return;
+
             cam.SetAspect((float)w / (float)h);
         });
     input.AddMouseScrollCallback([&cam](double xOffset, double yOffset) {
@@ -79,9 +83,9 @@ int main()
     
     // Model
     auto opaqueShader = assetManager.CreateShader("bolero://shaders/light_pass.glsl");
-    auto model_squaresAndthings = assetManager.CreateModel("bolero://models/squares_and_things.gltf", opaqueShader);
+    auto model = assetManager.CreateModel("bolero://models/squares_and_things.gltf", opaqueShader);
     blrc::Transform transform;
-    scene.AddEntity(model_squaresAndthings, transform);
+    scene.AddEntity(model, transform);
 
     blrc::Renderer::Init();
     blrc::RenderPipeline forwardRender;
@@ -95,7 +99,7 @@ int main()
     blrc::RenderContext renderCtx;
 
     // IBL Skybox Setup Pass
-    auto hdrMap = assetManager.CreateTex("bolero://hdri/newman_cafeteria_2k.hdr");
+    auto hdrMap = assetManager.CreateTex("bolero://hdri/citrus_orchard_puresky_2k.hdr");
     auto eqToCubeShader = assetManager.CreateShader("bolero://shaders/equirect_to_cubemap.glsl");
     blrc::Ref<IBLSetupPass> iblPass = std::make_shared<IBLSetupPass>(eqToCubeShader, hdrMap);
     // Scene Irradiance Pass
@@ -151,6 +155,10 @@ int main()
         }
 
         window.PollEvents();
+
+        // Skip frame when the window is minimized
+        if (window.GetHeight() == 0 || window.GetWidth() == 0)
+            continue;
 
         cam.HandleDrag(glm::vec2(input.GetMouseX(), input.GetMouseY()));
 

@@ -188,14 +188,13 @@ vec3 calcPointLight(PointLightData light, vec3 N, vec3 V, vec3 fragPos, float sh
 
 void main() 
 {
-	// note: is the pow(texture, 2.2) necessary?
 	vec3  ALBEDO    = u_hasAlbedoMap ? pow(texture(u_albedoMap, fs_in.v_TexCoords).rgb, vec3(2.2)) : u_albedoFactor;
     vec3  NORMAL    = normalize(fs_in.v_Normal);
     float METALLIC  = u_hasMetallicMap ? texture(u_metallicMap, fs_in.v_TexCoords).b : u_metallicFactor;		// Blue channel
     float ROUGHNESS = u_hasRoughnessMap ? texture(u_roughnessMap, fs_in.v_TexCoords).g : u_roughnessFactor;		// Green channel
     float AO        = u_hasAOMap ? texture(u_aoMap, fs_in.v_TexCoords).r : u_AOFactor;							// Red channel
 
-	ROUGHNESS = clamp(ROUGHNESS, 0.03, 1.0);  // prevent infinitely small specular points
+	//ROUGHNESS = clamp(ROUGHNESS, 0.03, 1.0);  // prevent infinitely small specular points
 
 	vec3 N = normalize(fs_in.v_Normal);
 	vec3 V = normalize(u_CameraPosAndTime.xyz - fs_in.v_FragPos);
