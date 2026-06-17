@@ -47,7 +47,8 @@ public:
         numDirShadows = std::min(numDirShadows, 4);
         for (int i = 0; i < numDirShadows; i++)
         {
-            glBindTextureUnit(10 + i, renderCtx.Get<int>("u_DirDepthMapTex_" + std::to_string(i)));
+            glBindTextureUnit(10 + i, renderCtx.Get<GLuint>("u_DirDepthMapTex_" + std::to_string(i)));
+
             m_lightShader->SetMat4("u_DirLightSpaceMat[" + std::to_string(i) + "]", renderCtx.Get<blrc::mat4>("u_DirLightSpaceMat_" + std::to_string(i)));
         }
         // Spot Shadows (Slots 14 - 17)
@@ -56,6 +57,7 @@ public:
         for (int i = 0; i < numSpotShadows; i++)
         {
             glBindTextureUnit(14 + i, renderCtx.Get<GLuint>("u_SpotDepthMapTex_" + std::to_string(i)));
+
             m_lightShader->SetMat4("u_SpotLightSpaceMat[" + std::to_string(i) + "]", renderCtx.Get<blrc::mat4>("u_SpotLightSpaceMat_" + std::to_string(i)));
         }
         // Point Shadows (Slots 18 - 21)

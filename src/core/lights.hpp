@@ -28,10 +28,19 @@ struct DirLight
     LightBase base;
     vec3 direction;
 
-    bool castsShadow = true;
-    float shadowSize = 40.0f;
-    float shadowNear = 0.1f;
-    float shadowFar  = 80.0f;
+    bool castsShadow;
+    float shadowSize;
+    float shadowNear;
+    float shadowFar;
+
+    DirLight()
+    : direction(-1.0f, -0.3f, -0.3f)
+    , castsShadow(true)
+    , shadowSize(20.0f)
+    , shadowNear(0.1f)
+    , shadowFar(20.0f)
+    {
+    }
 
     mat4 GetLightSpaceMat(const vec3& targetPos) const
     {
@@ -51,8 +60,16 @@ struct PointLight
     vec3 position;
     float range;
 
-    bool castsShadow = true;
-    float shadowNear = 0.1f;
+    bool castsShadow;
+    float shadowNear;
+
+    PointLight()
+    : position(0.0f, 0.0f, 0.0f)
+    , range(10.0f)
+    , castsShadow(true)
+    , shadowNear(0.1f)
+    {
+    }
 
     std::array<mat4, 6> GetLightSpaceMatrices() const
     {
@@ -77,8 +94,19 @@ struct SpotLight
     float innerCos;
     float outerCos;
 
-    bool castsShadow = true;
-    float shadowNear = 0.1f;
+    bool castsShadow;
+    float shadowNear;
+
+    SpotLight()
+    : position(0.0f, 0.0f, 0.0f)
+    , direction(0.0f, -1.0f, 0.0f)
+    , length(10.0f)
+    , innerCos(std::cos(DegToRad(12.5f)))
+    , outerCos(std::cos(DegToRad(17.5f)))
+    , castsShadow(true)
+    , shadowNear(0.1f)
+    {
+    }
 
     mat4 GetLightSpaceMat() const
     {

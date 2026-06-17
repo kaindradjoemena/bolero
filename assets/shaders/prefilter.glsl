@@ -60,7 +60,7 @@ in vec3 g_WorldPos;
 
 out vec4 FragColor;
 
-layout(binding = 18) uniform samplerCube u_EnvMap;
+layout(binding = 8) uniform samplerCube u_EnvMap;
 uniform uint u_EnvMapRes;
 uniform float u_Roughness;
 

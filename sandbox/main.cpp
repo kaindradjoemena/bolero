@@ -87,6 +87,21 @@ int main()
     blrc::Transform transform;
     scene.AddEntity(model, transform);
 
+
+    // Light
+    blrc::DirLight dirLight;
+    dirLight.base.power = 0.0f;
+    scene.AddLight(dirLight);
+    
+    blrc::SpotLight spotLight;
+    spotLight.base.power = 0.0f;
+    scene.AddLight(spotLight);
+
+    blrc::PointLight pointLight;
+    pointLight.base.power = 0.0f;
+    scene.AddLight(pointLight);
+
+
     blrc::Renderer::Init();
     blrc::RenderPipeline forwardRender;
 

@@ -72,7 +72,7 @@ public:
         for (size_t i = 0; i < 6; i++)
             m_prefilterShader->SetMat4("u_ViewProjMatrices[" + std::to_string(i) + "]", captureProj * captureViews[i]);
 
-        glBindTextureUnit(18, renderCtx.Get<GLuint>("u_EnvMap"));
+        glBindTextureUnit(8, renderCtx.Get<GLuint>("u_EnvMap"));
 
         uint32_t maxMip = m_prefilteredMap->GetSpec().numMips;
         for (size_t mip = 0; mip < maxMip; mip++)
