@@ -220,7 +220,7 @@ void main()
 			vec3 lightDir = normalize(-u_DirLights[i].directionAndPower.xyz);
 			float dynamicBias = max(MAX_BIAS * (1.0 - dot(N, lightDir)), MIN_BIAS);
 
-			shadow = calcShadow(u_DirShadowMaps[shadowIdx], fs_in.v_FragPosDirLightSpace[shadowIdx], shadowBias);
+			shadow = calcShadow(u_DirShadowMaps[shadowIdx], fs_in.v_FragPosDirLightSpace[shadowIdx], dynamicBias);
 		}
 	
 		Lo += calcDirLight(u_DirLights[i], N, V, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
@@ -253,7 +253,7 @@ void main()
 			float dynamicBias = max(MAX_BIAS * (1.0 - dot(N, lightDir)), MIN_BIAS);
 		
 			float lightRange = u_PointLights[i].positionAndRange.w;
-			shadow = calcPointShadow(u_PointShadowMaps[shadowIdx], fs_in.v_FragPos, u_PointLights[i].positionAndRange.xyz, lightRange, shadowBias);
+			shadow = calcPointShadow(u_PointShadowMaps[shadowIdx], fs_in.v_FragPos, u_PointLights[i].positionAndRange.xyz, lightRange, dynamicBias);
 		}
 
 		Lo += calcPointLight(u_PointLights[i], N, V, fs_in.v_FragPos, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
