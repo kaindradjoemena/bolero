@@ -170,6 +170,8 @@ layout(binding = 18) uniform samplerCube u_PointShadowMaps[4];
 
 
 // Shadow Calculation Helpers
+const float MIN_BIAS = 0.00001;
+const float MAX_BIAS = 0.001;
 float calcShadow(sampler2D shadowMap, vec4 fragPosLightSpace, float bias);
 float calcPointShadow(samplerCube shadowMap, vec3 fragPos, vec3 lightPos, float farPlane, float bias);
 
@@ -214,7 +216,12 @@ void main()
 		int shadowIdx = int(u_DirLights[i].colorAndShadow.w);
 
 		if (shadowIdx >= 0)
+		{
+			vec3 lightDir = normalize(-u_DirLights[i].directionAndPower.xyz);
+			float dynamicBias = max(MAX_BIAS * (1.0 - dot(N, lightDir)), MIN_BIAS);
+
 			shadow = calcShadow(u_DirShadowMaps[shadowIdx], fs_in.v_FragPosDirLightSpace[shadowIdx], shadowBias);
+		}
 	
 		Lo += calcDirLight(u_DirLights[i], N, V, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
 	}
@@ -225,7 +232,12 @@ void main()
 		int shadowIdx = int(u_SpotLights[i].powerAndShadow.y);
 
 		if (shadowIdx >= 0)
-			shadow = calcShadow(u_SpotShadowMaps[shadowIdx], fs_in.v_FragPosSpotLightSpace[shadowIdx], shadowBias);
+		{
+			vec3 lightDir = normalize(u_SpotLights[i].positionAndLength.xyz - fs_in.v_FragPos);
+			float dynamicBias = max(MAX_BIAS * (1.0 - dot(N, lightDir)), MIN_BIAS);
+
+			shadow = calcShadow(u_SpotShadowMaps[shadowIdx], fs_in.v_FragPosSpotLightSpace[shadowIdx], dynamicBias);
+		}
 		
 		Lo += calcSpotLight(u_SpotLights[i], N, V, fs_in.v_FragPos, shadow, ALBEDO, ROUGHNESS, METALLIC, F0);
 	}
@@ -237,6 +249,9 @@ void main()
 
 		if (shadowIdx >= 0)
 		{
+			vec3 lightDir = normalize(u_PointLights[i].positionAndRange.xyz - fs_in.v_FragPos);
+			float dynamicBias = max(MAX_BIAS * (1.0 - dot(N, lightDir)), MIN_BIAS);
+		
 			float lightRange = u_PointLights[i].positionAndRange.w;
 			shadow = calcPointShadow(u_PointShadowMaps[shadowIdx], fs_in.v_FragPos, u_PointLights[i].positionAndRange.xyz, lightRange, shadowBias);
 		}
@@ -299,10 +314,13 @@ vec3 calcSpotLight(SpotLightData light, vec3 N, vec3 V, vec3 fragPos, float shad
 {
     vec3 L = normalize(light.positionAndLength.xyz - fragPos);
     vec3 H = normalize(V + L);
-    
-    float dist = length(light.positionAndLength.xyz - fragPos);
-    float attenuation = 1.0 / (dist * dist);
-    
+
+	float dist = length(light.positionAndLength.xyz - fragPos);
+	float distRatio = dist / light.positionAndLength.w;
+	float falloff = clamp(1.0 - (distRatio * distRatio * distRatio * distRatio), 0.0, 1.0);
+	
+	float attenuation = (falloff * falloff) / (dist * dist + 1.0);
+	
     float theta = dot(L, normalize(-light.directionAndInner.xyz)); 
     float epsilon = light.directionAndInner.w - light.colorAndOuter.w; 
     float intensity = clamp((theta - light.colorAndOuter.w) / epsilon, 0.0, 1.0); 
@@ -330,8 +348,12 @@ vec3 calcPointLight(PointLightData light, vec3 N, vec3 V, vec3 fragPos, float sh
     vec3 L = normalize(light.positionAndRange.xyz - fragPos);
     vec3 H = normalize(V + L);
     
-    float dist = length(light.positionAndRange.xyz - fragPos);
-    float attenuation = 1.0 / (dist * dist);
+	float dist = length(light.positionAndRange.xyz - fragPos);
+	float distRatio = dist / light.positionAndRange.w;
+	float falloff = clamp(1.0 - (distRatio * distRatio * distRatio * distRatio), 0.0, 1.0);
+	
+	float attenuation = (falloff * falloff) / (dist * dist + 1.0);
+
     vec3 radiance = light.colorAndPower.rgb * light.colorAndPower.w * attenuation;
 
     float NDF = NDF_GGXTR(N, H, ROUGHNESS);   
