@@ -10,16 +10,17 @@ class DirShadowPass : public blrc::RenderPass
 public:
     static constexpr int MAX_DIR_LIGHTS = 4;
 
-    DirShadowPass(const blrc::Ref<blrc::Shader>& depthShader)
+    DirShadowPass(const blrc::Ref<blrc::Shader>& depthShader, uint32_t size = 2048)
     : RenderPass("Directional Shadow Pass")
     , m_depthShader(depthShader)
+    , m_size(size)
     {
     }
 
     void Init() override
     {
         for (size_t i = 0; i < MAX_DIR_LIGHTS; i++)
-            m_fbos.emplace_back(blrc::FrameBuffer::Create({ 512, 512, { blrc::ImgFmt::Depth32F } }));
+            m_fbos.emplace_back(blrc::FrameBuffer::Create({ m_size, m_size, { blrc::ImgFmt::Depth32F } }));
     }
 
     void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
@@ -81,4 +82,6 @@ public:
 private:
     std::vector<blrc::Ref<blrc::FrameBuffer>> m_fbos;
     blrc::Ref<blrc::Shader> m_depthShader;
+
+    uint32_t m_size;
 };
