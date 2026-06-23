@@ -24,18 +24,21 @@ public:
 
     void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         m_ui.BeginFrame();
 
-
         m_ui.DrawPipelineStats(scene, m_passes);
-
         m_ui.DrawProperties(scene, renderCtx);
-
+        m_ui.DrawScene(renderCtx);
+        m_ui.DrawExport(scene, renderCtx);
 
         m_ui.EndFrame();
     }
 
-    virtual void OnResize(uint32_t width, uint32_t height) override
+    virtual void OnWindowResize(uint32_t width, uint32_t height) override
     {
     }
 

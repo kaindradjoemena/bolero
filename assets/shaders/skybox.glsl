@@ -45,12 +45,23 @@ in vec3 v_TexCoords;
 
 layout(binding = 6) uniform samplerCube u_PrefilterMap;
 
-uniform float u_EnvironmentBlur = 0.9;
+uniform float u_EnvironmentBlur  = 0.9;
+uniform float u_EnvironmentRot   = 0.0;
+uniform float u_EnvironmentPower = 1.0;
 
+mat3 getRotationY(float angle)
+{
+	float s = sin(angle);
+	float c = cos(angle);
+	return mat3(c,   0.0, s,
+				0.0, 1.0, 0.0,
+				-s,  0.0, c);
+}
 
 void main()
 {
-    vec3 envColor = textureLod(u_PrefilterMap, v_TexCoords, u_EnvironmentBlur).rgb;
+	vec3 rotatedUV = getRotationY(u_EnvironmentRot) * v_TexCoords;
+    vec3 envColor = textureLod(u_PrefilterMap, rotatedUV, u_EnvironmentBlur).rgb * u_EnvironmentPower;
 	
 	FragColor = vec4(envColor, 1.0);
 }

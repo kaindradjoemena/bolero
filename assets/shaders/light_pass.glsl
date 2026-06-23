@@ -162,6 +162,9 @@ layout(binding = 4) uniform sampler2D u_aoMap;		   uniform bool u_hasAOMap;		   
 layout(binding = 5) uniform samplerCube u_IrradianceMap;
 layout(binding = 6) uniform samplerCube u_PrefilterMap;
 layout(binding = 7) uniform sampler2D   u_BrdfLut;
+uniform float u_EnvironmentRot   = 0.0;
+uniform float u_EnvironmentPower = 1.0;
+uniform bool  u_UseIBL           = true;
 
 // SHADOW MAP ARRAYS
 layout(binding = 10) uniform sampler2D   u_DirShadowMaps[4];
@@ -186,6 +189,15 @@ vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness);
 vec3 calcDirLight(DirLightData light, vec3 N, vec3 V, float shadow, vec3 ALBEDO, float ROUGHNESS, float METALLIC, vec3 F0);
 vec3 calcSpotLight(SpotLightData light, vec3 N, vec3 V, vec3 fragPos, float shadow, vec3 ALBEDO, float ROUGHNESS, float METALLIC, vec3 F0);
 vec3 calcPointLight(PointLightData light, vec3 N, vec3 V, vec3 fragPos, float shadow, vec3 ALBEDO, float ROUGHNESS, float METALLIC, vec3 F0);
+
+mat3 getRotationY(float angle)
+{
+	float s = sin(angle);
+	float c = cos(angle);
+	return mat3(c,   0.0, s,
+				0.0, 1.0, 0.0,
+				-s,  0.0, c);
+}
 
 
 void main() 
@@ -265,21 +277,33 @@ void main()
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - METALLIC;
 
-	// --- Diffuse IBL ---
-	vec3 irradiance = texture(u_IrradianceMap, N).rgb;
-	vec3 diffuse = irradiance * ALBEDO;
 
-	// --- Specular IBL ---
-    vec3 R = reflect(-V, N); 
-    const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(u_PrefilterMap, R, ROUGHNESS * MAX_REFLECTION_LOD).rgb;
-	// Sample the BRDF LUT using the view angle and roughness
-    vec2 envBRDF = texture(u_BrdfLut, vec2(max(dot(N, V), 0.0), ROUGHNESS)).rg;
-    // F0 * Scale + Bias
-    vec3 specular = prefilteredColor * (F0 * envBRDF.x + envBRDF.y);
+	vec3 ambient;
+	if (u_UseIBL)
+	{
+		// --- Diffuse IBL ---
+		mat3 rotY = getRotationY(u_EnvironmentRot);
+		vec3 rotatedN = rotY * N;
+		vec3 irradiance = texture(u_IrradianceMap, rotatedN).rgb;
+		vec3 diffuse = irradiance * ALBEDO;
 
-    vec3 ambient = (kD * diffuse + specular) * AO;
+		// --- Specular IBL ---
+		vec3 R = reflect(-V, N);
+		vec3 rotatedR = rotY * R;
+		const float MAX_REFLECTION_LOD = 4.0;
+		vec3 prefilteredColor = textureLod(u_PrefilterMap, rotatedR, ROUGHNESS * MAX_REFLECTION_LOD).rgb;
+		// Sample the BRDF LUT using the view angle and roughness
+		vec2 envBRDF = texture(u_BrdfLut, vec2(max(dot(N, V), 0.0), ROUGHNESS)).rg;
+		// F0 * Scale + Bias
+		vec3 specular = prefilteredColor * (F0 * envBRDF.x + envBRDF.y);
 
+		ambient = (kD * diffuse + specular) * AO * u_EnvironmentPower;
+	}
+	else
+	{
+		
+	}
+	
     vec3 color = ambient + Lo;
 
 	FragColor = vec4(ambient + Lo, 1.0);

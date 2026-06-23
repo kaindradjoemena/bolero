@@ -21,6 +21,8 @@
 
 // Core Framework & State
 #include "core/image_format.hpp"
+#include "core/image_buffer.hpp"
+#include "core/frame_capturer.hpp"
 #include "core/asset_manager.hpp"
 #include "core/scene.hpp"
 #include "core/camera.hpp"

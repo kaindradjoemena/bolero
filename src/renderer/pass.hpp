@@ -37,7 +37,7 @@ public:
 
     // Resizing behavior.
     // Useful for enabling window responsiveness
-    virtual void OnResize(uint32_t width, uint32_t height)
+    virtual void OnWindowResize(uint32_t width, uint32_t height)
     {
     }
 

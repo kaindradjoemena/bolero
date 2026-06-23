@@ -109,6 +109,12 @@ public:
     Renderer(Renderer&& other) = delete;
     Renderer& operator=(Renderer&& other) = delete;
 
+    static void SetRenderScale(float scale) { s_renderScale = Clamp(scale, 0.1f, 4.0f); }  // 10% - 400% native
+    static void SetViewportResolution(uint32_t w, uint32_t h) { s_viewportWidth = w; s_viewportHeight = h; }
+    
+    static float GetRenderScale() { return s_renderScale; }
+    static uint32_t GetViewportWidth() { return s_viewportWidth; }
+    static uint32_t GetViewportHeight() { return s_viewportHeight; }
 
     static const RenderStats& GetRenderStats() { return s_stats; }
 
@@ -131,6 +137,10 @@ public:
     static void DrawCube();
 
 private:
+    inline static float s_renderScale     = 1.0f;
+    inline static uint32_t s_viewportWidth  = 512;
+    inline static uint32_t s_viewportHeight = 512;
+
     inline static std::vector<RenderTask> s_opaqueQueue;
     inline static std::vector<RenderTask> s_transparentQueue;
     inline static std::vector<RenderTask> s_shadowCasterQueue;

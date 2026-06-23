@@ -26,6 +26,12 @@ public:
 
     void DrawProperties(Scene& scene, RenderContext& renderCtx);
 
+    void DrawScene(RenderContext& renderCtx);
+
+    void DrawExport(Scene& scene, RenderContext& renderCtx);
+
+    void CaptureViewport(RenderContext& renderCtx, const std::string& path);
+
 private:
     bool m_initialized = false;
 };

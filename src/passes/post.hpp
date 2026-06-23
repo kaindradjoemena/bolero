@@ -10,51 +10,65 @@ namespace blrc = blr::core;
 class PostPass : public blrc::RenderPass
 {
 public:
-    PostPass(uint32_t width, uint32_t height, const blrc::Ref<blrc::Shader>& postShader)
+    PostPass(const blrc::Ref<blrc::Shader>& postShader)
     : RenderPass("Post Pass")
-    , m_windowW(width)
-    , m_windowH(height)
     , m_postShader(postShader)
     {
     }
 
     void Init() override
     {
+        m_renderW = blrc::Renderer::GetViewportWidth();
+        m_renderH = blrc::Renderer::GetViewportHeight();
+        m_fbo = blrc::FrameBuffer::Create({ m_renderW, m_renderH, { blrc::ImgFmt::RGBA16F} });
     }
 
     void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
+        uint32_t targetW = blrc::Renderer::GetViewportWidth();
+        uint32_t targetH = blrc::Renderer::GetViewportHeight();
+        if (targetW != m_renderW || targetH != m_renderH)
+        {
+            m_renderW = targetW;
+            m_renderH = targetH;
+            m_fbo->Resize(m_renderW, m_renderH);
+        }
+        m_fbo->Bind();
+
         glDisable(GL_DEPTH_TEST);     
         glDisable(GL_CULL_FACE);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, m_windowW, m_windowH); 
         glClearColor(0.03f, 0.03f, 0.03f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         m_postShader->Bind();
 
         m_postShader->SetInt("u_ScreenTexture", 20);
-        glBindTextureUnit(20, renderCtx.Get<GLuint>("OPAQUE_PASS_TEX"));
+        glBindTextureUnit(20, renderCtx.Get<GLuint>("RESOLVED_TEX"));
 
         m_postShader->SetFloat("u_Exposure", renderCtx.Get<float>("u_Exposure", 1.0f));
 
         blrc::Renderer::DrawFullscreenQuad();
 
         m_postShader->Unbind();
+
+
+        m_fbo->Unbind();
+
+
+        renderCtx.Set("POST_PASS_TEX", m_fbo->GetColorAttachmentID(0));
     }
 
-    virtual void OnResize(uint32_t width, uint32_t height) override
+    virtual void OnWindowResize(uint32_t width, uint32_t height) override
     {
-        m_windowW = width;
-        m_windowH = height;
     }
 
     void Shutdown() override {}
 
 private:
-    uint32_t m_windowW;
-    uint32_t m_windowH;
+    uint32_t m_renderW;
+    uint32_t m_renderH;
 
     blrc::Ref<blrc::Shader> m_postShader;
+    blrc::Ref<blrc::FrameBuffer> m_fbo;
 };

@@ -1,14 +1,21 @@
+// core/render_context.hpp
+
 #pragma once
+
 #include <variant>
 #include <optional>
 #include <unordered_map>
 #include <string>
 
+#include <glad/glad.h>
+#include "utils/math.hpp"
+
+
 namespace blr::core
 {
 
 
-using ContextValue = std::variant<GLuint, int, float, bool, vec4, mat4>;
+using ContextValue = std::variant<GLuint, int, float, bool, vec2, vec3, vec4, mat3, mat4, std::string>;
 
 enum class Lifetime { TRANSIENT, PERSISTENT };
 

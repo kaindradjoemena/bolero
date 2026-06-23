@@ -1,11 +1,14 @@
 // ui/ui.cpp
 
 #include "UI.hpp"
+
+#include <algorithm>
+
 #include <bolero.hpp>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-
+#include <stb_image_write.h>
 #include <implot.h>
 
 #include "core/scene.hpp"
@@ -21,6 +24,11 @@ void UI::Init(GLFWwindow* window)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImPlot::CreateContext();
+
+    // Docking
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
@@ -32,6 +40,9 @@ void UI::BeginFrame()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    // Docking
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 }
 
 void UI::EndFrame()
@@ -289,6 +300,14 @@ void UI::DrawProperties(Scene& scene, RenderContext& renderCtx)
 
         if (ImGui::BeginTabItem("Rendering"))
         {
+            ImGui::SeparatorText("Background Color");
+            {
+                glm::vec4 backgroundCol = renderCtx.Get<glm::vec4>("u_BackgroundColor", glm::vec4(0.0f, 0.0f, 0.0f, 1.0));
+                if (ImGui::ColorEdit4("Color", &backgroundCol.x))
+                    renderCtx.Set("u_BackgroundColor", backgroundCol, Lifetime::PERSISTENT);
+
+            }
+
             ImGui::SeparatorText("Post Processing");
             {
                 float exposure = renderCtx.Get<float>("u_Exposure", 1.0f);
@@ -299,9 +318,28 @@ void UI::DrawProperties(Scene& scene, RenderContext& renderCtx)
             ImGui::Spacing();
             ImGui::SeparatorText("Environment");
             {
+                float envPow = renderCtx.Get<float>("u_EnvironmentPower", 1.0f);
+                if (ImGui::SliderFloat("Skybox Power", &envPow, 0.0f, 10.0f, "%.2f"))
+                    renderCtx.Set("u_EnvironmentPower", envPow, Lifetime::PERSISTENT);
+
+                
                 float envBlur = renderCtx.Get<float>("u_EnvironmentBlur", 0.9f);
                 if (ImGui::SliderFloat("Skybox Blur", &envBlur, 0.0f, 10.0f, "%.2f"))
                     renderCtx.Set("u_EnvironmentBlur", envBlur, Lifetime::PERSISTENT);
+                
+                float envRotRad = renderCtx.Get<float>("u_EnvironmentRot", 0.0f);
+                float envRotDeg = glm::degrees(envRotRad);
+                if (ImGui::SliderFloat("Skybox Rotation", &envRotDeg, 0.0f, 360.0f, "%.2f"))
+                    renderCtx.Set("u_EnvironmentRot", glm::radians(envRotDeg), Lifetime::PERSISTENT);
+            }
+
+            ImGui::SeparatorText("Anti-Aliasing");
+            {
+                // SSAA Scale
+                uint32_t scale = Renderer::GetRenderScale();
+                int scaleInt = static_cast<int>(scale);
+                if (ImGui::SliderInt("SSAA Scale", &scaleInt, 1, 4))
+                    Renderer::SetRenderScale(scaleInt);
             }
 
             ImGui::EndTabItem();
@@ -311,6 +349,204 @@ void UI::DrawProperties(Scene& scene, RenderContext& renderCtx)
     }
 
     ImGui::End();
+}
+
+void UI::DrawScene(RenderContext& renderCtx)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+
+    if (ImGui::Begin("Scene Viewport"))
+    {
+        ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+
+        uint32_t vpW = std::max((uint32_t)viewportSize.x, 1u);
+        uint32_t vpH = std::max((uint32_t)viewportSize.y, 1u);
+
+        Renderer::SetViewportResolution(vpW, vpH);
+
+        GLuint finalTex = renderCtx.Get<GLuint>("POST_PASS_TEX", 0);
+        if (finalTex != 0)
+            ImGui::Image((void*)(intptr_t)finalTex, viewportSize, ImVec2(0, 1), ImVec2(1, 0));
+    }
+    ImGui::End();
+
+    ImGui::PopStyleVar();
+}
+
+void UI::DrawExport(Scene& scene, RenderContext& renderCtx)
+{
+    if (!ImGui::Begin("Export"))
+    {
+        ImGui::End();
+        return;
+    }
+
+    if (ImGui::BeginTabBar("Export Tabs"))
+    {
+        // ===== VIEWPORT CAPTURE =====
+        if (ImGui::BeginTabItem("Viewport"))
+        {
+            static char exportPath[256] = "capture.png";
+
+            static std::string statusMsg = "";
+            static ImVec4 statusColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+            if (ImGui::InputText("Save Path", exportPath, IM_ARRAYSIZE(exportPath)))
+                statusMsg = ""; 
+
+            std::string pathStr = exportPath;
+            bool isPathEmpty = pathStr.empty();
+
+            std::string ext = std::filesystem::path(pathStr).extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c){ return std::tolower(c); });
+
+            bool isValidExt = (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".tga");
+
+            bool isDirValid = true;
+            try
+            {
+                std::filesystem::path p(pathStr);
+                std::filesystem::path dir = p.parent_path();
+                if (!dir.empty() && !std::filesystem::exists(dir))
+                    isDirValid = false;
+            }
+            catch (const std::exception&)
+            {
+                isDirValid = false; 
+            }
+
+            bool isValid = !isPathEmpty && isValidExt && isDirValid;
+
+            if (!isValid)
+                ImGui::BeginDisabled();
+
+            if (ImGui::Button("Capture"))
+            {
+                try
+                {
+                    CaptureViewport(renderCtx, pathStr);
+                    statusMsg = "Saved to " + pathStr;
+                    statusColor = ImVec4(0.2f, 1.0f, 0.2f, 1.0f);
+                } 
+                catch (const std::exception& e)
+                {
+                    statusMsg = std::string("Error: ") + e.what();
+                    statusColor = ImVec4(1.0f, 0.2f, 0.2f, 1.0f);
+                }
+            }
+
+            if (!isValid)
+            {
+                ImGui::EndDisabled();
+                ImGui::SameLine();
+                if (isPathEmpty)
+                    ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "Path cannot be empty!");
+                else if (!isValidExt)
+                    ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "Use .png, .jpg, .bmp, or .tga");
+                else if (!isDirValid)
+                    ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "Directory does not exist!");
+            }
+
+            if (!statusMsg.empty())
+            {
+                ImGui::Spacing();
+                ImGui::TextColored(statusColor, "%s", statusMsg.c_str());
+            }
+
+            ImGui::EndTabItem();
+        }
+
+        // ===== OFFLINE RENDERING =====
+        if (ImGui::BeginTabItem("Offline"))
+        {
+            static int targetSize[2] = {1920, 1080};
+            ImGui::DragInt2("Resolution", targetSize, 1.0f, 64, 8192);
+
+            static int currentFitMode = 0;
+            const char* fitModes[] = { "Vertical (Standard Crop)", "Horizontal (Lock Width)" };
+            ImGui::Combo("Camera Fit Mode", &currentFitMode, fitModes, IM_ARRAYSIZE(fitModes));
+
+            ImGui::Spacing();
+
+            static bool overrideSettings = false;
+            ImGui::Checkbox("Override Live Rendering Settings", &overrideSettings);
+            
+            static float exp = 1.0f, envPow = 1.0f, envBlr = 0.9f, envRt = 0.0f;
+            if (overrideSettings)
+            {
+                ImGui::Indent();
+                ImGui::DragFloat("Exposure", &exp, 0.01f, 0.0f, 10.0f, "%.2f EV");
+                ImGui::SliderFloat("Skybox Power", &envPow, 0.0f, 10.0f, "%.2f");
+                ImGui::SliderFloat("Skybox Blur", &envBlr, 0.0f, 10.0f, "%.2f");
+                float envRtDeg = glm::degrees(envRt);
+                if (ImGui::SliderFloat("Skybox Rotation", &envRtDeg, 0.0f, 360.0f, "%.2f"))
+                    envRt = glm::radians(envRtDeg);
+                ImGui::Unindent();
+            }
+            ImGui::Spacing();
+
+            static char exportPath[256] = "offline_render.png";
+            ImGui::InputText("Save Path", exportPath, IM_ARRAYSIZE(exportPath));
+
+            static std::string statusMsg = "";
+            static ImVec4 statusColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+            // Send configuration with the RenderContext
+            if (ImGui::Button("Render Offline Frame"))
+            {
+                // THE BLACKBOARD MAGIC: Throw it all in as TRANSIENT variables!
+                renderCtx.Set("#OFFLINE_RENDER_TRIGGER", true);
+                renderCtx.Set("#OFFLINE_RENDER_SIZE", vec2(targetSize[0], targetSize[1]));
+                renderCtx.Set("#OFFLINE_RENDER_PATH", std::string(exportPath));
+                renderCtx.Set("#OFFLINE_RENDER_FIT_MODE", currentFitMode);
+
+                if (overrideSettings)
+                {
+                    renderCtx.Set("#OFFLINE_RENDER_OVERRIDE_SETTINGS", true);
+                    renderCtx.Set("#OFFLINE_RENDER_OVERRIDE_EXP", exp);
+                    renderCtx.Set("#OFFLINE_RENDER_OVERRIDE_ENV_POW", envPow);
+                    renderCtx.Set("#OFFLINE_RENDER_OVERRIDE_ENV_BLUR", envBlr);
+                    renderCtx.Set("#OFFLINE_RENDER_OVERRIDE_ENV_ROT", envRt);
+                }
+
+                statusMsg = "Render queued for end of frame...";
+                statusColor = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+            }
+
+            if (!statusMsg.empty())
+            {
+                ImGui::Spacing();
+                ImGui::TextColored(statusColor, "%s", statusMsg.c_str());
+            }
+
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::End();
+}
+
+void UI::CaptureViewport(RenderContext& renderCtx, const std::string& path)
+{
+    GLuint tex = renderCtx.Get<GLuint>("POST_PASS_TEX");
+    uint32_t w = Renderer::GetViewportWidth();
+    uint32_t h = Renderer::GetViewportHeight();
+    if (w == 0 || h == 0)
+        throw std::runtime_error("Viewport dimensions are zero");
+
+    ImageBuffer buffer;
+    buffer.width = w;
+    buffer.height = h;
+    buffer.channels = 4;
+    buffer.pixels.resize(w * h * 4);
+
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.pixels.data());
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    buffer.SaveToFile(path);
 }
 
 

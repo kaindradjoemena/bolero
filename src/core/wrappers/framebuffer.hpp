@@ -57,6 +57,8 @@ public:
 
     GLuint GetColorAttachmentID(uint32_t index = 0) const { return m_colorAttachments[index]; }
     GLuint GetDepthAttachmentID() const { return m_depthAttachment; }
+
+    GLuint GetRendererID() const { return m_rendererID; }
     
     const FBSpec& GetSpec() const { return m_spec; }
 

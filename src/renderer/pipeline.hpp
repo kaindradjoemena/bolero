@@ -63,10 +63,10 @@ public:
         }
     }
 
-    void OnResize(uint32_t width, uint32_t height)
+    void OnWindowResize(uint32_t width, uint32_t height)
     {
         for (auto& pass : m_passes)
-            pass->OnResize(width, height);
+            pass->OnWindowResize(width, height);
     }
 
     void Shutdown()

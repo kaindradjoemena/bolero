@@ -7,22 +7,32 @@ namespace blrc = blr::core;
 class OpaquePass : public blrc::RenderPass
 {
 public:
-    OpaquePass(uint32_t initW, uint32_t initH, const blrc::Ref<blrc::Shader>& lightShader, const blrc::Ref<blrc::Shader>& skyboxShader)
+    OpaquePass(const blrc::Ref<blrc::Shader>& lightShader)
     : RenderPass("Main Opaque Pass")
-    , m_initW(initW)
-    , m_initH(initH)
     , m_lightShader(lightShader)
-    , m_skyboxShader(skyboxShader)
     {
     }
 
     void Init() override
     {
-        m_fbo = blrc::FrameBuffer::Create({ m_initW, m_initH, { blrc::ImgFmt::RGBA16F, blrc::ImgFmt::Depth32F} });
+        m_renderW = blrc::Renderer::GetViewportWidth();
+        m_renderH = blrc::Renderer::GetViewportHeight();
+        m_renderScale = blrc::Renderer::GetRenderScale();
+        m_fbo = blrc::FrameBuffer::Create({ m_renderW * m_renderScale, m_renderH * m_renderScale, { blrc::ImgFmt::RGBA16F, blrc::ImgFmt::Depth32F} });
     }
 
     void Execute(blrc::Scene& scene, blrc::RenderContext& renderCtx) override
     {
+        uint32_t targetW = blrc::Renderer::GetViewportWidth();
+        uint32_t targetH = blrc::Renderer::GetViewportHeight();
+        uint32_t scale   = blrc::Renderer::GetRenderScale();
+        if (scale != m_renderScale || targetW != m_renderW || targetH != m_renderH) 
+        {
+            m_renderScale = scale;
+            m_renderW = targetW;
+            m_renderH = targetH;
+            m_fbo->Resize(m_renderW * m_renderScale, m_renderH * m_renderScale);
+        }
         m_fbo->Bind(); 
 
         glEnable(GL_DEPTH_TEST);
@@ -30,7 +40,9 @@ public:
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         
-        glClearColor(0.03f, 0.03f, 0.03f, 1.0f);
+        // Background Color
+        blrc::vec4 backgroundCol = renderCtx.Get<blrc::vec4>("u_BackgroundColor", blrc::vec4(0.0f, 0.0f, 0.0f, 1.0));
+        glClearColor(backgroundCol.r, backgroundCol.g, backgroundCol.b, backgroundCol.a);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         blrc::Renderer::UpdateCameraUBO(*scene.GetCam());
@@ -38,9 +50,20 @@ public:
         m_lightShader->Bind(); 
 
         // IBL Maps (Slots 5, 6, 7)
-        glBindTextureUnit(5, renderCtx.Get<GLuint>("u_IrradianceMap"));
-        glBindTextureUnit(6, renderCtx.Get<GLuint>("u_PrefilterMap"));
-        glBindTextureUnit(7, renderCtx.Get<GLuint>("u_BrdfLut"));
+        GLuint irradianceMap = renderCtx.Get<GLuint>("u_IrradianceMap");
+        GLuint prefilterMap  = renderCtx.Get<GLuint>("u_PrefilterMap");
+
+        bool useIBL = (irradianceMap != 0 && prefilterMap != 0);
+        if (useIBL)
+        {
+            glBindTextureUnit(5, irradianceMap);
+            glBindTextureUnit(6, prefilterMap);
+            glBindTextureUnit(7, renderCtx.Get<GLuint>("u_BrdfLut"));
+        }
+        m_lightShader->SetFloat("u_EnvironmentRot", renderCtx.Get<float>("u_EnvironmentRot", 0.0f));
+        m_lightShader->SetFloat("u_EnvironmentPower", renderCtx.Get<float>("u_EnvironmentPower", 1.0f));
+        m_lightShader->SetBool("u_UseIBL", useIBL ? true : false);
+
 
         // Directional Shadows (Slots 10 - 13)
         int numDirShadows = renderCtx.Get<int>("u_NumDirShadows"); 
@@ -71,36 +94,25 @@ public:
         // Draw Opaque geometry
         blrc::Renderer::DrawQueue(blrc::RenderQueueType::OPAQUE, nullptr);
 
-        // Draw Skybox
-        glDepthFunc(GL_LEQUAL);
-
-        m_skyboxShader->Bind();
-        glBindTextureUnit(6, renderCtx.Get<GLuint>("u_PrefilterMap"));
-        
-        m_skyboxShader->SetFloat("u_EnvironmentBlur", renderCtx.Get<float>("u_EnvironmentBlur", 0.9f));
-        
-        blrc::Renderer::DrawCube();
-
-        glDepthFunc(GL_LESS);
 
         m_fbo->Unbind();
 
 
         renderCtx.Set("OPAQUE_PASS_TEX", m_fbo->GetColorAttachmentID(0));
+        renderCtx.Set("SCENE_FBO_ID", m_fbo->GetRendererID());
     }
 
-    virtual void OnResize(uint32_t width, uint32_t height) override
+    virtual void OnWindowResize(uint32_t width, uint32_t height) override
     {
-        m_fbo->Resize(width, height);
     }
 
     void Shutdown() override {}
 
 private:
-    uint32_t m_initW;
-    uint32_t m_initH;
+    uint32_t m_renderW;
+    uint32_t m_renderH;
+    uint32_t m_renderScale;
 
     blrc::Ref<blrc::FrameBuffer> m_fbo;
     blrc::Ref<blrc::Shader> m_lightShader;
-    blrc::Ref<blrc::Shader> m_skyboxShader;
 };
