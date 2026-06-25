@@ -2,19 +2,6 @@
 
 #include <bolero.hpp>
 
-#include "passes/opaque.hpp"  // light pass
-#include "passes/skybox.hpp"
-#include "passes/ssaa_resolve.hpp"
-#include "passes/dir_shadow.hpp"  // shadow pass
-#include "passes/spot_shadow.hpp"
-#include "passes/point_shadow.hpp"
-#include "passes/ibl_setup.hpp"
-#include "passes/irradiance.hpp"
-#include "passes/prefilter.hpp"
-#include "passes/brdf_lut.hpp"
-#include "passes/post.hpp"
-#include "passes/ui.hpp"
-
 #include <iostream>
 
 namespace blrc = blr::core;
@@ -76,10 +63,10 @@ int main()
     scene.SetCam(&cam);
     
     // Model
-    auto opaqueShader = assetManager.CreateShader("bolero://shaders/light_pass.glsl");
+    auto opaqueShader = assetManager.CreateShader("bolero://shaders/geometry_pass.glsl");
     auto model = assetManager.CreateModel("bolero://models/squares_and_things.gltf", opaqueShader);
     blrc::Transform transform;
-    scene.AddEntity(model, transform);
+    scene.AddEntity("squares_and_things", model, transform);
 
 
     // Light
@@ -100,46 +87,35 @@ int main()
     blrc::RenderContext renderCtx;
     blrc::Renderer::Init();
     blrc::RenderPipeline forwardRender;
+    blrc::RenderPipeline deferredRender;
 
-    window.AddResizeCallback([&forwardRender](uint32_t w, uint32_t h) {
+    window.AddResizeCallback([&forwardRender, &deferredRender](uint32_t w, uint32_t h) {
             forwardRender.OnWindowResize(w, h);
+            deferredRender.OnWindowResize(w, h);
         });
 
+    auto iblPass         = blrc::CreateIBLSetupPass(assetManager);
+    auto irradiancePass  = blrc::CreateIrradiancePass(assetManager);
+    auto prefilterPass   = blrc::CreatePrefilterPass(assetManager);
+    auto brdfLutPass     = blrc::CreateBrdfLutPass(assetManager);
 
-    // IBL Skybox Setup Pass
-    // auto hdrMap = assetManager.CreateTex("bolero://hdri/citrus_orchard_puresky_2k.hdr");
-    auto hdrMap = assetManager.CreateTex("bolero://hdri/newman_cafeteria_2k.hdr");
-    auto eqToCubeShader = assetManager.CreateShader("bolero://shaders/equirect_to_cubemap.glsl");
-    blrc::Ref<IBLSetupPass> iblPass = std::make_shared<IBLSetupPass>(eqToCubeShader, hdrMap);
-    // Scene Irradiance Pass
-    auto convolutionShader = assetManager.CreateShader("bolero://shaders/cubemap_convolution.glsl");
-    blrc::Ref<IrradiancePass> irradiancePass = std::make_shared<IrradiancePass>(convolutionShader);
-    // Environment Map Prefiltering Pass
-    auto prefilterShader = assetManager.CreateShader("bolero://shaders/prefilter.glsl");
-    blrc::Ref<PrefilterPass> prefilterPass = std::make_shared<PrefilterPass>(prefilterShader);
-    // BRDF LUT Pre Computation
-    auto brdfLutShader = assetManager.CreateShader("bolero://shaders/brdf_lut.glsl");
-    blrc::Ref<BrdfLutPass> brdfLutPass = std::make_shared<BrdfLutPass>(assetManager, brdfLutShader);
-    // Scene Depth Pass (Shadow Mapping)
-    auto depthShader      = assetManager.CreateShader("bolero://shaders/shadow_pass.glsl");
-    auto pointDepthShader = assetManager.CreateShader("bolero://shaders/point_shadow_pass.glsl");
-    blrc::Ref<DirShadowPass>   dirShadowPass   = std::make_shared<DirShadowPass>(depthShader);
-    blrc::Ref<SpotShadowPass>  spotShadowPass  = std::make_shared<SpotShadowPass>(depthShader);
-    blrc::Ref<PointShadowPass> pointShadowPass = std::make_shared<PointShadowPass>(pointDepthShader);
-    // Opaque Pass
-    blrc::Ref<OpaquePass> opaquePass = std::make_shared<OpaquePass>(opaqueShader);
-    // Skybox Pass
-    auto skyboxShader = assetManager.CreateShader("bolero://shaders/skybox.glsl");
-    blrc::Ref<SkyboxPass> skyboxPass = std::make_shared<SkyboxPass>(skyboxShader);
-    // SSAA Pass
-    blrc::Ref<SSAAResolvePass> ssaaPass = std::make_shared<SSAAResolvePass>();
-    // Post Process Pass
-    auto postShader = assetManager.CreateShader("bolero://shaders/post_pass.glsl");
-    blrc::Ref<PostPass> postPass = std::make_shared<PostPass>(postShader);
-    // UI Pass
-    blrc::Ref<UIPass> uiPass = std::make_shared<UIPass>(window.GetNativeWindow(), forwardRender.GetPasses());
+    auto dirShadowPass   = blrc::CreateDirShadowPass(assetManager);
+    auto spotShadowPass  = blrc::CreateSpotShadowPass(assetManager);
+    auto pointShadowPass = blrc::CreatePointShadowPass(assetManager);
 
+    // Forward Rendering
+    auto opaquePass      = blrc::CreateOpauePass(assetManager);
+    
+    // Deferred Rendering
+    auto geometryPass   = blrc::CreateGeometryPass(assetManager);
+    auto shadowMaskPass = blrc::CreateShadowMaskPass(assetManager);
+    auto lightingPass   = blrc::CreateLightingPass(assetManager);
 
+    auto skyboxPass      = blrc::CreateSkyboxPass(assetManager);
+    auto ssaaPass        = blrc::CreateSSAAResolvePass();
+    auto postPass        = blrc::CreatePostPass(assetManager);
+    
+    
     // Offline Rendering
     blrc::RenderPipeline offlineRender;
     offlineRender.AddPass(iblPass);
@@ -149,24 +125,75 @@ int main()
     offlineRender.AddPass(dirShadowPass);
     offlineRender.AddPass(spotShadowPass);
     offlineRender.AddPass(pointShadowPass);
-    offlineRender.AddPass(opaquePass);
+    offlineRender.AddPass(geometryPass);
+    offlineRender.AddPass(shadowMaskPass);
+    offlineRender.AddPass(lightingPass);
     offlineRender.AddPass(skyboxPass);
     offlineRender.AddPass(ssaaPass);
     offlineRender.AddPass(postPass);
+    
+    // Real Time Deferred Rendering
+    deferredRender.AddPass(iblPass);
+    deferredRender.AddPass(irradiancePass);
+    deferredRender.AddPass(prefilterPass);
+    deferredRender.AddPass(brdfLutPass);
+    deferredRender.AddPass(dirShadowPass);
+    deferredRender.AddPass(spotShadowPass);
+    deferredRender.AddPass(pointShadowPass);
+    deferredRender.AddPass(geometryPass);
+    deferredRender.AddPass(shadowMaskPass);
+    deferredRender.AddPass(lightingPass);
+    deferredRender.AddPass(skyboxPass);
+    deferredRender.AddPass(ssaaPass);
+    deferredRender.AddPass(postPass);
+    auto uiPassDef = blrc::CreateUIPass(window.GetNativeWindow(), deferredRender.GetPasses());
+    deferredRender.AddPass(uiPassDef);
 
-    // Real Time Forward Rendering
-    forwardRender.AddPass(iblPass);
-    forwardRender.AddPass(irradiancePass);
-    forwardRender.AddPass(prefilterPass);
-    forwardRender.AddPass(brdfLutPass);
-    forwardRender.AddPass(dirShadowPass);
-    forwardRender.AddPass(spotShadowPass);
-    forwardRender.AddPass(pointShadowPass);
-    forwardRender.AddPass(opaquePass);
-    forwardRender.AddPass(skyboxPass);
-    forwardRender.AddPass(ssaaPass);
-    forwardRender.AddPass(postPass);
-    forwardRender.AddPass(uiPass);
+
+    uiPassDef->DispatchAction([&offlineRender, &scene, &renderCtx]() {
+            if (renderCtx.Get<bool>("#OFFLINE_RENDER_TRIGGER", false))
+            {
+                blrc::vec2 size = renderCtx.Get<blrc::vec2>("#OFFLINE_RENDER_SIZE");
+                std::string path = renderCtx.Get<std::string>("#OFFLINE_RENDER_PATH");
+                blrc::FitMode fitMode = static_cast<blrc::FitMode>(renderCtx.Get<int>("#OFFLINE_RENDER_FIT_MODE"));
+
+                bool hasOverrides = renderCtx.Get<bool>("#OFFLINE_RENDER_OVERRIDE_SETTINGS", false);
+                float prevExp, prevEnvPow, prevEnvBlr, prevEnvRot;
+
+                if (hasOverrides)
+                {
+                    prevExp    = renderCtx.Get<float>("u_Exposure", 1.0f);
+                    prevEnvPow = renderCtx.Get<float>("u_EnvironmentPower", 1.0f);
+                    prevEnvBlr = renderCtx.Get<float>("u_EnvironmentBlur", 0.9f);
+                    prevEnvRot = renderCtx.Get<float>("u_EnvironmentRot", 0.0f);
+
+                    renderCtx.Set("u_Exposure", renderCtx.Get<float>("#OFFLINE_RENDER_OVERRIDE_EXP"), blrc::Lifetime::PERSISTENT);
+                    renderCtx.Set("u_EnvironmentPower", renderCtx.Get<float>("#OFFLINE_RENDER_OVERRIDE_ENV_POW"), blrc::Lifetime::PERSISTENT);
+                    renderCtx.Set("u_EnvironmentBlur", renderCtx.Get<float>("#OFFLINE_RENDER_OVERRIDE_ENV_BLUR"), blrc::Lifetime::PERSISTENT);
+                    renderCtx.Set("u_EnvironmentRot", renderCtx.Get<float>("#OFFLINE_RENDER_OVERRIDE_ENV_ROT"), blrc::Lifetime::PERSISTENT);
+                }
+
+                try
+                {
+                    blrc::ImageBuffer buffer = blrc::FrameCapturer::CapturePipeline(offlineRender, scene, renderCtx, size.x, size.y, fitMode);
+                    buffer.SaveToFile(path);
+                    std::cout << "Successfully saved to " << path << "\n";
+                }
+                catch (const std::exception& e)
+                {
+                    std::cerr << "Offline render failed: " << e.what() << "\n";
+                }
+
+                if (hasOverrides)
+                {
+                    renderCtx.Set("u_Exposure", prevExp, blrc::Lifetime::PERSISTENT);
+                    renderCtx.Set("u_EnvironmentPower", prevEnvPow, blrc::Lifetime::PERSISTENT);
+                    renderCtx.Set("u_EnvironmentBlur", prevEnvBlr, blrc::Lifetime::PERSISTENT);
+                    renderCtx.Set("u_EnvironmentRot", prevEnvRot, blrc::Lifetime::PERSISTENT);
+                }
+                renderCtx.Set("#OFFLINE_RENDER_TRIGGER", false);
+            }
+        });
 
 
     float hotReloadTimer = 0.0;
@@ -193,56 +220,10 @@ int main()
         cam.SetAspect((float)blrc::Renderer::GetViewportWidth() / (float)blrc::Renderer::GetViewportHeight());
 
         blrc::Renderer::BeginFrame();
-        
-        scene.Update(deltaTime, true);
 
         renderCtx.ClearTransient();
-        forwardRender.Execute(scene, renderCtx);  // pass scene
 
-        // Offline Rendering
-        if (renderCtx.Get<bool>("#OFFLINE_RENDER_TRIGGER", false))
-        {
-            blrc::vec2 size = renderCtx.Get<blrc::vec2>("#OFFLINE_RENDER_SIZE");
-            std::string path = renderCtx.Get<std::string>("#OFFLINE_RENDER_PATH");
-            blrc::FitMode fitMode = static_cast<blrc::FitMode>(renderCtx.Get<int>("#OFFLINE_RENDER_FIT_MODE"));
-
-            bool hasOverrides = renderCtx.Get<bool>("#OFFLINE_RENDER_OVERRIDE_SETTINGS", false);
-            float prevExp, prevEnvPow, prevEnvBlr, prevEnvRot;
-
-            // Apply overrides if they exist
-            if (hasOverrides)
-            {
-                prevExp = renderCtx.Get<float>("u_Exposure", 1.0f);
-                prevEnvPow = renderCtx.Get<float>("u_EnvironmentPower", 1.0f);
-                prevEnvBlr = renderCtx.Get<float>("u_EnvironmentBlur", 0.9f);
-                prevEnvRot = renderCtx.Get<float>("u_EnvironmentRot", 0.0f);
-
-                renderCtx.Set("u_Exposure", renderCtx.Get<float>("#OFFLINE_RENDER_OVERRIDE_EXP"), blrc::Lifetime::PERSISTENT);
-                renderCtx.Set("u_EnvironmentPower", renderCtx.Get<float>("#OFFLINE_RENDER_OVERRIDE_ENV_POW"), blrc::Lifetime::PERSISTENT);
-                renderCtx.Set("u_EnvironmentBlur", renderCtx.Get<float>("#OFFLINE_RENDER_OVERRIDE_ENV_BLUR"), blrc::Lifetime::PERSISTENT);
-                renderCtx.Set("u_EnvironmentRot", renderCtx.Get<float>("#OFFLINE_RENDER_OVERRIDE_ENV_ROT"), blrc::Lifetime::PERSISTENT);
-            }
-
-            try
-            {
-                blrc::ImageBuffer buffer = blrc::FrameCapturer::CapturePipeline(offlineRender, scene, renderCtx, size.x, size.y, fitMode);
-                buffer.SaveToFile(path);
-                std::cout << "Successfully saved to " << path << "\n";
-            }
-            catch (const std::exception& e)
-            {
-                std::cerr << "Offline render failed: " << e.what() << "\n";
-            }
-
-            // Put the overrides back for the live editor
-            if (hasOverrides)
-            {
-                renderCtx.Set("u_Exposure", prevExp, blrc::Lifetime::PERSISTENT);
-                renderCtx.Set("u_EnvironmentPower", prevEnvPow, blrc::Lifetime::PERSISTENT);
-                renderCtx.Set("u_EnvironmentBlur", prevEnvBlr, blrc::Lifetime::PERSISTENT);
-                renderCtx.Set("u_EnvironmentRot", prevEnvRot, blrc::Lifetime::PERSISTENT);
-            }
-        }
+        deferredRender.Execute(scene, renderCtx);
 
         window.SwapBuffers();
     }

@@ -12,7 +12,6 @@
 #include "utils/debug.hpp"
 
 #include <algorithm>
-
 #include <glfw/glfw3.h>
 
 
@@ -36,13 +35,13 @@ void Renderer::Init()
 #endif
 
     s_cameraUBO = UniformBuffer::Create(sizeof(CameraFrameData));
-    s_cameraUBO->Bind(0);
+    s_cameraUBO->Bind(BufferLoc::CAM_UBO);
 
     s_instanceSSBO = ShaderStorageBuffer::Create();
-    s_instanceSSBO->Bind(1);
+    s_instanceSSBO->Bind(BufferLoc::INSTANCE_SSBO);
 
     s_lightSSBO = ShaderStorageBuffer::Create();
-    s_lightSSBO->Bind(2);
+    s_lightSSBO->Bind(BufferLoc::LIGHT_SSBO);
 
     s_emptyVAO = VertexArray::Create();
 }
@@ -94,9 +93,9 @@ void Renderer::UploadBuffers()
 
     // Light data
     GPULightBuffer lightBuffer;
-    lightBuffer.dirCount   = static_cast<uint32_t>(std::min(s_dirLightBuffer.size(),   16ull));
-    lightBuffer.pointCount = static_cast<uint32_t>(std::min(s_pointLightBuffer.size(), 1024ull));
-    lightBuffer.spotCount  = static_cast<uint32_t>(std::min(s_spotLightBuffer.size(),  512ull));
+    lightBuffer.dirCount   = static_cast<uint32_t>(std::min(int(s_dirLightBuffer.size()),   MAX_DIR_LIGHTS));
+    lightBuffer.spotCount  = static_cast<uint32_t>(std::min(int(s_spotLightBuffer.size()),  MAX_SPOT_LIGHTS));
+    lightBuffer.pointCount = static_cast<uint32_t>(std::min(int(s_pointLightBuffer.size()), MAX_POINT_LIGHTS));
     lightBuffer.padding    = 0;
 
     std::copy_n(s_dirLightBuffer.begin(),   lightBuffer.dirCount,   lightBuffer.dirLights);
@@ -157,8 +156,14 @@ void Renderer::Submit(const SpotLight& l, int shadowIndex)
 void Renderer::DrawQueue(RenderQueueType queueType, Shader* overrideShader)
 {
     std::vector<RenderTask>* targetQueue = &s_opaqueQueue;
-    if (queueType == RenderQueueType::SHADOW_CASTER) targetQueue = &s_shadowCasterQueue;
-    else if (queueType == RenderQueueType::TRANSPARENT) targetQueue = &s_transparentQueue;
+    if (queueType == RenderQueueType::SHADOW_CASTER)
+    {
+        targetQueue = &s_shadowCasterQueue;
+    }
+    else if (queueType == RenderQueueType::TRANSPARENT)
+    {
+        targetQueue = &s_transparentQueue;
+    }
 
     if (targetQueue->empty())
         return;
@@ -169,18 +174,36 @@ void Renderer::DrawQueue(RenderQueueType queueType, Shader* overrideShader)
     if (overrideShader)
         overrideShader->Bind();
     
+    uint64_t lastShaderID   = 0;
     uint64_t lastMaterialID = 0;
-    uint64_t lastMeshID = 0;
+    uint64_t lastMeshID     = 0;
     for (const RenderTask& task : *targetQueue)
     {
         if (!overrideShader)
         {
-            if (task.material->GetHandle() != lastMaterialID)
+            uint64_t currentShaderID = task.material->GetShader()->GetHandle();
+            if (currentShaderID != lastShaderID)
             {
-                task.material->Bind();
-                lastMaterialID = task.material->GetHandle();
+                task.material->GetShader()->Bind();
+                lastShaderID = currentShaderID;
             }
+        }
 
+        if (task.material->GetHandle() != lastMaterialID)
+        {
+            if (overrideShader)
+                overrideShader->SetSuppressWarnings(true);
+
+            task.material->Bind(overrideShader);
+
+            if (overrideShader)
+                overrideShader->SetSuppressWarnings(false);
+
+            lastMaterialID = task.material->GetHandle();
+        }
+
+        if (!overrideShader)
+        {
             task.material->GetShader()->SetUInt("u_TransformIndex", task.transformIndex);
         }
         else
@@ -188,7 +211,6 @@ void Renderer::DrawQueue(RenderQueueType queueType, Shader* overrideShader)
             overrideShader->SetUInt("u_TransformIndex", task.transformIndex);
         }
 
-        // Bind mesh geometry
         if (task.mesh->GetHandle() != lastMeshID)
         {
             task.mesh->GetVAO()->Bind();
@@ -196,7 +218,7 @@ void Renderer::DrawQueue(RenderQueueType queueType, Shader* overrideShader)
         }
 
         glDrawElements(GL_TRIANGLES, task.mesh->GetIBO()->GetCount(), GL_UNSIGNED_INT, nullptr);
-    
+
         s_stats.drawCalls++;
     }
 }

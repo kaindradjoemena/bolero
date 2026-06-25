@@ -53,11 +53,11 @@ public:
 
     Ref<Tex> CreateTex(const TexSpec& texSpec);
 
-    Ref<Material> CreateMaterial(Ref<Shader> shader);
+    Ref<Material> CreateMaterial(const Ref<Shader>& shader);
 
-    Ref<Mesh> CreateMesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material);
+    Ref<Mesh> CreateMesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, const Ref<Material>& material);
 
-    Ref<Model> CreateModel(std::string_view filePath, Ref<Shader> defaultShader);
+    Ref<Model> CreateModel(std::string_view filePath, const Ref<Shader>& defaultShader);
 
     void Update();
 

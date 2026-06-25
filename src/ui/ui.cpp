@@ -21,17 +21,6 @@ namespace blr::core
 
 void UI::Init(GLFWwindow* window)
 {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImPlot::CreateContext();
-
-    // Docking
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 460");
     m_initialized = true;
 }
 
@@ -53,10 +42,6 @@ void UI::EndFrame()
 
 void UI::Shutdown()
 {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImPlot::DestroyContext();
-    ImGui::DestroyContext();
 }
 
 void UI::DrawPipelineStats(Scene& scene, const std::vector<Ref<RenderPass>>& passes)
@@ -81,8 +66,7 @@ void UI::DrawPipelineStats(Scene& scene, const std::vector<Ref<RenderPass>>& pas
         ImGui::Text(renderer);
         ImGui::Text(version);
         ImGui::Spacing();
-        ImGui::Text("TOTAL: CPU: %.2fms | GPU: %.2fms | Draws: %d",
-            totalCpuTimeMs, totalGpuTimeMs, totalDrawCalls);
+        ImGui::Text("TOTAL: CPU: %.2fms | GPU: %.2fms | Draws: %d", totalCpuTimeMs, totalGpuTimeMs, totalDrawCalls);
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
@@ -302,9 +286,9 @@ void UI::DrawProperties(Scene& scene, RenderContext& renderCtx)
         {
             ImGui::SeparatorText("Background Color");
             {
-                glm::vec4 backgroundCol = renderCtx.Get<glm::vec4>("u_BackgroundColor", glm::vec4(0.0f, 0.0f, 0.0f, 1.0));
+                glm::vec4 backgroundCol = renderCtx.Get<glm::vec4>("BACKGROUND_COLOR", glm::vec4(0.0f, 0.0f, 0.0f, 1.0));
                 if (ImGui::ColorEdit4("Color", &backgroundCol.x))
-                    renderCtx.Set("u_BackgroundColor", backgroundCol, Lifetime::PERSISTENT);
+                    renderCtx.Set("BACKGROUND_COLOR", backgroundCol, Lifetime::PERSISTENT);
 
             }
 

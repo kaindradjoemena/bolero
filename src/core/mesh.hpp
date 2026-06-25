@@ -68,8 +68,8 @@ private:
 // Construction must be called by the AssetManager class through the Create method
 friend class AssetManager;
 protected:
-    Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material);
-    static Ref<Mesh> Create(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material)
+    Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, const Ref<Material>& material);
+    static Ref<Mesh> Create(std::vector<Vertex> vertices, std::vector<uint32_t> indices, const Ref<Material>& material)
     {
         return std::shared_ptr<Mesh>(new Mesh(vertices, indices, material));
     }

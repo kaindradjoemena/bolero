@@ -6,6 +6,8 @@
 #include "utils/gpu_timer.hpp"
 
 #include <string>
+#include <functional>
+#include <vector>
 
 
 namespace blr::core
@@ -25,24 +27,55 @@ class Scene;
 class RenderPass
 {
 public:
-    RenderPass(const std::string& name) : m_name(name) {}
+    using InitFunc = std::function<void(RenderPass&)>;
+    using ExecFunc = std::function<void(Scene&, RenderContext&, RenderPass&)>;
+    using Action   = std::function<void()>;
+
+    RenderPass(const std::string& name, InitFunc initFunc, ExecFunc execFunc)
+    : m_name(name)
+    , m_initFunc(initFunc)
+    , m_execFunc(execFunc)
+    {
+    }
+    
     virtual ~RenderPass() = default;
 
-    // Called once when added to the pipeline by RenderPipeline::AddPass()
-    virtual void Init() = 0;
+    void Init()
+    {
+        if (m_initFunc)
+            m_initFunc(*this);
+    }
 
-    // This is where you configure GL state and issue Renderer draw commands.
-    // Called every frame.
-    virtual void Execute(Scene& scene, RenderContext& renderCtx) = 0;
+    void Execute(Scene& scene, RenderContext& renderCtx)
+    {
+        if (m_execFunc)
+            m_execFunc(scene, renderCtx, *this);
+    }
 
-    // Resizing behavior.
-    // Useful for enabling window responsiveness
-    virtual void OnWindowResize(uint32_t width, uint32_t height)
+    void OnWindowResize(uint32_t width, uint32_t height)
     {
     }
 
-    // Called when done
-    virtual void Shutdown() = 0;
+    void Shutdown()
+    {
+    }
+
+
+    void DispatchAction(Action action)
+    {
+        m_actionQueue.push_back(action);
+    }
+    
+    std::vector<Action>& GetActions()
+    {
+        return m_actionQueue;
+    }
+    
+    void ClearActions()
+    {
+        m_actionQueue.clear();
+    }
+
 
     const std::string& GetName() const { return m_name; }
 
@@ -54,6 +87,11 @@ protected:
     std::string m_name;
 
 private:
+    InitFunc m_initFunc;
+    ExecFunc m_execFunc;
+
+    std::vector<Action> m_actionQueue;
+
     utils::GpuTimer m_gpuTimer;
     PassStats       m_stats;
 };

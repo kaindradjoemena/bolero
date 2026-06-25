@@ -18,10 +18,7 @@ public:
     mat4 GetModelMat() const
     {
         if (!m_isDirty)
-        {
-            m_isDirty = false;
             return m_modelMat;
-        }
 
         mat4 modelMat = mat4(1.0f);
         modelMat      = glm::translate(modelMat, m_pos);

@@ -27,7 +27,7 @@ public:
     using ResizeCallback = std::function<void(uint32_t w, uint32_t h)>;
 
 public:
-    Window(uint32_t width, uint32_t height, const char* title, Input& input);
+    Window(uint32_t width, uint32_t height, const char* title, Input& input, bool headless = false);
     ~Window();
 
     // Prevent copying
@@ -55,6 +55,8 @@ public:
     void HandleResize(uint32_t w, uint32_t h);
 
 private:
+    bool m_headless;
+
     GLFWwindow* m_window = nullptr;
     uint32_t m_width     = DEFAULT_WIDTH;
     uint32_t m_height    = DEFAULT_HEIGHT;

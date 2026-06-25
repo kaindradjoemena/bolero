@@ -6,6 +6,7 @@
 #include "core/transform.hpp"
 
 #include <vector>
+#include <string>
 
 
 namespace blr::core
@@ -21,12 +22,14 @@ struct DirLight;
 struct PointLight;
 struct SpotLight;
 
-struct Renderable
+struct Entity
 {
-    Ref<Mesh> mesh;
-    Ref<Material> material;
+    std::string name;
+    Ref<Model> model;
     Transform transform;
     bool castShadows = true;
+
+    Ref<Material> materialOverride = nullptr;
 };
 
 
@@ -47,24 +50,22 @@ public:
     void SetCam(Camera* camera) { m_cam = camera; }
     Camera* GetCam() const { return m_cam; }
 
+    std::vector<Entity>& GetEntity() { return m_entities; }
     std::vector<DirLight>& GetDirLights() { return m_dirLights; }
     std::vector<PointLight>& GetPointLights() { return m_pointLights; }
     std::vector<SpotLight>& GetSpotLights() { return m_spotLights; }
 
-    void AddEntity(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform, bool castShadows = true);
-    void AddEntity(const Ref<Model>& model, const Transform& transform, bool castShadows = true);
+    void AddEntity(const std::string& name, const Ref<Model>& model, const Transform& transform, bool castShadows = true);
     void AddLight(const DirLight& light);
     void AddLight(const PointLight& light);
     void AddLight(const SpotLight& light);
-
-    void Update(float dt, bool ignoreMsg);
 
     void SubmitToRenderer();
 
 private:
     Camera* m_cam = nullptr;
 
-    std::vector<Renderable> m_renderables;
+    std::vector<Entity>     m_entities;
     std::vector<DirLight>   m_dirLights;
     std::vector<PointLight> m_pointLights;
     std::vector<SpotLight>  m_spotLights;

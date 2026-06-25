@@ -15,7 +15,7 @@ namespace blr::core
 
 Mesh::Mesh(std::vector<Vertex> vertices,
            std::vector<uint32_t> indices,
-           Ref<Material> material)
+           const Ref<Material>& material)
 : m_vertices(std::move(vertices))
 , m_indices(std::move(indices))
 , m_material(std::move(material))

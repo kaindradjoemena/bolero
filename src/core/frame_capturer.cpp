@@ -25,7 +25,6 @@ ImageBuffer FrameCapturer::CapturePipeline(RenderPipeline& pipeline, Scene& scen
     Camera* cam = scene.GetCam();
     float prevAspect = 1.0f;
     float prevFov = 1.0f;
-
     if (cam)
     {
         prevAspect = cam->GetAspect();

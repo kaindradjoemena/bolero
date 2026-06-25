@@ -60,7 +60,7 @@ Ref<Tex> AssetManager::CreateTex(const TexSpec& texSpec)
     return tex;
 }
 
-Ref<Material> AssetManager::CreateMaterial(Ref<Shader> shader)
+Ref<Material> AssetManager::CreateMaterial(const Ref<Shader>& shader)
 {
     Ref<Material> mat = Material::Create(shader);
     mat->SetHandle(UUID::Generate());
@@ -72,7 +72,7 @@ Ref<Material> AssetManager::CreateMaterial(Ref<Shader> shader)
     return mat;
 }
 
-Ref<Mesh> AssetManager::CreateMesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<Material> material)
+Ref<Mesh> AssetManager::CreateMesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, const Ref<Material>& material)
 {
     Ref<Mesh> mesh = Mesh::Create(vertices, indices, material);
     mesh->SetHandle(UUID::Generate());
@@ -84,7 +84,7 @@ Ref<Mesh> AssetManager::CreateMesh(std::vector<Vertex> vertices, std::vector<uin
     return mesh;
 }
 
-Ref<Model> AssetManager::CreateModel(std::string_view filePath, Ref<Shader> defaultShader)
+Ref<Model> AssetManager::CreateModel(std::string_view filePath, const Ref<Shader>& defaultShader)
 {
     std::filesystem::path physPath = VFS::Resolve(filePath);
 

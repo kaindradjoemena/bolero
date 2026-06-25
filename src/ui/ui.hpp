@@ -2,7 +2,10 @@
 
 #pragma once
 
-#include <bolero.hpp>
+#include "utils/base.hpp"
+
+#include <vector>
+#include <string>
 
 struct GLFWwindow;
 
@@ -13,6 +16,7 @@ namespace blr::core
 
 class Scene;
 class RenderPass;
+class RenderContext;
 
 class UI 
 {

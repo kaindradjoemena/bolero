@@ -13,7 +13,7 @@ namespace blr::core
 
 
 Shader::Shader(const std::filesystem::path& filePath)
-: m_filePath(filePath)
+: m_filePath(filePath), m_suppressWarnings(false)
 {
     std::string src = ReadFile(m_filePath);
     auto shaderSources = PreProcess(src);
@@ -189,12 +189,13 @@ void Shader::SetMat4(std::string_view name, const mat4& value)
 GLint Shader::GetUniformLocation(std::string_view name)
 {
     std::string nameStr(name);
-    if (m_uniformLocCache.find(nameStr) != m_uniformLocCache.end())
-        return m_uniformLocCache[nameStr];
+    auto it = m_uniformLocCache.find(nameStr);
+    if (it != m_uniformLocCache.end())
+        return it->second;
 
     GLint location = glGetUniformLocation(m_rendererID, nameStr.c_str());
-    if (location == -1)
-        std::cerr << "Warning: Uniform '" << name << "' doesn't exist!" << std::endl;
+    if (location == -1 && !m_suppressWarnings)
+        std::cerr << m_filePath.string() << " | Warning: Uniform '" << name << "' doesn't exist!" << std::endl;
 
     m_uniformLocCache[nameStr] = location;
     return location;

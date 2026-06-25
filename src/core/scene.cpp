@@ -7,6 +7,7 @@
 #include "core/lights.hpp"
 #include "core/transform.hpp"
 #include "renderer/renderer.hpp"
+#include "core/gpu_layout.hpp"
 
 #include <iostream>
 
@@ -14,15 +15,10 @@
 namespace blr::core
 {
 
-void Scene::AddEntity(const Ref<Mesh>& mesh, const Ref<Material>& material, const Transform& transform, bool castShadows)
-{
-    m_renderables.push_back({ mesh, material, transform, castShadows });
-}
 
-void Scene::AddEntity(const Ref<Model>& model, const Transform& transform, bool castShadows)
+void Scene::AddEntity(const std::string& name, const Ref<Model>& model, const Transform& transform, bool castShadows)
 {
-    for (const auto& mesh : model->GetMeshes())
-        m_renderables.push_back({ mesh, mesh->GetMaterial(), transform, castShadows });
+    m_entities.push_back({ name, model, transform, castShadows });
 }
 
 void Scene::AddLight(const DirLight& light)
@@ -40,12 +36,6 @@ void Scene::AddLight(const SpotLight& light)
     m_spotLights.push_back(light);
 }
 
-void Scene::Update(float dt, bool ignoreMsg)
-{
-    if (!ignoreMsg)
-        std::cout << "Scene::Update(float dt, bool ignoreMsg) is empty. Update(dt, true) to ignore" << std::endl;
-}
-
 void Scene::SubmitToRenderer()
 {
     if (!m_cam)
@@ -61,35 +51,49 @@ void Scene::SubmitToRenderer()
     for (const auto& light : m_dirLights)
     {
         int idx = -1;
-        if (light.castsShadow && dirShadowIdx < 4)
+        if (light.castsShadow && dirShadowIdx < MAX_DIR_LIGHTS)
             idx = dirShadowIdx++;
 
         Renderer::Submit(light, idx);
     }
-    // Point Lights
-    int pointShadowIdx = 0;
-    for (const auto& light : m_pointLights)
-    {
-        int idx = -1;
-        if (light.castsShadow && pointShadowIdx < 4)
-            idx = pointShadowIdx++;
 
-        Renderer::Submit(light, idx);
-    }
     // Spot Lights
     int spotShadowIdx = 0;
     for (const auto& light : m_spotLights)
     {
         int idx = -1;
-        if (light.castsShadow && spotShadowIdx < 4)
+        if (light.castsShadow && spotShadowIdx < MAX_SPOT_LIGHTS)
             idx = spotShadowIdx++;
 
         Renderer::Submit(light, idx);
     }
 
-    // Renderables
-    for (const auto& renderable : m_renderables)
-        Renderer::Submit(renderable.mesh, renderable.material, renderable.transform);
+    // Point Lights
+    int pointShadowIdx = 0;
+    for (const auto& light : m_pointLights)
+    {
+        int idx = -1;
+        if (light.castsShadow && pointShadowIdx < MAX_POINT_LIGHTS)
+            idx = pointShadowIdx++;
+
+        Renderer::Submit(light, idx);
+    }
+
+    // Flatten entities
+    for (const auto& entity : m_entities)
+    {
+        for (const auto& mesh : entity.model->GetMeshes())
+        {
+            if (entity.materialOverride)
+            {
+                Renderer::Submit(mesh, entity.materialOverride, entity.transform);
+            }
+            else
+            {
+                Renderer::Submit(mesh, mesh->GetMaterial(), entity.transform);
+            }
+        }
+    }
 }
 
 

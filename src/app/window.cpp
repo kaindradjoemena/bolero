@@ -4,6 +4,11 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <stb_image_write.h>
+#include <implot.h>
 
 #include "input.hpp"
 
@@ -51,8 +56,8 @@ static void CursorPosCallback(GLFWwindow* window, double x, double y)
 }
 
 
-Window::Window(uint32_t width, uint32_t height, const char* title, Input& input)
-: m_input(input), m_width(width), m_height(height), m_title(title)
+Window::Window(uint32_t width, uint32_t height, const char* title, Input& input, bool headless)
+: m_input(input), m_width(width), m_height(height), m_title(title), m_headless(headless)
 {
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW");
@@ -68,6 +73,8 @@ Window::Window(uint32_t width, uint32_t height, const char* title, Input& input)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    if (headless)
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
     m_window = glfwCreateWindow(m_width, m_height, m_title, nullptr, nullptr);
     if (!m_window)
@@ -92,10 +99,33 @@ Window::Window(uint32_t width, uint32_t height, const char* title, Input& input)
     glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
     glfwSetScrollCallback(m_window, ScrollCallback);
     glfwSetCursorPosCallback(m_window, CursorPosCallback);
+
+    // ImGui Stuff
+    if (!m_headless)
+    {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImPlot::CreateContext();
+    
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    
+        ImGui::StyleColorsDark();
+        ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+        ImGui_ImplOpenGL3_Init("#version 460");
+    }
 }
 
 Window::~Window()
 {
+    if (!m_headless)
+    {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImPlot::DestroyContext();
+        ImGui::DestroyContext();
+    }
+
     if (m_window)
     {
         glfwDestroyWindow(m_window);

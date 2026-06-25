@@ -12,11 +12,7 @@ namespace blr::core
 {
 
 
-enum class FitMode
-{
-    V,  // Vertical
-    H   // Horizontal
-};
+enum class FitMode { V, H };
 
 
 class FrameCapturer

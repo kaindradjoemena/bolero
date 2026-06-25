@@ -153,12 +153,15 @@ public:
     void SetMat3(std::string_view name, const mat3& value);
     void SetMat4(std::string_view name, const mat4& value);
 
+    void SetSuppressWarnings(bool suppress) { m_suppressWarnings = suppress; }
+
     bool Reload();
 
     GLuint GetRendererID() const { return m_rendererID; }
 
 private:
     std::filesystem::path m_filePath;
+    bool m_suppressWarnings;
 
     GLuint m_rendererID{0};
     std::unordered_map<std::string, GLint> m_uniformLocCache;

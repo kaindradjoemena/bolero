@@ -13,6 +13,7 @@
 #include "utils/base.hpp"
 #include "utils/math.hpp"
 #include "utils/debug.hpp"
+#include "core/gpu_layout.hpp"
 
 // Application Layer
 #include "app/window.hpp"
@@ -27,6 +28,9 @@
 #include "core/scene.hpp"
 #include "core/camera.hpp"
 #include "core/vfs.hpp"
+#include "core/scene.hpp"
+#include "core/texture.hpp"
+#include "ui/ui.hpp"
 
 // Renderer & Pass Architecture
 #include "renderer/renderer.hpp"
@@ -41,3 +45,9 @@
 #include "core/material.hpp"
 #include "core/shader.hpp"
 #include "core/lights.hpp"
+#include "core/wrappers/cubemap.hpp"
+
+#include "ui/ui.hpp"
+
+
+#include "core/passes.hpp"
