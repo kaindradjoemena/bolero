@@ -38,8 +38,13 @@ Ref<Tex> AssetManager::CreateTex(std::string_view texPath, const TexSpec& texSpe
 {
     std::filesystem::path physPath = VFS::Resolve(texPath);
 
+    if (m_texCache.find(physPath.string()) != m_texCache.end())
+        return m_texCache[physPath.string()];
+
     Ref<Tex> tex = Tex::Create(physPath, texSpec);
     tex->SetHandle(UUID::Generate());
+
+    m_texCache[physPath.string()] = tex;
 
 #if DEBUG_RESOURCE_CREATION_HANDLE
     std::cout << "AssetManager::CreateTex " << tex->GetHandle() << std::endl;

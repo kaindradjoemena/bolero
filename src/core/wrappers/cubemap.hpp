@@ -31,8 +31,8 @@ public:
     Cubemap& operator=(const Cubemap&) = delete;
 
     // Allow moving
-    Cubemap(Cubemap&& other) = default;
-    Cubemap& operator=(Cubemap&& other) = default;
+    Cubemap(Cubemap&& other) noexcept;
+    Cubemap& operator=(Cubemap&& other) noexcept;
 
 
     GLuint GetID() const { return m_rendererID; }

@@ -31,6 +31,41 @@ FrameBuffer::FrameBuffer(const FBSpec& spec)
     Invalidate();
 }
 
+FrameBuffer::FrameBuffer(FrameBuffer&& other) noexcept
+: m_rendererID(other.m_rendererID)
+, m_spec(std::move(other.m_spec))
+, m_colorSpecs(std::move(other.m_colorSpecs))
+, m_depthSpec(std::move(other.m_depthSpec))
+, m_colorAttachments(std::move(other.m_colorAttachments))
+, m_depthAttachment(other.m_depthAttachment)
+{
+    other.m_rendererID = 0;
+    other.m_colorAttachments.clear();
+    other.m_depthAttachment = 0;
+}
+
+FrameBuffer& FrameBuffer::operator=(FrameBuffer&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_rendererID != 0)
+            glDeleteTextures(1, &m_rendererID);
+        
+        m_rendererID = other.m_rendererID;
+        m_spec = std::move(other.m_spec);
+        m_colorSpecs = std::move(other.m_colorSpecs);
+        m_depthSpec = std::move(other.m_depthSpec);
+        m_colorAttachments = std::move(other.m_colorAttachments);
+        m_depthAttachment = other.m_depthAttachment;
+
+        other.m_rendererID = 0;
+        other.m_colorAttachments.clear();
+        other.m_depthAttachment = 0;
+    }
+
+    return *this;
+}
+
 FrameBuffer::~FrameBuffer()
 {
     if (m_rendererID != 0)

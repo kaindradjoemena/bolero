@@ -35,6 +35,7 @@ Model::Model(const std::filesystem::path& filePath, Ref<Shader> defaultShader, A
         return;
     }
 
+    m_filePath = filePath.string();
     m_directory = filePath.parent_path();
 
     ProcessMaterials(scene, assetManager);

@@ -12,6 +12,36 @@ namespace blr::core
 {
 
 
+Shader::Shader(Shader&& other) noexcept
+: Resource(std::move(other))
+, m_rendererID(other.m_rendererID)
+, m_filePath(std::move(other.m_filePath))
+, m_suppressWarnings(other.m_suppressWarnings)
+, m_uniformLocCache(std::move(other.m_uniformLocCache))
+{
+    other.m_rendererID = 0;
+}
+
+Shader& Shader::operator=(Shader&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_rendererID != 0)
+            glDeleteTextures(1, &m_rendererID);
+        
+        Resource::operator=(std::move(other));
+        m_rendererID = other.m_rendererID;
+        m_filePath = std::move(other.m_filePath);
+        m_suppressWarnings = other.m_suppressWarnings;
+        m_uniformLocCache = std::move(other.m_uniformLocCache);
+
+        other.m_rendererID = 0;
+    }
+
+    return *this;
+}
+
+
 Shader::Shader(const std::filesystem::path& filePath)
 : m_filePath(filePath), m_suppressWarnings(false)
 {
@@ -95,7 +125,7 @@ GLuint Shader::Compile(const std::unordered_map<GLenum, std::string>& shaderSour
     std::vector<GLuint> glShaderIDs;
     glShaderIDs.reserve(shaderSources.size());
 
-    // 1. Compile each shader stage
+    // Compile each shader stage
     for (auto& [type, source] : shaderSources)
     {
         GLuint shader = glCreateShader(type);
@@ -109,11 +139,18 @@ GLuint Shader::Compile(const std::unordered_map<GLenum, std::string>& shaderSour
         glShaderIDs.push_back(shader);
     }
 
-    // 2. Link the program
+    // Link the program
     glLinkProgram(program);
-    CheckCompileErrors(program, "PROGRAM");
+    GLint success;
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        CheckCompileErrors(program, "PROGRAM");
+        glDeleteProgram(program);
+        return 0;
+    }
 
-    // 3. Detach and clean up individual shaders to prevent memory leaks
+    // Detach and clean up individual shaders to prevent memory leaks
     for (auto id : glShaderIDs)
     {
         glDetachShader(program, id);

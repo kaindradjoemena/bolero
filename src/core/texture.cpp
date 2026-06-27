@@ -11,6 +11,34 @@ namespace blr::core
 {
 
 
+Tex::Tex(Tex&&other) noexcept
+: Resource(std::move(other))
+, m_rendererID(other.m_rendererID)
+, m_texPath(std::move(other.m_texPath))
+, m_texSpec(other.m_texSpec)
+{
+    other.m_rendererID = 0;
+}
+
+Tex& Tex::operator=(Tex&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_rendererID != 0)
+            glDeleteTextures(1, &m_rendererID);
+        
+        Resource::operator=(std::move(other));
+        m_rendererID = other.m_rendererID;
+        m_texPath = std::move(other.m_texPath);
+        m_texSpec = other.m_texSpec;
+
+        other.m_rendererID = 0;
+    }
+
+    return *this;
+}
+
+
 Tex::Tex(const std::filesystem::path& texPath, const TexSpec& texSpec)
 : m_texPath(texPath), m_texSpec(texSpec)
 {

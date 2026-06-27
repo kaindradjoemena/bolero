@@ -2,14 +2,14 @@
 
 #pragma once
 
+#include "uuid.hpp"
+
 #include <cstdint>
 
 
 namespace blr::core
 {
 
-
-using AssetHandle = uint64_t;
 
 class Resource
 {

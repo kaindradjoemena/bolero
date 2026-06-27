@@ -138,8 +138,8 @@ public:
     Shader& operator=(const Shader&) = delete;
 
     // Allow moving
-    Shader(Shader&& other) = default;
-    Shader& operator=(Shader&& other) = default;
+    Shader(Shader&& other) noexcept;
+    Shader& operator=(Shader&& other) noexcept;
 
     void Bind() const;
     void Unbind() const;

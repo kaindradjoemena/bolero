@@ -104,7 +104,7 @@ int main()
     auto pointShadowPass = blrc::CreatePointShadowPass(assetManager);
 
     // Forward Rendering
-    auto opaquePass      = blrc::CreateOpauePass(assetManager);
+    auto opaquePass      = blrc::CreateOpaquePass(assetManager);
     
     // Deferred Rendering
     auto geometryPass   = blrc::CreateGeometryPass(assetManager);

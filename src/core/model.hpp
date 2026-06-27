@@ -38,6 +38,7 @@ public:
     Model& operator=(Model&& other) = default;
 
 
+    const std::string& GetFilePath() const { return m_filePath; }
     const std::vector<Ref<Mesh>>& GetMeshes() const { return m_meshes; }
 
 private:
@@ -49,6 +50,7 @@ private:
     std::vector<Ref<Mesh>> m_meshes;
     std::vector<Ref<Material>> m_materials;
     
+    std::string m_filePath;
     std::filesystem::path m_directory;
     Ref<Shader> m_defaultShader;
 

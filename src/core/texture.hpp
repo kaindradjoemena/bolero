@@ -81,8 +81,8 @@ public:
     Tex& operator=(const Tex&) = delete;
     
     // Allow moving
-    Tex(Tex&& other) = default;
-    Tex& operator=(Tex&& other) = default;
+    Tex(Tex&& other) noexcept;
+    Tex& operator=(Tex&& other) noexcept;
 
     uint32_t GetID() const { return m_rendererID; }
     uint32_t GetWidth() const { return m_texSpec.w; }

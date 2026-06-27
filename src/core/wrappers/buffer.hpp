@@ -80,8 +80,8 @@ public:
     VertexBuffer& operator=(const VertexBuffer&) = delete;
 
     // Allow moving
-    VertexBuffer(VertexBuffer&& other) = default;
-    VertexBuffer& operator=(VertexBuffer&& other) = default;
+    VertexBuffer(VertexBuffer&& other) noexcept;
+    VertexBuffer& operator=(VertexBuffer&& other) noexcept;
 
 
     void Bind() const;
@@ -114,8 +114,8 @@ public:
     IndexBuffer& operator=(const IndexBuffer&) = delete;
 
     // Allow moving
-    IndexBuffer(IndexBuffer&& other) = default;
-    IndexBuffer& operator=(IndexBuffer&& other) = default;
+    IndexBuffer(IndexBuffer&& other) noexcept;
+    IndexBuffer& operator=(IndexBuffer&& other) noexcept;
 
 
     void Bind() const;
@@ -147,8 +147,8 @@ public:
     UniformBuffer& operator=(const UniformBuffer&) = delete;
 
     // Allow moving
-    UniformBuffer(UniformBuffer&& other) = default;
-    UniformBuffer& operator=(UniformBuffer&& other) = default;
+    UniformBuffer(UniformBuffer&& other) noexcept;
+    UniformBuffer& operator=(UniformBuffer&& other) noexcept;
 
 
     void Bind(uint32_t binding) const;
@@ -179,8 +179,8 @@ public:
     ShaderStorageBuffer& operator=(const ShaderStorageBuffer&) = delete;
 
     // Allow moving
-    ShaderStorageBuffer(ShaderStorageBuffer&& other) = default;
-    ShaderStorageBuffer& operator=(ShaderStorageBuffer&& other) = default;
+    ShaderStorageBuffer(ShaderStorageBuffer&& other) noexcept;
+    ShaderStorageBuffer& operator=(ShaderStorageBuffer&& other) noexcept;
 
     void Bind(uint32_t binding) const;
     void Unbind() const;

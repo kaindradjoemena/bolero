@@ -14,6 +14,33 @@ VertexArray::VertexArray()
     glCreateVertexArrays(1, &m_rendererID);
 }
 
+VertexArray::VertexArray(VertexArray&& other) noexcept
+: m_rendererID(other.m_rendererID)
+, m_vertexBufferIndex(other.m_vertexBufferIndex)
+, m_vertexBuffers(std::move(other.m_vertexBuffers))
+, m_indexBuffer(std::move(other.m_indexBuffer))
+{
+    other.m_rendererID = 0;
+}
+
+VertexArray& VertexArray::operator=(VertexArray&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_rendererID != 0)
+            glDeleteTextures(1, &m_rendererID);
+        
+        m_rendererID = other.m_rendererID;
+        m_vertexBufferIndex = other.m_vertexBufferIndex;
+        m_vertexBuffers = std::move(other.m_vertexBuffers);
+        m_indexBuffer = std::move(other.m_indexBuffer);
+
+        other.m_rendererID = 0;
+    }
+
+    return *this;
+}
+
 VertexArray::~VertexArray()
 {
     if (m_rendererID != 0)

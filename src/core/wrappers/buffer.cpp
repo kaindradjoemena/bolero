@@ -14,6 +14,29 @@ VertexBuffer::VertexBuffer(const void* verts, uint32_t size)
     glNamedBufferStorage(m_rendererID, size, verts, GL_DYNAMIC_STORAGE_BIT);
 }
 
+VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept
+: m_rendererID(other.m_rendererID)
+, m_layout(std::move(other.m_layout))
+{
+    other.m_rendererID = 0;
+}
+
+VertexBuffer& VertexBuffer::operator=(VertexBuffer&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_rendererID != 0)
+            glDeleteTextures(1, &m_rendererID);
+        
+        m_rendererID = other.m_rendererID;
+        m_layout = std::move(other.m_layout);
+
+        other.m_rendererID = 0;
+    }
+
+    return *this;
+}
+
 VertexBuffer::~VertexBuffer()
 {
     if (m_rendererID != 0)
@@ -39,6 +62,29 @@ IndexBuffer::IndexBuffer(const uint32_t* indices, uint32_t count)
     glNamedBufferStorage(m_rendererID, count * sizeof(uint32_t), indices, GL_DYNAMIC_STORAGE_BIT);
 }
 
+IndexBuffer::IndexBuffer(IndexBuffer&& other) noexcept
+: m_rendererID(other.m_rendererID)
+, m_count(m_count)
+{
+    other.m_rendererID = 0;
+}
+
+IndexBuffer& IndexBuffer::operator=(IndexBuffer&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_rendererID != 0)
+            glDeleteTextures(1, &m_rendererID);
+        
+        m_rendererID = other.m_rendererID;
+        m_count = other.m_count;
+
+        other.m_rendererID = 0;
+    }
+
+    return *this;
+}
+
 IndexBuffer::~IndexBuffer()
 {
     if (m_rendererID != 0)
@@ -61,6 +107,27 @@ UniformBuffer::UniformBuffer(uint32_t size)
 {
     glCreateBuffers(1, &m_rendererID);
     glNamedBufferData(m_rendererID, size, nullptr, GL_DYNAMIC_DRAW); 
+}
+
+UniformBuffer::UniformBuffer(UniformBuffer&& other) noexcept
+: m_rendererID(other.m_rendererID)
+{
+    other.m_rendererID = 0;
+}
+
+UniformBuffer& UniformBuffer::operator=(UniformBuffer&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_rendererID != 0)
+            glDeleteTextures(1, &m_rendererID);
+        
+        m_rendererID = other.m_rendererID;
+
+        other.m_rendererID = 0;
+    }
+
+    return *this;
 }
 
 UniformBuffer::~UniformBuffer()
@@ -89,6 +156,27 @@ void UniformBuffer::SetData(const void* data, uint32_t size, uint32_t offset) co
 ShaderStorageBuffer::ShaderStorageBuffer()
 {
     glCreateBuffers(1, &m_rendererID);
+}
+
+ShaderStorageBuffer::ShaderStorageBuffer(ShaderStorageBuffer&& other) noexcept
+: m_rendererID(other.m_rendererID)
+{
+    other.m_rendererID = 0;
+}
+
+ShaderStorageBuffer& ShaderStorageBuffer::operator=(ShaderStorageBuffer&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_rendererID != 0)
+            glDeleteTextures(1, &m_rendererID);
+        
+        m_rendererID = other.m_rendererID;
+
+        other.m_rendererID = 0;
+    }
+
+    return *this;
 }
 
 ShaderStorageBuffer::~ShaderStorageBuffer()

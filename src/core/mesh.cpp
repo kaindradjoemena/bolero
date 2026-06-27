@@ -18,7 +18,7 @@ Mesh::Mesh(std::vector<Vertex> vertices,
            const Ref<Material>& material)
 : m_vertices(std::move(vertices))
 , m_indices(std::move(indices))
-, m_material(std::move(material))
+, m_material(material)
 {
     SetupMesh();
 }

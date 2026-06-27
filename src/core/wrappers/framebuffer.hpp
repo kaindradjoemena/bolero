@@ -46,8 +46,8 @@ public:
     FrameBuffer& operator=(const FrameBuffer&) = delete;
 
     // Allow moving
-    FrameBuffer(FrameBuffer&& other) = default;
-    FrameBuffer& operator=(FrameBuffer&& other) = default;
+    FrameBuffer(FrameBuffer&& other) noexcept;
+    FrameBuffer& operator=(FrameBuffer&& other) noexcept;
 
 
     void Bind() const;

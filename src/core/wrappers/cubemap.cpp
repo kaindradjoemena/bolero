@@ -16,10 +16,14 @@ Cubemap::Cubemap(const TexSpec& spec)
     if (m_spec.generateMips)
     {
         if (m_spec.numMips > 0)
+        {
             mipLevels = m_spec.numMips;
+        }
         else
-            mipLevels = static_cast<GLsizei>(std::floor(std::log2(std::max(m_spec.w, m_spec.h)))) + 1; // Auto full-chain
+        {
+            mipLevels = static_cast<GLsizei>(std::floor(std::log2(std::max(m_spec.w, m_spec.h)))) + 1;
             m_spec.numMips = mipLevels;
+        }
     }
 
     glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_rendererID);
@@ -31,6 +35,29 @@ Cubemap::Cubemap(const TexSpec& spec)
     glTextureParameteri(m_rendererID, GL_TEXTURE_WRAP_R, TextWrapToGLEnum(m_spec.wrapS)); 
     glTextureParameteri(m_rendererID, GL_TEXTURE_MIN_FILTER, TexFilterToGLEnum(m_spec.minFilter));
     glTextureParameteri(m_rendererID, GL_TEXTURE_MAG_FILTER, TexFilterToGLEnum(m_spec.magFilter));
+}
+
+Cubemap::Cubemap(Cubemap&& other) noexcept
+: m_rendererID(other.m_rendererID)
+, m_spec(std::move(other.m_spec))
+{
+    other.m_rendererID = 0;
+}
+
+Cubemap& Cubemap::operator=(Cubemap&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_rendererID != 0)
+            glDeleteTextures(1, &m_rendererID);
+        
+        m_rendererID = other.m_rendererID;
+        m_spec = std::move(other.m_spec);
+
+        other.m_rendererID = 0;
+    }
+
+    return *this;
 }
 
 Cubemap::~Cubemap()

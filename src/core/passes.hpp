@@ -20,6 +20,12 @@ Ref<RenderPass> CreateIrradiancePass(AssetManager& assetManager, uint32_t size =
         GLuint fboID = 0;
         uint32_t size;
         bool hasExecuted = false;
+
+        ~PassData()
+        {
+            if (fboID != 0)
+                glDeleteFramebuffers(1, &fboID);
+        }
     };
     auto d = std::make_shared<PassData>();
     d->size = size;
@@ -99,6 +105,12 @@ Ref<RenderPass> CreatePrefilterPass(AssetManager& assetManager, uint32_t size = 
         uint32_t size;
         uint32_t samples;
         bool hasExecuted = false;
+
+        ~PassData()
+        {
+            if (fboID != 0)
+                glDeleteFramebuffers(1, &fboID);
+        }
     };
     auto d = std::make_shared<PassData>();
     d->size = size;
@@ -196,6 +208,12 @@ Ref<RenderPass> CreateBrdfLutPass(AssetManager& assetManager, uint32_t size = 51
         uint32_t size;
         uint32_t samples;
         bool hasExecuted = false;
+
+        ~PassData()
+        {
+            if (fboID != 0)
+                glDeleteFramebuffers(1, &fboID);
+        }
     };
     auto d = std::make_shared<PassData>();
     d->size = size;
@@ -263,6 +281,12 @@ Ref<RenderPass> CreateIBLSetupPass(AssetManager& assetManager, uint32_t size = 5
         GLuint fboID = 0;
         uint32_t size;
         bool hasExecuted = false;
+
+        ~PassData()
+        {
+            if (fboID != 0)
+                glDeleteFramebuffers(1, &fboID);
+        }
     };
     auto d = std::make_shared<PassData>();
     d->size = size;
@@ -374,10 +398,10 @@ Ref<RenderPass> CreateSkyboxPass(AssetManager& assetManager)
 
             uint32_t targetW = Renderer::GetViewportWidth();
             uint32_t targetH = Renderer::GetViewportHeight();
-            uint32_t scale   = Renderer::GetRenderScale();
+            float scale   = Renderer::GetRenderScale();
 
             glBindFramebuffer(GL_FRAMEBUFFER, sceneFbo);
-            glViewport(0, 0, targetW * scale, targetH * scale);
+            glViewport(0, 0, static_cast<uint32_t>(targetW * scale), static_cast<uint32_t>(targetH * scale));
 
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LEQUAL);
@@ -399,7 +423,7 @@ Ref<RenderPass> CreateSkyboxPass(AssetManager& assetManager)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 inline
-Ref<RenderPass> CreateOpauePass(AssetManager& assetManager)
+Ref<RenderPass> CreateOpaquePass(AssetManager& assetManager)
 {
     struct PassData
     {
@@ -426,13 +450,13 @@ Ref<RenderPass> CreateOpauePass(AssetManager& assetManager)
             /* FBO RESIZING & BINDING */
             uint32_t targetW = Renderer::GetViewportWidth();
             uint32_t targetH = Renderer::GetViewportHeight();
-            uint32_t scale   = Renderer::GetRenderScale();
+            float scale   = Renderer::GetRenderScale();
             if (targetW != d->renderW || targetH != d->renderH || scale != d->renderScale)
             {
                 d->renderW     = targetW;
                 d->renderH     = targetH;
                 d->renderScale = scale;
-                d->fbo->Resize(d->renderW * d->renderScale, d->renderH * d->renderScale);
+                d->fbo->Resize(static_cast<uint32_t>(d->renderW * d->renderScale), static_cast<uint32_t>(d->renderH * d->renderScale));
             }
             d->fbo->Bind();
             
@@ -737,7 +761,7 @@ Ref<RenderPass> CreateSSAAResolvePass()
 
             uint32_t targetW = Renderer::GetViewportWidth();
             uint32_t targetH = Renderer::GetViewportHeight();
-            uint32_t scale   = Renderer::GetRenderScale();
+            float scale   = Renderer::GetRenderScale();
             if (targetW != d->renderW || targetH != d->renderH)
             {
                 d->renderW = targetW;
@@ -748,7 +772,7 @@ Ref<RenderPass> CreateSSAAResolvePass()
             glBindFramebuffer(GL_READ_FRAMEBUFFER, sceneFbo);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, d->resolveFbo->GetRendererID());
 
-            glBlitFramebuffer(0, 0, d->renderW * scale, d->renderH * scale,
+            glBlitFramebuffer(0, 0, static_cast<uint32_t>(d->renderW * scale), static_cast<uint32_t>(d->renderH * scale),
                                 0, 0, d->renderW, d->renderH,
                                 GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
@@ -846,13 +870,13 @@ Ref<RenderPass> CreateGeometryPass(AssetManager& assetManager)
         {
             uint32_t targetW = Renderer::GetViewportWidth();
             uint32_t targetH = Renderer::GetViewportHeight();
-            uint32_t scale   = Renderer::GetRenderScale();
+            float scale   = Renderer::GetRenderScale();
             if (scale != d->renderScale || targetW != d->renderW || targetH != d->renderH)
             {
                 d->renderW     = targetW;
                 d->renderH     = targetH;
                 d->renderScale = scale;
-                d->fbo->Resize(d->renderW * d->renderScale, d->renderH * d->renderScale);
+                d->fbo->Resize(static_cast<uint32_t>(d->renderW * d->renderScale), static_cast<uint32_t>(d->renderH * d->renderScale));
             }
             d->fbo->Bind();
 
@@ -912,13 +936,13 @@ Ref<RenderPass> CreateShadowMaskPass(AssetManager& assetManager)
             // 1. State Checks
             uint32_t targetW = Renderer::GetViewportWidth();
             uint32_t targetH = Renderer::GetViewportHeight();
-            uint32_t scale   = Renderer::GetRenderScale();
+            float scale   = Renderer::GetRenderScale();
             if (scale != d->renderScale || targetW != d->renderW || targetH != d->renderH)
             {
                 d->renderW     = targetW;
                 d->renderH     = targetH;
                 d->renderScale = scale;
-                d->fbo->Resize(d->renderW * d->renderScale, d->renderH * d->renderScale);
+                d->fbo->Resize(static_cast<uint32_t>(d->renderW * d->renderScale), static_cast<uint32_t>(d->renderH * d->renderScale));
             }
             d->fbo->Bind();
 
@@ -995,13 +1019,13 @@ Ref<RenderPass> CreateLightingPass(AssetManager& assetManager)
         {
             uint32_t targetW = Renderer::GetViewportWidth();
             uint32_t targetH = Renderer::GetViewportHeight();
-            uint32_t scale   = Renderer::GetRenderScale();
+            float scale   = Renderer::GetRenderScale();
             if (scale != d->renderScale || targetW != d->renderW || targetH != d->renderH)
             {
                 d->renderH     = targetH;
                 d->renderW     = targetW;
                 d->renderScale = scale;
-                d->fbo->Resize(d->renderW * d->renderScale, d->renderH * d->renderScale);
+                d->fbo->Resize(static_cast<uint32_t>(d->renderW * d->renderScale), static_cast<uint32_t>(d->renderH * d->renderScale));
             }
             d->fbo->Bind();
 

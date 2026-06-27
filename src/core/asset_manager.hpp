@@ -63,6 +63,7 @@ public:
 
 private:
     std::unordered_map<std::string, ShaderCacheEntry> m_shaderCache;
+    std::unordered_map<std::string, Ref<Tex>> m_texCache;
 };
 
 
